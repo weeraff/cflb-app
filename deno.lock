@@ -1,0 +1,26 @@
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@supabase/supabase-js@2": "2.111.0"
+  },
+  "jsr": {
+    "@supabase/supabase-js@2.111.0": {
+      "integrity": "92cd1d4c2933f6a62099f7d3b2b91908b70a9d110ee6098e1b2d3db2e6b7ef1b"
+    }
+  },
+  "workspace": {
+    "packageJson": {
+      "dependencies": [
+        "npm:@supabase/supabase-js@^2.111.0",
+        "npm:@types/react-dom@^19.2.3",
+        "npm:@types/react@^19.2.17",
+        "npm:@vitejs/plugin-react@^6.0.4",
+        "npm:oxlint@^1.75.0",
+        "npm:react-dom@^19.2.8",
+        "npm:react-router-dom@^7.18.2",
+        "npm:react@^19.2.8",
+        "npm:vite@^8.2.0"
+      ]
+    }
+  }
+}
