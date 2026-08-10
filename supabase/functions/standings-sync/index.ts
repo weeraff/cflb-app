@@ -1,6 +1,7 @@
-// Supabase Edge Function: pulls league tables and recent results. Deploy
-// and schedule with `supabase functions deploy standings-sync` + cron
-// (already scheduled every 6 hours, see supabase/migrations).
+// Supabase Edge Function: pulls league tables, recent results, and top
+// goal scorers. Deploy and schedule with
+// `supabase functions deploy standings-sync` + cron (already scheduled
+// every 6 hours, see supabase/migrations).
 //
 // Two data sources:
 //   - api.ffa.football (Football Australia) for the Australian Championship,
@@ -20,9 +21,17 @@
 //   1. https://mc-api.dribl.com/api/seasons -> find the entry with is_current: true
 //   2. view-source the relevant page on footballnsw.com.au/competitions/
 //      and pull the competition + league ids out of its dribl links
+//
+// Top scorers come from Dribl's "moments" endpoint (the same system that
+// powers the "Golden Boot" style leaderboards on the public site), which
+// requires a tenant id, resolved once via /api/tenants?mc_link=<domain>.
+// Only Goals, Red Cards, and Yellow Cards are tracked there, no assists
+// exist for any of the three competitions (checked 2026-08-11), so this
+// only pulls goals.
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const DRIBL_SEASON = 'wOmelzGd02' // 2026, confirmed current 2026-08-10
+const DRIBL_TENANT = '1RwNlWemjr' // Football NSW, resolved via /api/tenants?mc_link=competitions.footballnsw.com.au
 
 const DRIBL_COMPETITIONS = [
   { name: 'NPL NSW', competition: 'A4KLxx87Kq', league: 'bgdMjoBxmE' },
@@ -43,6 +52,7 @@ Deno.serve(async () => {
 
   let standingsUpdated = 0
   let resultsUpdated = 0
+  let topScorersUpdated = 0
 
   for (const comp of DRIBL_COMPETITIONS) {
     try {
@@ -56,6 +66,12 @@ Deno.serve(async () => {
     } catch (err) {
       await logError(supabase, `dribl-results-${comp.name}`, err)
     }
+
+    try {
+      topScorersUpdated += await syncDriblTopScorers(supabase, comp)
+    } catch (err) {
+      await logError(supabase, `dribl-top-scorers-${comp.name}`, err)
+    }
   }
 
   try {
@@ -64,7 +80,7 @@ Deno.serve(async () => {
     await logError(supabase, 'ffa-ladder', err)
   }
 
-  return new Response(JSON.stringify({ standingsUpdated, resultsUpdated }), {
+  return new Response(JSON.stringify({ standingsUpdated, resultsUpdated, topScorersUpdated }), {
     headers: { 'Content-Type': 'application/json' },
   })
 })
@@ -124,6 +140,35 @@ async function syncDriblResults(supabase: SupabaseClientAny, comp: DriblCompetit
         ground: a.ground_name,
       },
       { onConflict: 'dribl_id' },
+    )
+    if (!error) count += 1
+  }
+  return count
+}
+
+async function syncDriblTopScorers(supabase: SupabaseClientAny, comp: DriblCompetition) {
+  const url = `https://mc-api.dribl.com/api/moments?tenant=${DRIBL_TENANT}&season=${DRIBL_SEASON}&competition=${comp.competition}&league=${comp.league}`
+  const res = await fetch(url, { headers: { Accept: 'application/json' } })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const json = await res.json()
+
+  const scorersMoment = (json.data ?? []).find((m: { attributes: { name: string } }) =>
+    m.attributes.name.includes('Top Goal Scorers'),
+  )
+  if (!scorersMoment) throw new Error('no Top Goal Scorers moment found')
+
+  let count = 0
+  for (const player of scorersMoment.attributes.content.slice(0, 10)) {
+    const { error } = await supabase.from('top_scorers').upsert(
+      {
+        competition: comp.name,
+        dribl_id: player.user_id,
+        player_name: player.name,
+        club_name: player.club_names?.[0] ?? '',
+        goals: player.goals,
+        image_url: player.image,
+      },
+      { onConflict: 'competition,dribl_id' },
     )
     if (!error) count += 1
   }

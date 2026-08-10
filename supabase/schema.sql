@@ -87,6 +87,20 @@ create table if not exists results (
 
 create index if not exists results_played_at_idx on results (played_at desc);
 
+-- Sourced from Dribl's "moments" leaderboards. Only Goals, Red Cards, and
+-- Yellow Cards are tracked there, no assists data exists, so goals only.
+create table if not exists top_scorers (
+  id uuid primary key default gen_random_uuid(),
+  competition text not null,
+  dribl_id text not null,
+  player_name text not null,
+  club_name text not null,
+  goals int not null default 0,
+  image_url text,
+  updated_at timestamptz not null default now(),
+  unique (competition, dribl_id)
+);
+
 -- ============ Predictions ============
 
 create table if not exists fixtures (
@@ -135,6 +149,7 @@ alter table news_items enable row level security;
 alter table episodes enable row level security;
 alter table standings enable row level security;
 alter table results enable row level security;
+alter table top_scorers enable row level security;
 alter table fixtures enable row level security;
 alter table sponsors enable row level security;
 alter table profiles enable row level security;
@@ -147,6 +162,7 @@ create policy "news_items are publicly readable" on news_items for select using 
 create policy "episodes are publicly readable" on episodes for select using (true);
 create policy "standings are publicly readable" on standings for select using (true);
 create policy "results are publicly readable" on results for select using (true);
+create policy "top_scorers are publicly readable" on top_scorers for select using (true);
 create policy "fixtures are publicly readable" on fixtures for select using (true);
 create policy "active sponsors are publicly readable" on sponsors for select using (active);
 

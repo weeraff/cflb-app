@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
-import { COMPETITIONS, placeholderStandings, placeholderResults } from '../lib/placeholderData'
+import { COMPETITIONS, placeholderStandings, placeholderResults, placeholderTopScorers } from '../lib/placeholderData'
 
 const COMPETITION_LABELS = {
   'NPL NSW': 'NPL NSW',
@@ -11,6 +11,7 @@ const COMPETITION_LABELS = {
 export default function TablePage() {
   const [standings, setStandings] = useState(placeholderStandings)
   const [results, setResults] = useState(placeholderResults)
+  const [topScorers, setTopScorers] = useState(placeholderTopScorers)
   const [usingPlaceholder, setUsingPlaceholder] = useState(true)
   const [activeCompetition, setActiveCompetition] = useState(COMPETITIONS[0])
 
@@ -38,6 +39,15 @@ export default function TablePage() {
       .then(({ data, error }) => {
         if (!error && data?.length) setResults(data)
       })
+
+    supabase
+      .from('top_scorers')
+      .select('*')
+      .in('competition', COMPETITIONS)
+      .order('goals', { ascending: false })
+      .then(({ data, error }) => {
+        if (!error && data?.length) setTopScorers(data)
+      })
   }, [])
 
   const rows = standings
@@ -46,6 +56,11 @@ export default function TablePage() {
 
   const recentResults = results
     .filter((row) => row.competition === activeCompetition)
+    .slice(0, 5)
+
+  const scorers = topScorers
+    .filter((row) => row.competition === activeCompetition)
+    .sort((a, b) => b.goals - a.goals)
     .slice(0, 5)
 
   return (
@@ -115,6 +130,22 @@ export default function TablePage() {
           </li>
         ))}
       </ul>
+
+      <h2 className="results-heading">Top Scorers</h2>
+      <ol className="scorers-list">
+        {scorers.map((s) => (
+          <li key={s.id ?? s.player_name} className="scorer-row">
+            {s.image_url ? (
+              <img className="scorer-row__photo" src={s.image_url} alt="" loading="lazy" />
+            ) : (
+              <span className="scorer-row__photo scorer-row__photo--placeholder" />
+            )}
+            <span className="scorer-row__name">{s.player_name}</span>
+            <span className="scorer-row__club">{s.club_name}</span>
+            <span className="scorer-row__goals">{s.goals}</span>
+          </li>
+        ))}
+      </ol>
     </section>
   )
 }

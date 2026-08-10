@@ -705,6 +705,61 @@ h2 {
   flex: none;
 }
 
+.scorers-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.scorer-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.9rem;
+}
+
+.scorer-row__photo {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: none;
+  background: var(--surface-alt, var(--border));
+}
+
+.scorer-row__photo--placeholder {
+  background: var(--border);
+}
+
+.scorer-row__name {
+  font-weight: 700;
+  flex: 1;
+  min-width: 0;
+}
+
+.scorer-row__club {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.scorer-row__goals {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  font-weight: 700;
+  flex: none;
+  min-width: 1.5rem;
+  text-align: right;
+}
+
 /* Predictions */
 .coming-soon {
   background: var(--surface);

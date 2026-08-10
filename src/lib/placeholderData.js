@@ -195,6 +195,27 @@ export const placeholderResults = [
   { id: 'BdDb9JlvJN', competition: 'League Two', round: 'Round 27', home_team: 'Sydney University SFC', away_team: 'Nepean FC', home_score: 4, away_score: 1, played_at: '2026-08-07T21:00:00Z', ground: 'Sydney University Football Ground' },
 ]
 
+// From Dribl's "Top Goal Scorers" moment (Golden Boot style leaderboard),
+// same source as standings/results, pulled live 2026-08-11. No assists
+// data exists for any of these three competitions on this platform.
+export const placeholderTopScorers = [
+  { id: 'nmYnXOOD1N', competition: 'NPL NSW', player_name: 'Awan Lual', club_name: 'Western Sydney Wanderers FC', goals: 20, image_url: 'https://ocean.dribl.com/167570fafe364779bcecbc9fe2c2d33c' },
+  { id: 'Vdz1JOb5BK', competition: 'NPL NSW', player_name: 'Presley Ortiz', club_name: 'APIA Leichhardt FC', goals: 17, image_url: 'https://ocean.dribl.com/68cd935e641a4bd2a94f4363786666ad' },
+  { id: 'lNba84O3mx', competition: 'NPL NSW', player_name: 'Damian Tsekenis', club_name: 'Marconi Stallions FC', goals: 15, image_url: 'https://ocean.dribl.com/0a4c1209e80740988c3918b0ecea00b1' },
+  { id: '8NOpjnX3WK', competition: 'NPL NSW', player_name: 'Moudi Najjar', club_name: 'Rockdale Ilinden FC', goals: 14, image_url: 'https://ocean.dribl.com/3ef07888684946ebbb59c22bf1d437e1' },
+  { id: 'jmap1A10dR', competition: 'NPL NSW', player_name: 'Travis Major', club_name: 'Blacktown City FC', goals: 12, image_url: 'https://ocean.dribl.com/82bcc0c009d44362b97303f08f6f7d43' },
+  { id: 'jdylVLaLK5', competition: 'League One', player_name: 'Aedon Kyra', club_name: 'Blacktown Spartans FC', goals: 21, image_url: 'https://ocean.dribl.com/627af1914525447f83bd5ddc9567eda8' },
+  { id: 'xNxWk9Jbmk', competition: 'League One', player_name: 'William Kounnas', club_name: 'Canterbury Bankstown FC', goals: 20, image_url: 'https://ocean.dribl.com/1c627c58c8ae4a46a21ea30af35e5104' },
+  { id: 'nmYJAoraNz', competition: 'League One', player_name: 'Alessandro Lacalandra', club_name: 'Hurstville Zagreb FC', goals: 17, image_url: 'https://ocean.dribl.com/220f0e48fa5a4d4fa92364641888329f' },
+  { id: 'EN2pD73EBd', competition: 'League One', player_name: 'Chan Yelchan', club_name: 'Macarthur Rams FC', goals: 14, image_url: 'https://ocean.dribl.com/253bc555cb994928a48cfd2ae22603d9' },
+  { id: 'yKJJ15eBXK', competition: 'League One', player_name: 'Darcy Ellem', club_name: 'Blacktown Spartans FC', goals: 14, image_url: 'https://ocean.dribl.com/c81b1595cb314ac09e336bba01170fd0' },
+  { id: 'OmepJ5Gj0d', competition: 'League Two', player_name: 'Patrick Antelmi', club_name: 'Mounties Wanderers FC', goals: 29, image_url: 'https://ocean.dribl.com/fcd94c36e9244ca082f8fb30f583d6ac' },
+  { id: 'ld44jy9DdW', competition: 'League Two', player_name: 'Marco Sama', club_name: 'Parramatta FC', goals: 22, image_url: 'https://ocean.dribl.com/41fd05f4705e4858a6b119a514c67636' },
+  { id: 'ZKRyZJv7rN', competition: 'League Two', player_name: 'Toby Witjes', club_name: 'Nepean FC', goals: 18, image_url: 'https://ocean.dribl.com/1fccd2799ac04f19b5e107609df870a3' },
+  { id: 'xm8ZGpzezK', competition: 'League Two', player_name: 'Isaac Folkes', club_name: 'Sydney University SFC', goals: 15, image_url: 'https://ocean.dribl.com/a55f544ae7a54584a35c0c76d1eb7ac9' },
+  { id: 'nmYJA3xyNz', competition: 'League Two', player_name: 'Daniel Bittar', club_name: 'Bonnyrigg White Eagles FC', goals: 14, image_url: 'https://ocean.dribl.com/4a5bdb2099d94c4abf6fc2de3cd8930e' },
+]
+
 export const placeholderFixtures = [
   { id: 'f1', home_team: 'Sydney FC Youth', away_team: 'Melbourne Victory NPL', kickoff_at: '2026-10-04T05:00:00Z', status: 'scheduled' },
   { id: 'f2', home_team: 'Perth Glory Reserves', away_team: 'Adelaide City', kickoff_at: '2026-10-04T09:00:00Z', status: 'scheduled' },
