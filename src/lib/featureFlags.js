@@ -1,2 +1,2 @@
-// Flip to false to relaunch predictions (and its sign-in entry point) once fixtures are ready.
-export const PREDICTIONS_COMING_SOON = true
+// Flip to true to hide predictions again if the fixtures feed breaks.
+export const PREDICTIONS_COMING_SOON = false

@@ -105,8 +105,12 @@ create table if not exists top_scorers (
 
 create table if not exists fixtures (
   id uuid primary key default gen_random_uuid(),
+  competition text not null default 'Australian Championship',
+  dribl_id text unique,
+  round text,
   home_team text not null,
   away_team text not null,
+  ground text,
   kickoff_at timestamptz not null,
   home_score int,
   away_score int,

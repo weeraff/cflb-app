@@ -216,9 +216,15 @@ export const placeholderTopScorers = [
   { id: 'nmYJA3xyNz', competition: 'League Two', player_name: 'Daniel Bittar', club_name: 'Bonnyrigg White Eagles FC', goals: 14, image_url: 'https://ocean.dribl.com/4a5bdb2099d94c4abf6fc2de3cd8930e' },
 ]
 
+// Real upcoming/recent fixtures pulled live from Dribl on 2026-08-11, to
+// preview all three states a fixture can be in: scheduled (open to pick),
+// locked (kicked off, no result yet), completed (scored).
 export const placeholderFixtures = [
-  { id: 'f1', home_team: 'Sydney FC Youth', away_team: 'Melbourne Victory NPL', kickoff_at: '2026-10-04T05:00:00Z', status: 'scheduled' },
-  { id: 'f2', home_team: 'Perth Glory Reserves', away_team: 'Adelaide City', kickoff_at: '2026-10-04T09:00:00Z', status: 'scheduled' },
+  { id: 'x1', competition: 'NPL NSW', round: 'Round 28', home_team: 'Sydney FC', away_team: 'St George City FA', kickoff_at: '2026-08-14T09:30:00Z', status: 'scheduled' },
+  { id: 'x2', competition: 'League One', round: 'Round 28', home_team: 'Macarthur Rams FC', away_team: 'Blacktown Spartans FC', kickoff_at: '2026-08-15T06:30:00Z', status: 'scheduled' },
+  { id: 'x3', competition: 'League Two', round: 'Round 24', home_team: 'Granville Rage', away_team: 'Hawkesbury City FC', kickoff_at: '2026-08-11T10:00:00Z', status: 'scheduled' },
+  { id: 'x4', competition: 'NPL NSW', round: 'Round 27', home_team: 'Marconi Stallions FC', away_team: 'Sydney FC', kickoff_at: '2026-08-09T05:00:00Z', status: 'locked' },
+  { id: 'x5', competition: 'NPL NSW', round: 'Round 27', home_team: 'Wollongong Wolves FC', away_team: 'Sydney United 58 FC', kickoff_at: '2026-08-09T05:00:00Z', home_score: 1, away_score: 2, status: 'completed' },
 ]
 
 export const placeholderLeaderboard = [

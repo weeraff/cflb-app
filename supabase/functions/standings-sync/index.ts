@@ -1,7 +1,10 @@
-// Supabase Edge Function: pulls league tables, recent results, and top
-// goal scorers. Deploy and schedule with
-// `supabase functions deploy standings-sync` + cron (already scheduled
-// every 6 hours, see supabase/migrations).
+// Supabase Edge Function: pulls league tables, recent results, top goal
+// scorers, and upcoming fixtures, then locks kicked-off fixtures, marks
+// finished ones complete, and scores predictions against them. Deploy and
+// schedule with `supabase functions deploy standings-sync` + cron
+// (already scheduled every 6 hours, see supabase/migrations, worth
+// tightening once predictions are live so locking/scoring isn't hours
+// behind kickoff).
 //
 // Two data sources:
 //   - api.ffa.football (Football Australia) for the Australian Championship,
@@ -53,6 +56,7 @@ Deno.serve(async () => {
   let standingsUpdated = 0
   let resultsUpdated = 0
   let topScorersUpdated = 0
+  let fixturesUpdated = 0
 
   for (const comp of DRIBL_COMPETITIONS) {
     try {
@@ -72,6 +76,12 @@ Deno.serve(async () => {
     } catch (err) {
       await logError(supabase, `dribl-top-scorers-${comp.name}`, err)
     }
+
+    try {
+      fixturesUpdated += await syncDriblFixtures(supabase, comp)
+    } catch (err) {
+      await logError(supabase, `dribl-fixtures-${comp.name}`, err)
+    }
   }
 
   try {
@@ -80,9 +90,29 @@ Deno.serve(async () => {
     await logError(supabase, 'ffa-ladder', err)
   }
 
-  return new Response(JSON.stringify({ standingsUpdated, resultsUpdated, topScorersUpdated }), {
-    headers: { 'Content-Type': 'application/json' },
-  })
+  let locked = 0
+  let completed = 0
+  let scored = 0
+  try {
+    locked = await lockKickedOffFixtures(supabase)
+  } catch (err) {
+    await logError(supabase, 'lock-fixtures', err)
+  }
+  try {
+    completed = await completeFixturesFromResults(supabase)
+  } catch (err) {
+    await logError(supabase, 'complete-fixtures', err)
+  }
+  try {
+    scored = await scorePredictions(supabase)
+  } catch (err) {
+    await logError(supabase, 'score-predictions', err)
+  }
+
+  return new Response(
+    JSON.stringify({ standingsUpdated, resultsUpdated, topScorersUpdated, fixturesUpdated, locked, completed, scored }),
+    { headers: { 'Content-Type': 'application/json' } },
+  )
 })
 
 async function syncDriblLadder(supabase: SupabaseClientAny, comp: DriblCompetition) {
@@ -130,7 +160,10 @@ async function syncDriblResults(supabase: SupabaseClientAny, comp: DriblCompetit
     const { error } = await supabase.from('results').upsert(
       {
         competition: comp.name,
-        dribl_id: row.hash_id,
+        // match_hash_id (not the result resource's own hash_id) is the
+        // stable id shared with fixtures, needed to join a completed
+        // result back to its scheduled fixture for locking/scoring.
+        dribl_id: a.match_hash_id,
         round: a.full_round,
         home_team: cleanTeamName(a.home_team_name),
         away_team: cleanTeamName(a.away_team_name),
@@ -173,6 +206,126 @@ async function syncDriblTopScorers(supabase: SupabaseClientAny, comp: DriblCompe
     if (!error) count += 1
   }
   return count
+}
+
+async function syncDriblFixtures(supabase: SupabaseClientAny, comp: DriblCompetition) {
+  const url = `https://mc-api.dribl.com/api/fixtures?season=${DRIBL_SEASON}&competition=${comp.competition}&league=${comp.league}&date_range=default&timezone=Australia%2FSydney`
+  const res = await fetch(url, { headers: { Accept: 'application/json' } })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const json = await res.json()
+
+  let count = 0
+  for (const row of json.data ?? []) {
+    const a = row.attributes
+    if (a.status !== 'pending' || a.bye_flag) continue
+
+    const { error } = await supabase.from('fixtures').upsert(
+      {
+        competition: comp.name,
+        dribl_id: a.match_hash_id,
+        round: a.full_round,
+        home_team: cleanTeamName(a.home_team_name),
+        away_team: cleanTeamName(a.away_team_name),
+        ground: a.ground_name,
+        kickoff_at: new Date(a.date).toISOString(),
+        status: 'scheduled',
+      },
+      { onConflict: 'dribl_id', ignoreDuplicates: false },
+    )
+    if (!error) count += 1
+  }
+  return count
+}
+
+// Predictions close once kickoff passes, regardless of whether a result
+// has come through yet, closing the picking window is time-based.
+async function lockKickedOffFixtures(supabase: SupabaseClientAny) {
+  const { data, error } = await supabase
+    .from('fixtures')
+    .update({ status: 'locked' })
+    .eq('status', 'scheduled')
+    .lte('kickoff_at', new Date().toISOString())
+    .select('id')
+  if (error) throw error
+  return data?.length ?? 0
+}
+
+// Once a result lands (matched by the shared match_hash_id), copy the
+// score onto the fixture and mark it completed so scorePredictions can run.
+async function completeFixturesFromResults(supabase: SupabaseClientAny) {
+  const { data: pending, error: pendingError } = await supabase
+    .from('fixtures')
+    .select('id, dribl_id')
+    .in('status', ['scheduled', 'locked'])
+    .not('dribl_id', 'is', null)
+  if (pendingError) throw pendingError
+  if (!pending?.length) return 0
+
+  const { data: results, error: resultsError } = await supabase
+    .from('results')
+    .select('dribl_id, home_score, away_score')
+    .in('dribl_id', pending.map((f: { dribl_id: string }) => f.dribl_id))
+  if (resultsError) throw resultsError
+
+  const resultsByDriblId: Record<string, { home_score: number; away_score: number }> = {}
+  for (const r of results) resultsByDriblId[r.dribl_id] = r
+
+  let count = 0
+  for (const fixture of pending) {
+    const result = resultsByDriblId[fixture.dribl_id]
+    if (!result) continue
+
+    const { error } = await supabase
+      .from('fixtures')
+      .update({ home_score: result.home_score, away_score: result.away_score, status: 'completed' })
+      .eq('id', fixture.id)
+    if (!error) count += 1
+  }
+  return count
+}
+
+// 3 points for an exact scoreline, 1 for picking the right outcome
+// (win/draw/loss) with the wrong score, 0 otherwise.
+async function scorePredictions(supabase: SupabaseClientAny) {
+  const { data: completedFixtures, error: fixturesError } = await supabase
+    .from('fixtures')
+    .select('id, home_score, away_score')
+    .eq('status', 'completed')
+  if (fixturesError) throw fixturesError
+  if (!completedFixtures?.length) return 0
+
+  const { data: unscored, error: predictionsError } = await supabase
+    .from('predictions')
+    .select('id, fixture_id, home_score_pick, away_score_pick')
+    .in('fixture_id', completedFixtures.map((f: { id: string }) => f.id))
+    .is('points_awarded', null)
+  if (predictionsError) throw predictionsError
+  if (!unscored?.length) return 0
+
+  const fixturesById: Record<string, { home_score: number; away_score: number }> = {}
+  for (const f of completedFixtures) fixturesById[f.id] = f
+
+  let count = 0
+  for (const pick of unscored) {
+    const fixture = fixturesById[pick.fixture_id]
+    if (!fixture) continue
+
+    const points = scoreOnePrediction(fixture, pick)
+    const { error } = await supabase.from('predictions').update({ points_awarded: points }).eq('id', pick.id)
+    if (!error) count += 1
+  }
+  return count
+}
+
+function scoreOnePrediction(
+  fixture: { home_score: number; away_score: number },
+  pick: { home_score_pick: number; away_score_pick: number },
+) {
+  if (pick.home_score_pick === fixture.home_score && pick.away_score_pick === fixture.away_score) return 3
+
+  const actualOutcome = Math.sign(fixture.home_score - fixture.away_score)
+  const pickedOutcome = Math.sign(pick.home_score_pick - pick.away_score_pick)
+  return actualOutcome === pickedOutcome ? 1 : 0
 }
 
 async function syncFfaLadder(supabase: SupabaseClientAny) {
