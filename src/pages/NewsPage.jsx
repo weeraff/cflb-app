@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { placeholderNews } from '../lib/placeholderData'
+import MatchdayBanner from '../components/MatchdayBanner'
 
 export default function NewsPage() {
   const [articles, setArticles] = useState(placeholderNews)
@@ -23,6 +24,8 @@ export default function NewsPage() {
 
   return (
     <section>
+      <MatchdayBanner />
+
       <h1>NPL Football News</h1>
       <p className="section-subtitle">
         Pulled from journalists and outlets covering NSW football.
