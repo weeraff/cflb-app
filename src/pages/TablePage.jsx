@@ -87,34 +87,36 @@ export default function TablePage() {
         ))}
       </select>
 
-      <table className="standings-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Team</th>
-            <th>P</th>
-            <th>W</th>
-            <th>D</th>
-            <th>L</th>
-            <th>GD</th>
-            <th>Pts</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.team} className={row.position === 1 ? 'zone--leader' : ''}>
-              <td>{row.position}</td>
-              <td>{row.team}</td>
-              <td>{row.played}</td>
-              <td>{row.won}</td>
-              <td>{row.drawn}</td>
-              <td>{row.lost}</td>
-              <td>{row.gd}</td>
-              <td><strong>{row.points}</strong></td>
+      <div className="table-scroll">
+        <table className="standings-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Team</th>
+              <th>P</th>
+              <th>W</th>
+              <th>D</th>
+              <th>L</th>
+              <th>GD</th>
+              <th>Pts</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.team} className={row.position === 1 ? 'zone--leader' : ''}>
+                <td>{row.position}</td>
+                <td>{row.team}</td>
+                <td>{row.played}</td>
+                <td>{row.won}</td>
+                <td>{row.drawn}</td>
+                <td>{row.lost}</td>
+                <td>{row.gd}</td>
+                <td><strong>{row.points}</strong></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <h2 className="results-heading">Recent Results</h2>
       <ul className="results-list">
@@ -122,9 +124,9 @@ export default function TablePage() {
           <li key={r.id ?? `${r.home_team}-${r.away_team}-${r.played_at}`} className="result-row">
             <span className="result-row__round">{r.round}</span>
             <span className="result-row__match">
-              <span className={r.home_score > r.away_score ? 'result-row__winner' : ''}>{r.home_team}</span>
+              <span className={`result-row__team${r.home_score > r.away_score ? ' result-row__winner' : ''}`}>{r.home_team}</span>
               <span className="result-row__score">{r.home_score} - {r.away_score}</span>
-              <span className={r.away_score > r.home_score ? 'result-row__winner' : ''}>{r.away_team}</span>
+              <span className={`result-row__team${r.away_score > r.home_score ? ' result-row__winner' : ''}`}>{r.away_team}</span>
             </span>
             {r.ground && <span className="result-row__ground">{r.ground}</span>}
           </li>

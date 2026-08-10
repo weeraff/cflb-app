@@ -571,8 +571,15 @@ h2 {
 }
 
 /* Table */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius);
+}
+
 .standings-table {
   width: 100%;
+  min-width: 480px;
   border-collapse: collapse;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -688,6 +695,14 @@ h2 {
   min-width: 0;
 }
 
+.result-row__team {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
 .result-row__winner {
   font-weight: 700;
 }
@@ -741,6 +756,9 @@ h2 {
   font-weight: 700;
   flex: 1;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .scorer-row__club {
@@ -748,6 +766,9 @@ h2 {
   font-size: 0.85rem;
   flex: 1;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .scorer-row__goals {
@@ -758,6 +779,24 @@ h2 {
   flex: none;
   min-width: 1.5rem;
   text-align: right;
+}
+
+@media (max-width: 480px) {
+  .result-row {
+    align-items: flex-start;
+  }
+
+  .result-row__round {
+    width: auto;
+  }
+
+  .result-row__match {
+    flex-basis: 100%;
+  }
+
+  .scorer-row__club {
+    display: none;
+  }
 }
 
 /* Predictions */
