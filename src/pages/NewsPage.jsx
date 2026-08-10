@@ -23,10 +23,10 @@ export default function NewsPage() {
 
   return (
     <section>
-      <h1>Championship News</h1>
+      <h1>NPL Football News</h1>
       <p className="section-subtitle">
-        Pulled from journalists and outlets covering the Australian Championship.
-        {usingPlaceholder && ' (live snapshot from confirmed sources — auto-updates once news-sync is deployed)'}
+        Pulled from journalists and outlets covering NSW football.
+        {usingPlaceholder && ' (live snapshot from confirmed sources, auto-updates once news-sync is deployed)'}
       </p>
 
       {articles[0] && (

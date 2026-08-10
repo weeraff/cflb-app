@@ -610,61 +610,99 @@ h2 {
   font-family: var(--font-display);
   font-weight: 600;
   color: var(--text-dim);
-  position: relative;
 }
 
-.standings-table tr.zone--promotion td:first-child::before,
-.standings-table tr.zone--relegation td:first-child::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-}
-
-.standings-table tr.zone--promotion td:first-child::before {
-  background: var(--accent);
-}
-
-.standings-table tr.zone--relegation td:first-child::before {
-  background: var(--danger);
-}
-
-.standings-table tr.zone--promotion td:first-child {
+.standings-table tr.zone--leader td:first-child {
   color: var(--accent);
 }
 
-.standings-table tr.zone--relegation td:first-child {
-  color: var(--danger);
-}
-
-.standings-legend {
-  display: flex;
-  gap: 1.5rem;
-  margin-top: 1rem;
-  font-size: 0.8rem;
+.competition-select-label {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   color: var(--text-dim);
+  margin-bottom: 0.4rem;
 }
 
-.standings-legend span {
-  display: inline-flex;
-  align-items: center;
+.competition-select {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  margin-bottom: 1.25rem;
+  min-width: 220px;
+}
+
+.results-heading {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 1.75rem 0 0.75rem;
+}
+
+.results-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
 }
 
-.standings-legend .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+.result-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.9rem;
+  font-size: 0.9rem;
+  flex-wrap: wrap;
 }
 
-.standings-legend .dot--promotion {
-  background: var(--accent);
+.result-row__round {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  flex: none;
+  width: 5.5rem;
 }
 
-.standings-legend .dot--relegation {
-  background: var(--danger);
+.result-row__match {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.result-row__winner {
+  font-weight: 700;
+}
+
+.result-row__score {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  flex: none;
+}
+
+.result-row__ground {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  flex: none;
 }
 
 /* Predictions */

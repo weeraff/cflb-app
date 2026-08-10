@@ -1,10 +1,10 @@
-// Supabase Edge Function: pulls Championship coverage from configured
+// Supabase Edge Function: pulls NSW football coverage from configured
 // journalist/outlet sources and upserts new articles into news_items.
 // Deploy and schedule with `supabase functions deploy news-sync` + a cron
 // trigger (every 15-30 min).
 //
 // Two source types are supported (neither australianchampionship.com.au
-// nor highpressau.com publish a maintained RSS feed — their /rss.xml and
+// nor highpressau.com publish a maintained RSS feed, their /rss.xml and
 // sitemap.xml only surface old/unrelated content, checked directly against
 // the live sites before writing this):
 //   - 'rss'         standard RSS/Atom feed (WordPress etc.)
@@ -39,7 +39,7 @@ const SOURCES: (RssSource | ListingSource)[] = [
     linkPattern: /^\/posts\/[a-z0-9-]+$/,
     maxItems: 15,
   },
-  // Instagram (@auschampionship) has no public feed — needs the official
+  // Instagram (@auschampionship) has no public feed, needs the official
   // Instagram API with app review, not worth it for the beta. Revisit later.
 ]
 
@@ -76,7 +76,7 @@ Deno.serve(async () => {
         source: source.name,
         message: err instanceof Error ? err.message : String(err),
       })
-      // Deliberately continue to the next source — one bad source shouldn't
+      // Deliberately continue to the next source, one bad source shouldn't
       // block the rest of the sync.
     }
   }
@@ -176,8 +176,8 @@ function stripHtml(value: string) {
   return decodeHtmlEntities(value.replace(/<[^>]*>/g, '')).trim()
 }
 
-// WordPress's default RSS excerpt appends "The post X appeared first on Y."
-// — strip it so the aggregator shows a clean snippet, not WP boilerplate.
+// WordPress's default RSS excerpt appends "The post X appeared first on Y.",
+// strip it so the aggregator shows a clean snippet, not WP boilerplate.
 function stripWordPressBoilerplate(value: string) {
   return value.replace(/\s*The post .+ appeared first on .+\.\s*$/, '').trim()
 }

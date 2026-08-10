@@ -28,7 +28,7 @@ export default function PodcastPage() {
     <section>
       <h1>Episodes &amp; Clips</h1>
       <p className="section-subtitle">
-        Watch on YouTube, listen on the go — synced automatically.
+        Watch on YouTube, listen on the go, synced automatically.
         {usingPlaceholder && ' (showing the latest known episodes until podcast-sync goes live)'}
       </p>
 

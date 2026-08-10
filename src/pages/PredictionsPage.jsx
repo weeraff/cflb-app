@@ -86,7 +86,7 @@ function PredictionsPageContent() {
             <button className="button button--secondary" type="submit">Email me a sign-in link</button>
           </form>
           {magicLinkSent && <p className="auth-note">Check your inbox for the sign-in link.</p>}
-          {!isSupabaseConfigured && <p className="auth-note">Supabase isn't connected yet — this is a preview of the sign-in flow.</p>}
+          {!isSupabaseConfigured && <p className="auth-note">Supabase isn't connected yet, this is a preview of the sign-in flow.</p>}
         </div>
       )}
 

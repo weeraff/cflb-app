@@ -2,7 +2,7 @@
 // playlist and upserts new episodes/clips into `episodes`. Deploy and
 // schedule with `supabase functions deploy podcast-sync` + a cron trigger.
 //
-// "The Champagne Football Show with Gaz & Chaz" — hosted on Acast,
+// "The Champagne Football Show with Gaz & Chaz", hosted on Acast,
 // distributed via Anchor's RSS. 113 episodes live on this feed as of
 // 2026-08-07; confirmed real, not a placeholder.
 import { createClient } from 'jsr:@supabase/supabase-js@2'
@@ -11,6 +11,9 @@ const SPOTIFY_SHOW_RSS = 'https://anchor.fm/s/10ab793e0/podcast/rss'
 // Channel UCbfWQYNp7XBsreEFSukTWlQ's uploads playlist (UC -> UU swap).
 const YOUTUBE_PLAYLIST_ID = 'UUbfWQYNp7XBsreEFSukTWlQ'
 const YOUTUBE_API_KEY = Deno.env.get('YOUTUBE_API_KEY') ?? ''
+
+// deno-lint-ignore no-explicit-any
+type SupabaseClientAny = any
 
 Deno.serve(async () => {
   const supabase = createClient(
@@ -41,7 +44,7 @@ Deno.serve(async () => {
   })
 })
 
-async function syncSpotify(supabase: ReturnType<typeof createClient>, feedUrl: string) {
+async function syncSpotify(supabase: SupabaseClientAny, feedUrl: string) {
   const res = await fetch(feedUrl)
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const xml = await res.text()
@@ -52,7 +55,7 @@ async function syncSpotify(supabase: ReturnType<typeof createClient>, feedUrl: s
     const guid = extractTag(block, 'guid')
     // The RSS guid is Anchor's internal id, not a public Spotify episode id,
     // so it can't build a working open.spotify.com/embed/episode/ url. The
-    // enclosure is a real, directly playable audio file — use that instead.
+    // enclosure is a real, directly playable audio file, use that instead.
     const audioUrl = extractAttr(block, 'enclosure', 'url')
     if (!audioUrl) continue
 
@@ -74,7 +77,7 @@ async function syncSpotify(supabase: ReturnType<typeof createClient>, feedUrl: s
 }
 
 async function syncYoutube(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClientAny,
   playlistId: string,
   apiKey: string,
 ) {
@@ -103,7 +106,7 @@ async function syncYoutube(
   return count
 }
 
-async function logError(supabase: ReturnType<typeof createClient>, source: string, err: unknown) {
+async function logError(supabase: SupabaseClientAny, source: string, err: unknown) {
   await supabase.from('ingestion_errors').insert({
     job: 'podcast',
     source,

@@ -1,8 +1,5 @@
--- Champagne Football Lemonade Banter beta app.
--- Full schema reference, kept in sync with supabase/migrations/.
--- For a fresh project, running this file directly is enough.
--- For an already-live project, use `supabase db push` against the
--- migrations folder instead, that's the actual source of truth.
+-- Champagne Football Lemonade Banter — Australian Championship beta
+-- Run this against a Supabase project (SQL editor or `supabase db push`).
 
 create extension if not exists "pgcrypto";
 
@@ -46,17 +43,10 @@ create table if not exists episodes (
 
 create index if not exists episodes_published_at_idx on episodes (published_at desc);
 
--- ============ League tables ============
---
--- `competition` scopes each row (NPL, League One, League Two, and later
--- Australian Championship once its 2026 season starts). `group_name` is
--- only used by competitions with a group stage; NPL-tier ladders are flat
--- so it stays null there.
+-- ============ League table ============
 
 create table if not exists standings (
   id uuid primary key default gen_random_uuid(),
-  competition text not null default 'Australian Championship',
-  group_name text,
   position int not null,
   team text not null,
   played int not null default 0,
@@ -68,24 +58,8 @@ create table if not exists standings (
   gd int not null default 0,
   points int not null default 0,
   updated_at timestamptz not null default now(),
-  unique (competition, team)
+  unique (team)
 );
-
-create table if not exists results (
-  id uuid primary key default gen_random_uuid(),
-  competition text not null,
-  dribl_id text not null unique,
-  round text,
-  home_team text not null,
-  away_team text not null,
-  home_score int,
-  away_score int,
-  played_at timestamptz not null,
-  ground text,
-  created_at timestamptz not null default now()
-);
-
-create index if not exists results_played_at_idx on results (played_at desc);
 
 -- ============ Predictions ============
 
@@ -134,7 +108,6 @@ create table if not exists sponsors (
 alter table news_items enable row level security;
 alter table episodes enable row level security;
 alter table standings enable row level security;
-alter table results enable row level security;
 alter table fixtures enable row level security;
 alter table sponsors enable row level security;
 alter table profiles enable row level security;
@@ -146,7 +119,6 @@ alter table ingestion_errors enable row level security;
 create policy "news_items are publicly readable" on news_items for select using (true);
 create policy "episodes are publicly readable" on episodes for select using (true);
 create policy "standings are publicly readable" on standings for select using (true);
-create policy "results are publicly readable" on results for select using (true);
 create policy "fixtures are publicly readable" on fixtures for select using (true);
 create policy "active sponsors are publicly readable" on sponsors for select using (active);
 
@@ -192,4 +164,4 @@ create or replace view leaderboard as
   left join profiles pr on pr.id = p.user_id
   group by p.user_id, pr.display_name;
 
--- ingestion_errors is operational data, no public policy, service role only.
+-- ingestion_errors is operational data, no public policy — service role only.

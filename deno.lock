@@ -19,6 +19,8 @@
         "npm:react-dom@^19.2.8",
         "npm:react-router-dom@^7.18.2",
         "npm:react@^19.2.8",
+        "npm:supabase@^2.113.0",
+        "npm:vercel@^58.9.0",
         "npm:vite@^8.2.0"
       ]
     }
