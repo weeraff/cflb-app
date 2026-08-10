@@ -38,6 +38,7 @@ function PredictionsPageContent() {
     supabase
       .from('fixtures')
       .select('*')
+      .eq('featured', true)
       .order('kickoff_at', { ascending: true })
       .then(({ data, error }) => {
         if (!error && data) setFixtures(data)
@@ -154,7 +155,7 @@ function PredictionsPageContent() {
   return (
     <section>
       <h1>Predictions</h1>
-      <p className="section-subtitle">Pick the scoreline before kickoff. 3 points for an exact score, 1 for the right result.</p>
+      <p className="section-subtitle">12 fixtures each week, 4 from each competition. Pick the scoreline before kickoff, 3 points for an exact score, 1 for the right result.</p>
 
       {!auth?.user && (
         <div className="auth-card">

@@ -115,6 +115,9 @@ create table if not exists fixtures (
   home_score int,
   away_score int,
   status text not null default 'scheduled' check (status in ('scheduled', 'locked', 'completed')),
+  -- Each week the show features 12 fixtures for predictions (4 per
+  -- competition), hand-picked, not every fixture that syncs in.
+  featured boolean not null default false,
   created_at timestamptz not null default now()
 );
 
@@ -190,6 +193,7 @@ create policy "users insert their own predictions before kickoff" on predictions
       select 1 from fixtures
       where fixtures.id = fixture_id
       and fixtures.status = 'scheduled'
+      and fixtures.featured = true
     )
   );
 
@@ -200,6 +204,7 @@ create policy "users update their own predictions before kickoff" on predictions
       select 1 from fixtures
       where fixtures.id = fixture_id
       and fixtures.status = 'scheduled'
+      and fixtures.featured = true
     )
   );
 
