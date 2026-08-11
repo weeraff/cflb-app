@@ -155,6 +155,18 @@ create table if not exists sponsors (
   created_at timestamptz not null default now()
 );
 
+-- Web Push subscriptions. Each browser/device a user opts in on gets its
+-- own row (endpoint is unique per browser install), so one user can have
+-- several if they enable notifications on both phone and desktop.
+create table if not exists push_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  endpoint text not null unique,
+  p256dh text not null,
+  auth_key text not null,
+  created_at timestamptz not null default now()
+);
+
 -- ============ Row Level Security ============
 
 alter table news_items enable row level security;
@@ -167,6 +179,7 @@ alter table sponsors enable row level security;
 alter table profiles enable row level security;
 alter table predictions enable row level security;
 alter table ingestion_errors enable row level security;
+alter table push_subscriptions enable row level security;
 
 -- Public read-only content: anyone (including anon) can read, only the
 -- service role (used by scheduled edge functions) can write.
@@ -221,5 +234,8 @@ create or replace view leaderboard as
   from predictions p
   left join profiles pr on pr.id = p.user_id
   group by p.user_id, pr.display_name;
+
+create policy "users manage their own push subscriptions" on push_subscriptions
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- ingestion_errors is operational data, no public policy, service role only.

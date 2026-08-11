@@ -4,6 +4,7 @@ import { placeholderNews } from '../lib/placeholderData'
 import MatchdayBanner from '../components/MatchdayBanner'
 import PredictionsSnapshot from '../components/PredictionsSnapshot'
 import GamesComingUp from '../components/GamesComingUp'
+import NotificationOptIn from '../components/NotificationOptIn'
 
 export default function NewsPage() {
   const [articles, setArticles] = useState(placeholderNews)
@@ -31,6 +32,8 @@ export default function NewsPage() {
       <MatchdayBanner />
 
       <PredictionsSnapshot />
+
+      <NotificationOptIn />
 
       <GamesComingUp />
 
