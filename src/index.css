@@ -1096,23 +1096,47 @@ h2 {
   padding: 0.15rem 0.5rem;
 }
 
-.score-input {
-  width: 44px;
+.score-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.score-stepper__btn {
+  width: 32px;
+  height: 32px;
+  flex: none;
   font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 600;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
   background: var(--surface-alt);
   border: 1px solid var(--border);
   color: var(--text);
-  padding: 0.35rem;
-  border-radius: 6px;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 
-.score-input:focus {
-  outline: none;
+.score-stepper__btn:hover {
   border-color: var(--accent);
+  color: var(--accent);
+}
+
+.score-stepper__btn:active {
+  transform: scale(0.94);
+}
+
+.score-stepper__value {
+  min-width: 1.4rem;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .leaderboard {

@@ -109,10 +109,7 @@ function PredictionsPageContent() {
     }))
   }
 
-  async function submitPick(fixtureId) {
-    const pick = picks[fixtureId]
-    if (!pick || pick.home == null || pick.away == null) return
-
+  async function submitPick(fixtureId, home, away) {
     if (!isSupabaseConfigured || !auth?.user) {
       window.alert('Sign in to save your prediction.')
       return
@@ -124,8 +121,8 @@ function PredictionsPageContent() {
         {
           user_id: auth.user.id,
           fixture_id: fixtureId,
-          home_score_pick: pick.home,
-          away_score_pick: pick.away,
+          home_score_pick: home,
+          away_score_pick: away,
         },
         { onConflict: 'user_id,fixture_id' },
       )
@@ -207,27 +204,30 @@ function PredictionsPageContent() {
                   <TeamCrest src={fixture.home_logo} />
                   {fixture.home_team}
                 </span>
-                <input
-                  type="number"
-                  min="0"
-                  className="score-input"
-                  defaultValue={existing?.home_score_pick}
-                  onChange={(e) => updatePick(fixture.id, 'home', Number(e.target.value))}
+                <ScoreStepper
+                  value={picks[fixture.id]?.home ?? existing?.home_score_pick ?? 0}
+                  onChange={(v) => updatePick(fixture.id, 'home', v)}
                 />
                 <span className="fixture-card__vs">v</span>
-                <input
-                  type="number"
-                  min="0"
-                  className="score-input"
-                  defaultValue={existing?.away_score_pick}
-                  onChange={(e) => updatePick(fixture.id, 'away', Number(e.target.value))}
+                <ScoreStepper
+                  value={picks[fixture.id]?.away ?? existing?.away_score_pick ?? 0}
+                  onChange={(v) => updatePick(fixture.id, 'away', v)}
                 />
                 <span className="fixture-card__team">
                   <TeamCrest src={fixture.away_logo} />
                   {fixture.away_team}
                 </span>
               </div>
-              <button className="button button--small" onClick={() => submitPick(fixture.id)}>
+              <button
+                className="button button--small"
+                onClick={() =>
+                  submitPick(
+                    fixture.id,
+                    picks[fixture.id]?.home ?? existing?.home_score_pick ?? 0,
+                    picks[fixture.id]?.away ?? existing?.away_score_pick ?? 0,
+                  )
+                }
+              >
                 {existing ? 'Update pick' : 'Save pick'}
               </button>
             </div>
@@ -310,6 +310,30 @@ function PredictionsPageContent() {
         ))}
       </ol>
     </section>
+  )
+}
+
+function ScoreStepper({ value, onChange }) {
+  return (
+    <div className="score-stepper">
+      <button
+        type="button"
+        className="score-stepper__btn"
+        onClick={() => onChange(Math.max(0, value - 1))}
+        aria-label="Decrease score"
+      >
+        −
+      </button>
+      <span className="score-stepper__value">{value}</span>
+      <button
+        type="button"
+        className="score-stepper__btn"
+        onClick={() => onChange(value + 1)}
+        aria-label="Increase score"
+      >
+        +
+      </button>
+    </div>
   )
 }
 
