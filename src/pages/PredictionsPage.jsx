@@ -289,7 +289,7 @@ function PredictionsPageContent() {
                   {pick && (
                     <span className="result-row__ground">
                       You picked {pick.home_score_pick}-{pick.away_score_pick}
-                      {pick.points_awarded != null ? ` (+${pick.points_awarded})` : ' (scoring soon)'}
+                      {pick.points_awarded != null ? ` (+${pick.points_awarded})` : ' (scoring…)'}
                     </span>
                   )}
                 </li>
