@@ -123,6 +123,10 @@ create table if not exists fixtures (
   -- Each week the show features 12 fixtures for predictions (4 per
   -- competition), hand-picked, not every fixture that syncs in.
   featured boolean not null default false,
+  -- Whether a "picks closing soon" / "full time" push has already gone
+  -- out for this fixture, so the cron doesn't re-send it every run.
+  notified_picks_closing boolean not null default false,
+  notified_result boolean not null default false,
   created_at timestamptz not null default now()
 );
 

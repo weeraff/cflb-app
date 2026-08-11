@@ -32,6 +32,7 @@
 // exist for any of the three competitions (checked 2026-08-11), so this
 // only pulls goals.
 import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { sendPushToAll } from '../_shared/sendPush.ts'
 
 const DRIBL_SEASON = 'wOmelzGd02' // 2026, confirmed current 2026-08-10
 const DRIBL_TENANT = '1RwNlWemjr' // Football NSW, resolved via /api/tenants?mc_link=competitions.footballnsw.com.au
@@ -109,8 +110,32 @@ Deno.serve(async () => {
     await logError(supabase, 'score-predictions', err)
   }
 
+  let resultsNotified = 0
+  try {
+    resultsNotified = await notifyCompletedFeaturedFixtures(supabase)
+  } catch (err) {
+    await logError(supabase, 'notify-results', err)
+  }
+
+  let closingNotified = 0
+  try {
+    closingNotified = await notifyPicksClosingSoon(supabase)
+  } catch (err) {
+    await logError(supabase, 'notify-picks-closing', err)
+  }
+
   return new Response(
-    JSON.stringify({ standingsUpdated, resultsUpdated, topScorersUpdated, fixturesUpdated, locked, completed, scored }),
+    JSON.stringify({
+      standingsUpdated,
+      resultsUpdated,
+      topScorersUpdated,
+      fixturesUpdated,
+      locked,
+      completed,
+      scored,
+      resultsNotified,
+      closingNotified,
+    }),
     { headers: { 'Content-Type': 'application/json' } },
   )
 })
@@ -287,6 +312,64 @@ async function completeFixturesFromResults(supabase: SupabaseClientAny) {
     if (!error) count += 1
   }
   return count
+}
+
+// Only notifies for featured fixtures, the ones people could actually
+// have picked, notifying on every one of the ~90 weekly results across
+// all three competitions would be way too much noise.
+async function notifyCompletedFeaturedFixtures(supabase: SupabaseClientAny) {
+  const { data, error } = await supabase
+    .from('fixtures')
+    .select('id, home_team, away_team, home_score, away_score')
+    .eq('status', 'completed')
+    .eq('featured', true)
+    .eq('notified_result', false)
+  if (error) throw error
+  if (!data?.length) return 0
+
+  const body =
+    data.length === 1
+      ? `${data[0].home_team} ${data[0].home_score}-${data[0].away_score} ${data[0].away_team}`
+      : `${data.length} results are in, check your picks`
+
+  const sent = await sendPushToAll(supabase, { title: 'Full time', body, url: '/predictions' })
+
+  await supabase
+    .from('fixtures')
+    .update({ notified_result: true })
+    .in('id', data.map((f: { id: string }) => f.id))
+
+  return sent
+}
+
+// A single reminder per fixture once it's within 24h of kickoff, not a
+// re-send every 15 minutes while it sits inside that window.
+async function notifyPicksClosingSoon(supabase: SupabaseClientAny) {
+  const within24h = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+
+  const { data, error } = await supabase
+    .from('fixtures')
+    .select('id')
+    .eq('status', 'scheduled')
+    .eq('featured', true)
+    .eq('notified_picks_closing', false)
+    .lte('kickoff_at', within24h)
+  if (error) throw error
+  if (!data?.length) return 0
+
+  const body =
+    data.length === 1
+      ? 'A featured fixture kicks off within 24 hours, get your pick in.'
+      : `${data.length} featured fixtures kick off within 24 hours, get your picks in.`
+
+  const sent = await sendPushToAll(supabase, { title: 'Picks close soon', body, url: '/predictions' })
+
+  await supabase
+    .from('fixtures')
+    .update({ notified_picks_closing: true })
+    .in('id', data.map((f: { id: string }) => f.id))
+
+  return sent
 }
 
 // 3 points for an exact scoreline, 1 for picking the right outcome
