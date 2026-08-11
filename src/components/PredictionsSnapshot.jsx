@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import ShareRankButton from './ShareRankButton'
 
 export default function PredictionsSnapshot() {
   const auth = useAuth()
   const [rank, setRank] = useState(null)
   const [points, setPoints] = useState(0)
+  const [displayName, setDisplayName] = useState('')
   const [picksMade, setPicksMade] = useState(0)
   const [fixturesOpen, setFixturesOpen] = useState(0)
   const [loaded, setLoaded] = useState(false)
@@ -24,6 +26,7 @@ export default function PredictionsSnapshot() {
         if (index !== -1) {
           setRank(index + 1)
           setPoints(data[index].points)
+          setDisplayName(data[index].display_name)
         }
       })
 
@@ -80,9 +83,12 @@ export default function PredictionsSnapshot() {
           </div>
         )}
       </div>
-      <Link className="button button--small" to="/predictions">
-        {loaded && fixturesOpen > 0 && picksMade < fixturesOpen ? 'Finish your picks' : 'View predictions'}
-      </Link>
+      <div className="dashboard-card__actions">
+        <Link className="button button--small" to="/predictions">
+          {loaded && fixturesOpen > 0 && picksMade < fixturesOpen ? 'Finish your picks' : 'View predictions'}
+        </Link>
+        {rank && <ShareRankButton displayName={displayName} rank={rank} points={points} />}
+      </div>
     </section>
   )
 }

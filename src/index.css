@@ -476,6 +476,12 @@ h2 {
   color: var(--text-dim);
 }
 
+.dashboard-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
 /* News */
 .news-hero {
   display: block;
