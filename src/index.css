@@ -389,10 +389,10 @@ h2 {
 }
 
 .matchday-fixture__team {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   flex: 1;
 }
 
@@ -757,6 +757,24 @@ h2 {
   font-weight: 600;
 }
 
+.standings-table__team {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.team-crest {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.team-crest--placeholder {
+  border-radius: 50%;
+  background: var(--surface-alt);
+}
+
 .standings-table td:first-child {
   font-family: var(--font-display);
   font-weight: 600;
@@ -840,11 +858,18 @@ h2 {
 }
 
 .result-row__team {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.result-row__team-name {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  flex: 1;
 }
 
 .result-row__winner {
@@ -1048,6 +1073,12 @@ h2 {
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 0.95rem;
+}
+
+.fixture-card__team {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .fixture-card__vs {

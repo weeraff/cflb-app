@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { placeholderFixtures } from '../lib/placeholderData'
+import TeamCrest from './TeamCrest'
 
 export default function GamesComingUp() {
   const [fixtures, setFixtures] = useState(
@@ -31,9 +32,15 @@ export default function GamesComingUp() {
           <li key={fixture.id} className="result-row">
             <span className="result-row__round">{fixture.competition}</span>
             <span className="result-row__match">
-              <span className="result-row__team">{fixture.home_team}</span>
+              <span className="result-row__team">
+                <TeamCrest src={fixture.home_logo} />
+                <span className="result-row__team-name">{fixture.home_team}</span>
+              </span>
               <span className="result-row__score">v</span>
-              <span className="result-row__team">{fixture.away_team}</span>
+              <span className="result-row__team">
+                <TeamCrest src={fixture.away_logo} />
+                <span className="result-row__team-name">{fixture.away_team}</span>
+              </span>
             </span>
             <span className="result-row__ground">{formatKickoff(fixture.kickoff_at)}</span>
           </li>

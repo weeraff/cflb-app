@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { COMPETITIONS, placeholderStandings, placeholderResults, placeholderTopScorers } from '../lib/placeholderData'
+import TeamCrest from '../components/TeamCrest'
 
 const COMPETITION_LABELS = {
   'NPL NSW': 'NPL NSW',
@@ -105,7 +106,12 @@ export default function TablePage() {
             {rows.map((row) => (
               <tr key={row.team} className={row.position === 1 ? 'zone--leader' : ''}>
                 <td>{row.position}</td>
-                <td>{row.team}</td>
+                <td>
+                  <span className="standings-table__team">
+                    <TeamCrest src={row.logo_url} />
+                    {row.team}
+                  </span>
+                </td>
                 <td>{row.played}</td>
                 <td>{row.won}</td>
                 <td>{row.drawn}</td>
@@ -124,9 +130,15 @@ export default function TablePage() {
           <li key={r.id ?? `${r.home_team}-${r.away_team}-${r.played_at}`} className="result-row">
             <span className="result-row__round">{r.round}</span>
             <span className="result-row__match">
-              <span className={`result-row__team${r.home_score > r.away_score ? ' result-row__winner' : ''}`}>{r.home_team}</span>
+              <span className={`result-row__team${r.home_score > r.away_score ? ' result-row__winner' : ''}`}>
+                <TeamCrest src={r.home_logo} />
+                <span className="result-row__team-name">{r.home_team}</span>
+              </span>
               <span className="result-row__score">{r.home_score} - {r.away_score}</span>
-              <span className={`result-row__team${r.away_score > r.home_score ? ' result-row__winner' : ''}`}>{r.away_team}</span>
+              <span className={`result-row__team${r.away_score > r.home_score ? ' result-row__winner' : ''}`}>
+                <TeamCrest src={r.away_logo} />
+                <span className="result-row__team-name">{r.away_team}</span>
+              </span>
             </span>
             {r.ground && <span className="result-row__ground">{r.ground}</span>}
           </li>
