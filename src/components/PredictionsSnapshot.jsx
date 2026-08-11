@@ -56,39 +56,57 @@ export default function PredictionsSnapshot() {
 
   if (!auth?.user) {
     return (
-      <section className="dashboard-card">
-        <span className="dashboard-card__label">Predictions</span>
-        <p className="dashboard-card__body">Sign in to pick this week's scorelines and see where you land on the leaderboard.</p>
-        <Link className="button button--small" to="/predictions">Make your picks</Link>
+      <section className="rank-panel rank-panel--empty">
+        <span className="rank-panel__ordinal rank-panel__ordinal--ghost">?</span>
+        <div className="rank-panel__meta">
+          <p className="rank-panel__prompt">Sign in and pick this week's scorelines to see where you land on the leaderboard.</p>
+          <Link className="button button--small" to="/predictions">Make your picks</Link>
+        </div>
+      </section>
+    )
+  }
+
+  if (!rank) {
+    return (
+      <section className="rank-panel rank-panel--empty">
+        <span className="rank-panel__ordinal rank-panel__ordinal--ghost">?</span>
+        <div className="rank-panel__meta">
+          <p className="rank-panel__prompt">Make a pick to enter the leaderboard.</p>
+          <Link className="button button--small" to="/predictions">Make your picks</Link>
+        </div>
       </section>
     )
   }
 
   return (
-    <section className="dashboard-card">
-      <span className="dashboard-card__label">Your Predictions</span>
-      <div className="dashboard-card__stats">
-        <div>
-          <span className="dashboard-card__stat">{rank ? `#${rank}` : '-'}</span>
-          <span className="dashboard-card__stat-label">Leaderboard</span>
+    <section className={`rank-panel${rank === 1 ? ' rank-panel--gold' : ''}`}>
+      <div className="rank-panel__main">
+        <span className="rank-panel__ordinal">
+          {rank}
+          <sup className="rank-panel__suffix">{ordinalSuffix(rank)}</sup>
+        </span>
+        <div className="rank-panel__meta">
+          <span className="rank-panel__points">{points} pts</span>
+          {loaded && fixturesOpen > 0 && (
+            <span className="rank-panel__picks">{picksMade}/{fixturesOpen} picks this week</span>
+          )}
         </div>
-        <div>
-          <span className="dashboard-card__stat">{points}</span>
-          <span className="dashboard-card__stat-label">Points</span>
-        </div>
-        {loaded && fixturesOpen > 0 && (
-          <div>
-            <span className="dashboard-card__stat">{picksMade}/{fixturesOpen}</span>
-            <span className="dashboard-card__stat-label">Picks this week</span>
-          </div>
-        )}
       </div>
       <div className="dashboard-card__actions">
         <Link className="button button--small" to="/predictions">
           {loaded && fixturesOpen > 0 && picksMade < fixturesOpen ? 'Finish your picks' : 'View predictions'}
         </Link>
-        {rank && <ShareRankButton displayName={displayName} rank={rank} points={points} />}
+        <ShareRankButton displayName={displayName} rank={rank} points={points} />
       </div>
     </section>
   )
+}
+
+function ordinalSuffix(n) {
+  const j = n % 10
+  const k = n % 100
+  if (j === 1 && k !== 11) return 'st'
+  if (j === 2 && k !== 12) return 'nd'
+  if (j === 3 && k !== 13) return 'rd'
+  return 'th'
 }

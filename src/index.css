@@ -334,22 +334,11 @@ h2 {
 
 /* Matchday */
 .matchday-banner {
-  background: var(--accent-soft);
-  border: 1px solid var(--accent-dim);
-  border-radius: var(--radius);
-  padding: 1rem 1.25rem;
   margin-bottom: 1.5rem;
 }
 
-.matchday-banner__label {
-  display: block;
-  font-family: var(--font-display);
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 0.75rem;
+.matchday-banner .results-heading {
+  margin-top: 0;
 }
 
 .matchday-banner__list {
@@ -429,57 +418,129 @@ h2 {
 }
 
 /* Dashboard */
-.dashboard-card {
+
+/* The dashboard's one deliberate peak: the personal, changes-daily reason
+   to open the app, sized and colored to actually read as the loudest
+   thing on the page. Gold is reserved system-wide for rank/prestige
+   (DESIGN.md), so #1 gets it here; everyone else runs on the standard
+   accent. */
+.rank-panel {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1.1rem 1.25rem;
+  padding: 1.5rem 1.5rem 1.25rem;
   margin-bottom: 1.5rem;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
 }
 
-.dashboard-card__label {
+.rank-panel__main {
+  display: flex;
+  align-items: baseline;
+  gap: 1.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.rank-panel__ordinal {
   font-family: var(--font-display);
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 700;
+  font-size: clamp(3.5rem, 12vw, 5.5rem);
+  line-height: 0.9;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rank-panel--gold .rank-panel__ordinal {
   color: var(--gold);
 }
 
-.dashboard-card__body {
-  color: var(--text-dim);
-  margin: 0;
-  max-width: 52ch;
+.rank-panel__suffix {
+  font-size: 0.32em;
+  font-weight: 600;
+  margin-left: 0.15em;
 }
 
-.dashboard-card__stats {
+.rank-panel__ordinal--ghost {
+  color: var(--text-dim);
+  opacity: 0.4;
+}
+
+.rank-panel__meta {
   display: flex;
-  gap: 2rem;
+  flex-direction: column;
+  gap: 0.3rem;
 }
 
-.dashboard-card__stat {
-  display: block;
+.rank-panel__points {
   font-family: var(--font-display);
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--accent);
-  font-variant-numeric: tabular-nums;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
 }
 
-.dashboard-card__stat-label {
-  display: block;
-  font-size: 0.75rem;
+.rank-panel__picks {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
   color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rank-panel__prompt {
+  color: var(--text-dim);
+  margin: 0 0 0.6rem;
+  max-width: 40ch;
+}
+
+.rank-panel--empty {
+  align-items: center;
 }
 
 .dashboard-card__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
+}
+
+/* A lighter-weight prompt that doesn't compete with the rank panel above
+   it for attention, single line, no card chrome. */
+.notice-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+
+.notice-bar__text {
+  margin: 0;
+  color: var(--text-dim);
+}
+
+.notice-bar__action {
+  font-family: var(--font-display);
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0;
+  flex: none;
+}
+
+.notice-bar__action:hover {
+  text-decoration: underline;
 }
 
 /* News */

@@ -28,7 +28,7 @@ export default function MatchdayBanner() {
 
   return (
     <section className="matchday-banner">
-      <span className="matchday-banner__label">On Today</span>
+      <h2 className="results-heading">Matchday</h2>
       <ul className="matchday-banner__list">
         {fixtures.map((fixture) => (
           <li key={fixture.id} className="matchday-fixture">

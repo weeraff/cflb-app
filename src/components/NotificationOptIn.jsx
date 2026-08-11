@@ -30,12 +30,11 @@ export default function NotificationOptIn() {
   }
 
   return (
-    <section className="dashboard-card">
-      <span className="dashboard-card__label">Notifications</span>
-      <p className="dashboard-card__body">Get a nudge when a new episode drops or a big result comes in.</p>
-      <button className="button button--small" onClick={enable} disabled={busy}>
+    <div className="notice-bar">
+      <p className="notice-bar__text">Get a nudge when a new episode drops or a big result comes in.</p>
+      <button className="notice-bar__action" onClick={enable} disabled={busy}>
         {busy ? 'Enabling...' : 'Turn on notifications'}
       </button>
-    </section>
+    </div>
   )
 }
