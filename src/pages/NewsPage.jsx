@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { placeholderNews } from '../lib/placeholderData'
 import MatchdayBanner from '../components/MatchdayBanner'
+import PredictionsSnapshot from '../components/PredictionsSnapshot'
+import GamesComingUp from '../components/GamesComingUp'
 
 export default function NewsPage() {
   const [articles, setArticles] = useState(placeholderNews)
@@ -24,9 +26,15 @@ export default function NewsPage() {
 
   return (
     <section>
+      <h1>This Week</h1>
+
       <MatchdayBanner />
 
-      <h1>NPL Football News</h1>
+      <PredictionsSnapshot />
+
+      <GamesComingUp />
+
+      <h2 className="results-heading">Latest News</h2>
       <p className="section-subtitle">
         Pulled from journalists and outlets covering NSW football.
         {usingPlaceholder && ' (live snapshot from confirmed sources, auto-updates once news-sync is deployed)'}
