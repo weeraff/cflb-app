@@ -12,10 +12,13 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
-            <Route index element={<NewsPage />} />
-            <Route path="podcast" element={<PodcastPage />} />
-            <Route path="table" element={<TablePage />} />
+            <Route index element={<PredictionsPage />} />
+            {/* Kept as an alias: push notifications already scheduled and
+                sent reference this exact path, don't break those links. */}
             <Route path="predictions" element={<PredictionsPage />} />
+            <Route path="table" element={<TablePage />} />
+            <Route path="podcast" element={<PodcastPage />} />
+            <Route path="news" element={<NewsPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

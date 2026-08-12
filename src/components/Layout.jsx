@@ -4,10 +4,10 @@ import { useAuth } from '../context/AuthContext'
 import { PREDICTIONS_COMING_SOON } from '../lib/featureFlags'
 
 const navItems = [
-  { to: '/', label: 'News', end: true },
-  { to: '/podcast', label: 'Podcast' },
+  { to: '/', label: 'Predictions', end: true, soon: PREDICTIONS_COMING_SOON },
   { to: '/table', label: 'Table' },
-  { to: '/predictions', label: 'Predictions', soon: PREDICTIONS_COMING_SOON },
+  { to: '/podcast', label: 'Podcast' },
+  { to: '/news', label: 'News' },
 ]
 
 export default function Layout() {
@@ -27,7 +27,7 @@ export default function Layout() {
           {auth?.user ? (
             <button className="link-button" onClick={auth.signOut}>Sign out</button>
           ) : !PREDICTIONS_COMING_SOON ? (
-            <NavLink to="/predictions" className="link-button">Sign in</NavLink>
+            <NavLink to="/" className="link-button">Sign in</NavLink>
           ) : null}
         </div>
         <nav className="app-nav">

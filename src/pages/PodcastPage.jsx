@@ -13,7 +13,6 @@ function formatDate(iso) {
 
 const YOUTUBE_CHANNEL_URL = 'https://www.youtube.com/channel/UCbfWQYNp7XBsreEFSukTWlQ'
 const PREVIOUS_EPISODES_LIMIT = 6
-const SHORTS_LIMIT = 12
 const AUDIO_EPISODES_LIMIT = 8
 
 export default function PodcastPage() {
@@ -38,16 +37,12 @@ export default function PodcastPage() {
   const fullEpisodes = episodes
     .filter((ep) => ep.source === 'youtube' && ep.type !== 'short')
     .sort((a, b) => new Date(b.published_at) - new Date(a.published_at))
-  const shorts = episodes
-    .filter((ep) => ep.source === 'youtube' && ep.type === 'short')
-    .sort((a, b) => new Date(b.published_at) - new Date(a.published_at))
   const audioEpisodes = episodes
     .filter((ep) => ep.source === 'spotify')
     .sort((a, b) => new Date(b.published_at) - new Date(a.published_at))
 
   const [latestEpisode, ...previousEpisodes] = fullEpisodes
   const visiblePrevious = previousEpisodes.slice(0, PREVIOUS_EPISODES_LIMIT)
-  const visibleShorts = shorts.slice(0, SHORTS_LIMIT)
   const visibleAudio = audioEpisodes.slice(0, AUDIO_EPISODES_LIMIT)
 
   const episodesById = new Map(episodes.map((ep) => [episodeKey(ep), ep]))
@@ -107,32 +102,6 @@ export default function PodcastPage() {
               <a className="podcast-see-all" href={YOUTUBE_CHANNEL_URL} target="_blank" rel="noreferrer">
                 See all episodes on YouTube
               </a>
-            </>
-          )}
-
-          {visibleShorts.length > 0 && (
-            <>
-              <h2 className="podcast-column-heading">Shorts</h2>
-              <div className="shorts-row">
-                {visibleShorts.map((ep) => (
-                  <a
-                    key={ep.id}
-                    id={`episode-${episodeKey(ep)}`}
-                    className="short-card"
-                    href={`https://www.youtube.com/shorts/${ep.external_id}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <img
-                      className="short-card__thumb"
-                      src={`https://i.ytimg.com/vi/${ep.external_id}/hqdefault.jpg`}
-                      alt=""
-                      loading="lazy"
-                    />
-                    <span className="short-card__title">{ep.title}</span>
-                  </a>
-                ))}
-              </div>
             </>
           )}
         </div>

@@ -5,6 +5,7 @@ import { placeholderFixtures, placeholderLeaderboard } from '../lib/placeholderD
 import { PREDICTIONS_COMING_SOON } from '../lib/featureFlags'
 import TeamCrest from '../components/TeamCrest'
 import Leagues from '../components/Leagues'
+import CompetitionReference from '../components/CompetitionReference'
 
 export default function PredictionsPage() {
   if (PREDICTIONS_COMING_SOON) {
@@ -204,6 +205,11 @@ function PredictionsPageContent() {
           {displayNameError && <p className="auth-note auth-note--error">{displayNameError}</p>}
         </div>
       )}
+
+      <details className="reference-panel">
+        <summary className="reference-panel__toggle">Check the table, results &amp; form before you pick</summary>
+        <CompetitionReference heading={null} />
+      </details>
 
       <h2>Upcoming Fixtures</h2>
       <div className="fixture-list">
