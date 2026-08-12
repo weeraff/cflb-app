@@ -327,15 +327,19 @@ function PredictionsPageContent() {
       <Leagues />
 
       <h2>Leaderboard</h2>
-      <ol className="leaderboard">
-        {leaderboard.map((entry, i) => (
-          <li key={entry.user_id ?? entry.display_name}>
-            <span className="leaderboard__rank">{i + 1}</span>
-            <span className="leaderboard__name">{entry.display_name}</span>
-            <span className="leaderboard__points">{entry.points} pts</span>
-          </li>
-        ))}
-      </ol>
+      {leaderboard.some((entry) => entry.points > 0) ? (
+        <ol className="leaderboard">
+          {leaderboard.map((entry, i) => (
+            <li key={entry.user_id ?? entry.display_name}>
+              <span className="leaderboard__rank">{i + 1}</span>
+              <span className="leaderboard__name">{entry.display_name}</span>
+              <span className="leaderboard__points">{entry.points} pts</span>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="auth-note">Be the first on the board — make your picks before kickoff.</p>
+      )}
     </section>
   )
 }

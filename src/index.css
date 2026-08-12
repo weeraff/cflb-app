@@ -1196,6 +1196,44 @@ h2 {
   flex-direction: column;
 }
 
+/* Compact fixture list for narrow columns (News sidebar) — team names
+   get their own row instead of squeezing onto one horizontal line,
+   which was truncating real team names down to 3-4 characters. */
+.mini-fixture-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mini-fixture {
+  border-top: 1px solid var(--border);
+  padding: 0.6rem 0;
+}
+
+.mini-fixture__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 0.35rem;
+}
+
+.mini-fixture__team {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.1rem 0;
+}
+
 .result-row {
   display: flex;
   align-items: center;

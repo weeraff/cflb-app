@@ -208,18 +208,19 @@ export default function Leagues() {
             </p>
           )}
 
-          <ol className="leaderboard">
-            {leagueLeaderboard.map((entry, i) => (
-              <li key={entry.user_id}>
-                <span className="leaderboard__rank">{i + 1}</span>
-                <span className="leaderboard__name">{entry.display_name}</span>
-                <span className="leaderboard__points">{entry.points} pts</span>
-              </li>
-            ))}
-            {leagueLeaderboard.length === 0 && (
-              <li><span className="leaderboard__name">No picks made in this league yet.</span></li>
-            )}
-          </ol>
+          {leagueLeaderboard.some((entry) => entry.points > 0) ? (
+            <ol className="leaderboard">
+              {leagueLeaderboard.map((entry, i) => (
+                <li key={entry.user_id}>
+                  <span className="leaderboard__rank">{i + 1}</span>
+                  <span className="leaderboard__name">{entry.display_name}</span>
+                  <span className="leaderboard__points">{entry.points} pts</span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="auth-note">No picks made in this league yet — be the first.</p>
+          )}
         </div>
       )}
     </>
