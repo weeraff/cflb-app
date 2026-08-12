@@ -50,18 +50,20 @@ a {
 h1, h2, h3 {
   margin: 0 0 0.5rem;
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.01em;
   text-transform: uppercase;
 }
 
 h1 {
-  font-size: 1.9rem;
+  font-size: clamp(2.25rem, 6vw, 3.25rem);
+  line-height: 0.98;
+  letter-spacing: -0.005em;
 }
 
 h2 {
-  font-size: 1.3rem;
-  margin-top: 2rem;
+  font-size: clamp(1.4rem, 2.6vw, 1.7rem);
+  margin-top: 2.5rem;
 }
 
 /* Shell */
@@ -96,8 +98,8 @@ h2 {
   align-items: center;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.15rem;
-  letter-spacing: 0.03em;
+  font-size: 1.4rem;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   min-width: 0;
 }
@@ -145,7 +147,7 @@ h2 {
   align-items: center;
   min-height: 44px;
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.85rem;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -230,9 +232,9 @@ h2 {
   border: none;
   padding: 0 1.25rem;
   border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  letter-spacing: 0.02em;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   cursor: pointer;
   transition: transform 0.12s ease, box-shadow 0.12s ease;
@@ -469,6 +471,11 @@ h2 {
 
 .rank-panel--gold .rank-panel__ordinal {
   color: var(--gold);
+  text-shadow: 0 0 32px rgba(212, 175, 55, 0.35);
+}
+
+.rank-panel--gold {
+  border-color: var(--gold);
 }
 
 .rank-panel__suffix {
@@ -605,7 +612,8 @@ h2 {
 }
 
 .news-hero__body .news-item__title {
-  font-size: 1.5rem;
+  font-size: clamp(1.6rem, 3.4vw, 2.3rem);
+  line-height: 1.08;
   margin: 0.4rem 0 0.5rem;
 }
 
@@ -964,9 +972,9 @@ h2 {
 .standings-table th {
   font-family: var(--font-display);
   color: var(--text-dim);
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
