@@ -32,7 +32,7 @@
 // exist for any of the three competitions (checked 2026-08-11), so this
 // only pulls goals.
 import { createClient } from 'jsr:@supabase/supabase-js@2'
-import { sendPushToAll } from '../_shared/sendPush.ts'
+import { sendPushToAll, sendPushToUsers } from '../_shared/sendPush.ts'
 
 const DRIBL_SEASON = 'wOmelzGd02' // 2026, confirmed current 2026-08-10
 const DRIBL_TENANT = '1RwNlWemjr' // Football NSW, resolved via /api/tenants?mc_link=competitions.footballnsw.com.au
@@ -117,6 +117,17 @@ Deno.serve(async () => {
     await logError(supabase, 'notify-results', err)
   }
 
+  // Ranks can only move when points changed, so skip the leaderboard
+  // recompute entirely on runs where nothing was scored.
+  let rankChangesNotified = 0
+  if (scored > 0) {
+    try {
+      rankChangesNotified = await notifyRankChanges(supabase)
+    } catch (err) {
+      await logError(supabase, 'notify-rank-change', err)
+    }
+  }
+
   let closingNotified = 0
   try {
     closingNotified = await notifyPicksClosingSoon(supabase)
@@ -135,6 +146,7 @@ Deno.serve(async () => {
       scored,
       resultsNotified,
       closingNotified,
+      rankChangesNotified,
     }),
     { headers: { 'Content-Type': 'application/json' } },
   )
@@ -403,6 +415,71 @@ async function scorePredictions(supabase: SupabaseClientAny) {
     if (!error) count += 1
   }
   return count
+}
+
+// Compares each user's current leaderboard position against their
+// last-known one (stored on profiles.last_rank) and notifies whoever
+// moved, in either direction — losing a spot is at least as motivating
+// to check the app as gaining one.
+async function notifyRankChanges(supabase: SupabaseClientAny) {
+  const { data: leaderboard, error } = await supabase
+    .from('leaderboard')
+    .select('*')
+    .order('points', { ascending: false })
+  if (error) throw error
+  if (!leaderboard?.length) return 0
+
+  const { data: profiles, error: profilesError } = await supabase
+    .from('profiles')
+    .select('id, last_rank')
+  if (profilesError) throw profilesError
+
+  const lastRankByUserId: Record<string, number | null> = {}
+  for (const p of profiles ?? []) lastRankByUserId[p.id] = p.last_rank
+
+  const topPoints = leaderboard[0].points
+  let notified = 0
+
+  for (let i = 0; i < leaderboard.length; i++) {
+    const entry = leaderboard[i]
+    const rank = i + 1
+    const previousRank = lastRankByUserId[entry.user_id]
+
+    if (previousRank !== rank) {
+      await supabase.from('profiles').update({ last_rank: rank }).eq('id', entry.user_id)
+    }
+
+    // No prior rank means this is the user's first-ever scored week —
+    // nothing to compare against, and everyone would "move" at once.
+    if (previousRank == null || previousRank === rank) continue
+
+    const movedUp = rank < previousRank
+    const gap = topPoints - entry.points
+    const gapNote = rank === 1 ? " — you're #1!" : gap > 0 ? ` — ${gap} pt${gap === 1 ? '' : 's'} off 1st` : ''
+
+    try {
+      const sent = await sendPushToUsers(supabase, [entry.user_id], {
+        title: movedUp ? 'You moved up the leaderboard' : 'You dropped on the leaderboard',
+        body: `Now ${ordinal(rank)} with ${entry.points} pts${gapNote}`,
+        url: '/predictions',
+      })
+      notified += sent
+    } catch (err) {
+      await logError(supabase, 'notify-rank-change-send', err)
+    }
+  }
+
+  return notified
+}
+
+function ordinal(n: number) {
+  const rem100 = n % 100
+  if (rem100 >= 11 && rem100 <= 13) return `${n}th`
+  const rem10 = n % 10
+  if (rem10 === 1) return `${n}st`
+  if (rem10 === 2) return `${n}nd`
+  if (rem10 === 3) return `${n}rd`
+  return `${n}th`
 }
 
 function scoreOnePrediction(

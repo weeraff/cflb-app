@@ -133,6 +133,9 @@ create table if not exists fixtures (
 create table if not exists profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   display_name text not null,
+  -- Leaderboard position as of the last standings-sync run, so a rank
+  -- change can be detected and notified on without recomputing history.
+  last_rank int,
   created_at timestamptz not null default now()
 );
 
