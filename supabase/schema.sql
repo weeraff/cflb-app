@@ -127,6 +127,10 @@ create table if not exists fixtures (
   -- out for this fixture, so the cron doesn't re-send it every run.
   notified_picks_closing boolean not null default false,
   notified_result boolean not null default false,
+  -- Flash-reporter UI state (live/full_time), entirely separate from
+  -- `status`/`home_score`/`away_score` above, which stay governed by the
+  -- official Dribl-driven standings-sync pipeline.
+  reported_status text not null default 'scheduled' check (reported_status in ('scheduled', 'live', 'full_time')),
   created_at timestamptz not null default now()
 );
 
@@ -136,6 +140,9 @@ create table if not exists profiles (
   -- Leaderboard position as of the last standings-sync run, so a rank
   -- change can be detected and notified on without recomputing history.
   last_rank int,
+  -- Allowlisted flash reporters (toggled by hand in the Supabase
+  -- dashboard, no admin UI in v1) can log live goal/card events.
+  is_reporter boolean not null default false,
   created_at timestamptz not null default now()
 );
 
@@ -148,6 +155,41 @@ create table if not exists predictions (
   points_awarded int,
   created_at timestamptz not null default now(),
   unique (user_id, fixture_id)
+);
+
+-- ============ Flash reporter ============
+
+-- Trusted users (profiles.is_reporter) log goal/card events and lineups
+-- for a fixture in real time. This is a distinct layer from the official
+-- Dribl-driven fixtures.status/home_score/away_score pipeline in
+-- standings-sync; nothing here can conflict with the automated scoring
+-- and predictions pipeline that already depends on `status`.
+create table if not exists match_events (
+  id uuid primary key default gen_random_uuid(),
+  fixture_id uuid not null references fixtures(id) on delete cascade,
+  type text not null check (type in ('goal', 'card')),
+  minute int not null check (minute >= 0),
+  team text not null check (team in ('home', 'away')),
+  player_name text not null,
+  -- goals only
+  assist_name text,
+  -- cards only
+  card_type text check (card_type in ('yellow', 'red')),
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists match_events_fixture_id_idx on match_events (fixture_id);
+
+create table if not exists match_lineups (
+  fixture_id uuid not null references fixtures(id) on delete cascade,
+  team text not null check (team in ('home', 'away')),
+  -- Simple free-text fallback (one player per line), not a structured
+  -- roster — typing a real lineup fast pre-kickoff is the priority.
+  starting_xi text,
+  subs text,
+  updated_at timestamptz not null default now(),
+  primary key (fixture_id, team)
 );
 
 -- ============ Mini-leagues ============
@@ -212,6 +254,8 @@ alter table ingestion_errors enable row level security;
 alter table push_subscriptions enable row level security;
 alter table leagues enable row level security;
 alter table league_members enable row level security;
+alter table match_events enable row level security;
+alter table match_lineups enable row level security;
 
 -- Public read-only content: anyone (including anon) can read, only the
 -- service role (used by scheduled edge functions) can write.
@@ -294,5 +338,43 @@ create policy "users join leagues themselves" on league_members
 
 create policy "users leave leagues themselves" on league_members
   for delete using (auth.uid() = user_id);
+
+-- Live events and lineups are public read (that's the whole point of the
+-- public-facing live view); writes are restricted to allowlisted reporters.
+create policy "match_events are publicly readable" on match_events for select using (true);
+create policy "match_lineups are publicly readable" on match_lineups for select using (true);
+
+create policy "reporters manage match_events" on match_events for all
+  using (exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_reporter))
+  with check (exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_reporter));
+
+create policy "reporters manage match_lineups" on match_lineups for all
+  using (exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_reporter))
+  with check (exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_reporter));
+
+-- Reporters also need to flip fixtures.reported_status (live / full_time).
+-- Trust-based, not column-scoped: an allowlisted reporter can update any
+-- fixture, consistent with the brief's small-trusted-allowlist model.
+create policy "reporters update fixtures" on fixtures for update
+  using (exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_reporter));
+
+-- Realtime: the public live view subscribes to these so goal/card events
+-- and status changes push to open tabs without a refresh.
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'match_events'
+  ) then
+    alter publication supabase_realtime add table match_events;
+  end if;
+
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'fixtures'
+  ) then
+    alter publication supabase_realtime add table fixtures;
+  end if;
+end $$;
 
 -- ingestion_errors is operational data, no public policy, service role only.

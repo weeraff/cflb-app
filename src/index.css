@@ -1690,3 +1690,225 @@ h2 {
     flex: 1 1 100%;
   }
 }
+
+/* Reporter panel */
+.reporter-fixture {
+  margin-top: 1.5rem;
+}
+
+.reporter-fixture__status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  border-top: 1px solid var(--border);
+  padding: 1rem 0;
+}
+
+.reporter-status {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.6rem;
+  color: var(--text-dim);
+  background: var(--surface-alt);
+}
+
+.reporter-status--live {
+  color: var(--accent-ink);
+  background: var(--accent);
+}
+
+.reporter-status--full_time {
+  color: var(--bg);
+  background: var(--gold);
+}
+
+.reporter-fixture__actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.reporter-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.reporter-form input,
+.reporter-form select {
+  min-height: 44px;
+  font-family: var(--font-body);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0 0.6rem;
+}
+
+.reporter-form input[type='number'] {
+  width: 4.5rem;
+}
+
+.reporter-events {
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+}
+
+.reporter-event {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border-top: 1px solid var(--border);
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.reporter-event__minute {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--accent);
+  flex: none;
+  width: 2.5rem;
+}
+
+.reporter-event__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.reporter-event__team {
+  color: var(--text-dim);
+}
+
+.reporter-event__remove {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--danger);
+  cursor: pointer;
+}
+
+.reporter-lineup {
+  border-top: 1px solid var(--border);
+  padding: 1rem 0;
+}
+
+.reporter-lineup h3 {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: normal;
+  margin: 0 0 0.6rem;
+}
+
+.reporter-lineup textarea {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.6rem;
+  font-family: var(--font-body);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.5rem 0.6rem;
+  resize: vertical;
+}
+
+/* Live score strip (News page, public) */
+.live-strip {
+  margin-bottom: 2rem;
+}
+
+.live-strip__cards {
+  display: flex;
+  flex-direction: column;
+}
+
+.live-card {
+  border-top: 1px solid var(--border);
+}
+
+.live-card__summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text);
+  padding: 0.75rem 0;
+  cursor: pointer;
+  font-family: var(--font-body);
+  text-align: left;
+}
+
+.live-card__badge {
+  flex: none;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  color: var(--text-dim);
+  background: var(--surface-alt);
+}
+
+.live-card__badge--live {
+  color: var(--accent-ink);
+  background: var(--accent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .live-card__badge--live {
+    animation: live-pulse 2s ease-in-out infinite;
+  }
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.live-card__badge--full_time {
+  color: var(--bg);
+  background: var(--gold);
+}
+
+.live-card__team {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live-card__score {
+  flex: none;
+  font-family: var(--font-splash);
+  font-size: 1.3rem;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.live-card__events {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0 0 0.5rem;
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}

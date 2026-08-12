@@ -5,6 +5,7 @@ import MatchdayBanner from '../components/MatchdayBanner'
 import PredictionsSnapshot from '../components/PredictionsSnapshot'
 import GamesComingUp from '../components/GamesComingUp'
 import NotificationOptIn from '../components/NotificationOptIn'
+import LiveScoreStrip from '../components/LiveScoreStrip'
 
 export default function NewsPage() {
   const [articles, setArticles] = useState(placeholderNews)
@@ -32,6 +33,8 @@ export default function NewsPage() {
         Pulled from journalists and outlets covering NSW football.
         {usingPlaceholder && ' (live snapshot from confirmed sources, auto-updates once news-sync is deployed)'}
       </p>
+
+      <LiveScoreStrip />
 
       <div className="news-cover">
         {articles[0] && (

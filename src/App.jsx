@@ -5,6 +5,7 @@ import NewsPage from './pages/NewsPage'
 import PodcastPage from './pages/PodcastPage'
 import TablePage from './pages/TablePage'
 import PredictionsPage from './pages/PredictionsPage'
+import ReporterPage from './pages/ReporterPage'
 
 export default function App() {
   return (
@@ -19,6 +20,9 @@ export default function App() {
             <Route path="table" element={<TablePage />} />
             <Route path="podcast" element={<PodcastPage />} />
             <Route path="news" element={<NewsPage />} />
+            {/* Not in the visible nav — trusted-allowlist admin route,
+                reporters navigate here directly by URL. */}
+            <Route path="reporter" element={<ReporterPage />} />
           </Route>
         </Routes>
       </BrowserRouter>
