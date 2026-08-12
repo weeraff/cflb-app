@@ -28,40 +28,40 @@ export default function NewsPage() {
   return (
     <section>
       <h1>This Week</h1>
-
-      <MatchdayBanner />
-
-      <PredictionsSnapshot />
-
-      <NotificationOptIn />
-
-      <GamesComingUp />
-
-      <h2 className="results-heading">Latest News</h2>
       <p className="section-subtitle">
         Pulled from journalists and outlets covering NSW football.
         {usingPlaceholder && ' (live snapshot from confirmed sources, auto-updates once news-sync is deployed)'}
       </p>
 
-      {articles[0] && (
-        <a
-          href={articles[0].url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="news-hero"
-        >
-          {articles[0].image_url && (
-            <img className="news-hero__image" src={articles[0].image_url} alt="" loading="lazy" />
-          )}
-          <div className="news-hero__scrim" />
-          <div className="news-hero__body">
-            <span className="news-item__source">{articles[0].source}</span>
-            <span className="news-item__title">{articles[0].title}</span>
-            <p className="news-item__snippet">{articles[0].snippet}</p>
-          </div>
-        </a>
-      )}
+      <div className="news-cover">
+        {articles[0] && (
+          <a
+            href={articles[0].url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="news-hero"
+          >
+            {articles[0].image_url && (
+              <img className="news-hero__image" src={articles[0].image_url} alt="" loading="lazy" />
+            )}
+            <div className="news-hero__scrim" />
+            <div className="news-hero__body">
+              <span className="news-item__source">{articles[0].source}</span>
+              <span className="news-item__title">{articles[0].title}</span>
+              <p className="news-item__snippet">{articles[0].snippet}</p>
+            </div>
+          </a>
+        )}
 
+        <div className="news-sidebar">
+          <PredictionsSnapshot />
+          <NotificationOptIn />
+          <MatchdayBanner />
+          <GamesComingUp />
+        </div>
+      </div>
+
+      <h2 className="results-heading">Latest News</h2>
       <ul className="news-list">
         {articles.slice(1, 6).map((article) => (
           <li key={article.id}>
