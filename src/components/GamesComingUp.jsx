@@ -33,12 +33,12 @@ export default function GamesComingUp() {
             <span className="result-row__round">{fixture.competition}</span>
             <span className="result-row__match">
               <span className="result-row__team">
-                <TeamCrest src={fixture.home_logo} />
+                <TeamCrest src={fixture.home_logo} name={fixture.home_team} />
                 <span className="result-row__team-name">{fixture.home_team}</span>
               </span>
               <span className="result-row__score">v</span>
               <span className="result-row__team">
-                <TeamCrest src={fixture.away_logo} />
+                <TeamCrest src={fixture.away_logo} name={fixture.away_team} />
                 <span className="result-row__team-name">{fixture.away_team}</span>
               </span>
             </span>

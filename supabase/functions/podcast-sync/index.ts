@@ -106,6 +106,13 @@ async function syncSpotify(supabase: SupabaseClientAny, feedUrl: string) {
   return { count, newTitles }
 }
 
+// YouTube's uploads playlist mixes full episodes and Shorts with no field
+// marking which is which. A second call to videos.list for contentDetails
+// gets each video's real duration so we can classify it ourselves: Shorts
+// are capped at 3 minutes, so anything at or under that is a 'short',
+// everything else is a full 'episode'.
+const SHORT_MAX_SECONDS = 180
+
 async function syncYoutube(
   supabase: SupabaseClientAny,
   playlistId: string,
@@ -116,19 +123,25 @@ async function syncYoutube(
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const data = await res.json()
 
+  const items = data.items ?? []
+  const videoIds = items.map((item: { snippet: { resourceId: { videoId: string } } }) => item.snippet.resourceId.videoId)
+  const durations = await fetchDurations(videoIds, apiKey)
+
   const { data: existing } = await supabase.from('episodes').select('external_id').eq('source', 'youtube')
   const existingIds = new Set((existing ?? []).map((e: { external_id: string }) => e.external_id))
 
   let count = 0
   const newTitles: string[] = []
-  for (const item of data.items ?? []) {
+  for (const item of items) {
     const videoId = item.snippet.resourceId.videoId
     const title = item.snippet.title
+    const seconds = durations.get(videoId) ?? null
+    const type = seconds !== null && seconds <= SHORT_MAX_SECONDS ? 'short' : 'episode'
     const { error } = await supabase.from('episodes').upsert(
       {
         title,
         description: item.snippet.description,
-        type: 'clip',
+        type,
         source: 'youtube',
         external_id: videoId,
         embed_url: `https://www.youtube.com/embed/${videoId}`,
@@ -142,6 +155,28 @@ async function syncYoutube(
     }
   }
   return { count, newTitles }
+}
+
+async function fetchDurations(videoIds: string[], apiKey: string) {
+  const durations = new Map<string, number>()
+  if (videoIds.length === 0) return durations
+
+  const url = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${videoIds.join(',')}&key=${apiKey}`
+  const res = await fetch(url)
+  if (!res.ok) return durations
+
+  const data = await res.json()
+  for (const item of data.items ?? []) {
+    durations.set(item.id, parseIso8601Duration(item.contentDetails.duration))
+  }
+  return durations
+}
+
+function parseIso8601Duration(duration: string) {
+  const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
+  if (!match) return 0
+  const [, hours, minutes, seconds] = match
+  return (Number(hours) || 0) * 3600 + (Number(minutes) || 0) * 60 + (Number(seconds) || 0)
 }
 
 async function logError(supabase: SupabaseClientAny, source: string, err: unknown) {

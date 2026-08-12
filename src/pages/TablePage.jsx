@@ -103,25 +103,44 @@ export default function TablePage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={row.team} className={row.position === 1 ? 'zone--leader' : ''}>
-                <td>{row.position}</td>
-                <td>
-                  <span className="standings-table__team">
-                    <TeamCrest src={row.logo_url} />
-                    {row.team}
-                  </span>
-                </td>
-                <td>{row.played}</td>
-                <td>{row.won}</td>
-                <td>{row.drawn}</td>
-                <td>{row.lost}</td>
-                <td>{row.gd}</td>
-                <td><strong>{row.points}</strong></td>
-              </tr>
-            ))}
+            {rows.map((row) => {
+              const zone =
+                row.position === 1
+                  ? 'zone--leader'
+                  : row.position > rows.length - 2
+                    ? 'zone--relegation'
+                    : ''
+              return (
+                <tr key={row.team} className={zone}>
+                  <td>{row.position}</td>
+                  <td>
+                    <span className="standings-table__team">
+                      <TeamCrest src={row.logo_url} name={row.team} />
+                      {row.team}
+                    </span>
+                  </td>
+                  <td>{row.played}</td>
+                  <td>{row.won}</td>
+                  <td>{row.drawn}</td>
+                  <td>{row.lost}</td>
+                  <td>{row.gd}</td>
+                  <td><strong>{row.points}</strong></td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
+      </div>
+
+      <div className="table-legend">
+        <span className="table-legend__item">
+          <span className="table-legend__swatch table-legend__swatch--leader" />
+          Champion
+        </span>
+        <span className="table-legend__item">
+          <span className="table-legend__swatch table-legend__swatch--relegation" />
+          Relegation
+        </span>
       </div>
 
       <h2 className="results-heading">Recent Results</h2>
@@ -131,12 +150,12 @@ export default function TablePage() {
             <span className="result-row__round">{r.round}</span>
             <span className="result-row__match">
               <span className={`result-row__team${r.home_score > r.away_score ? ' result-row__winner' : ''}`}>
-                <TeamCrest src={r.home_logo} />
+                <TeamCrest src={r.home_logo} name={r.home_team} />
                 <span className="result-row__team-name">{r.home_team}</span>
               </span>
               <span className="result-row__score">{r.home_score} - {r.away_score}</span>
               <span className={`result-row__team${r.away_score > r.home_score ? ' result-row__winner' : ''}`}>
-                <TeamCrest src={r.away_logo} />
+                <TeamCrest src={r.away_logo} name={r.away_team} />
                 <span className="result-row__team-name">{r.away_team}</span>
               </span>
             </span>

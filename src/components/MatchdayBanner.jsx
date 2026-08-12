@@ -35,12 +35,12 @@ export default function MatchdayBanner() {
             <span className="matchday-fixture__competition">{fixture.competition}</span>
             <span className="matchday-fixture__match">
               <span className="matchday-fixture__team">
-                <TeamCrest src={fixture.home_logo} />
+                <TeamCrest src={fixture.home_logo} name={fixture.home_team} />
                 {fixture.home_team}
               </span>
               <MatchdayStatus fixture={fixture} />
               <span className="matchday-fixture__team">
-                <TeamCrest src={fixture.away_logo} />
+                <TeamCrest src={fixture.away_logo} name={fixture.away_team} />
                 {fixture.away_team}
               </span>
             </span>

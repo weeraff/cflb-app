@@ -32,6 +32,9 @@ function PredictionsPageContent() {
   const [profile, setProfile] = useState(null)
   const [profileChecked, setProfileChecked] = useState(false)
   const [displayNameInput, setDisplayNameInput] = useState('')
+  const [displayNameError, setDisplayNameError] = useState('')
+  const [submitNotice, setSubmitNotice] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     if (!isSupabaseConfigured) return
@@ -99,7 +102,12 @@ function PredictionsPageContent() {
       .select()
       .single()
 
-    if (!error) setProfile(data)
+    if (!error) {
+      setProfile(data)
+      setDisplayNameError('')
+    } else {
+      setDisplayNameError('Could not save your name, try again.')
+    }
   }
 
   function updatePick(fixtureId, field, value) {
@@ -109,28 +117,34 @@ function PredictionsPageContent() {
     }))
   }
 
-  async function submitPick(fixtureId, home, away) {
+  async function submitAllPicks() {
     if (!isSupabaseConfigured || !auth?.user) {
-      window.alert('Sign in to save your prediction.')
+      setSubmitNotice({ type: 'info', text: 'Sign in above to submit your predictions.' })
       return
     }
+    if (upcoming.length === 0) return
+
+    setSubmitting(true)
+    const rows = upcoming.map((fixture) => ({
+      user_id: auth.user.id,
+      fixture_id: fixture.id,
+      home_score_pick: picks[fixture.id]?.home ?? myPredictions[fixture.id]?.home_score_pick ?? 0,
+      away_score_pick: picks[fixture.id]?.away ?? myPredictions[fixture.id]?.away_score_pick ?? 0,
+    }))
 
     const { data, error } = await supabase
       .from('predictions')
-      .upsert(
-        {
-          user_id: auth.user.id,
-          fixture_id: fixtureId,
-          home_score_pick: home,
-          away_score_pick: away,
-        },
-        { onConflict: 'user_id,fixture_id' },
-      )
+      .upsert(rows, { onConflict: 'user_id,fixture_id' })
       .select()
-      .single()
 
+    setSubmitting(false)
     if (!error) {
-      setMyPredictions((prev) => ({ ...prev, [fixtureId]: data }))
+      const byFixture = { ...myPredictions }
+      for (const row of data) byFixture[row.fixture_id] = row
+      setMyPredictions(byFixture)
+      setSubmitNotice({ type: 'success', text: 'Predictions submitted.' })
+    } else {
+      setSubmitNotice({ type: 'error', text: 'Could not submit your predictions, try again.' })
     }
   }
 
@@ -186,6 +200,7 @@ function PredictionsPageContent() {
             />
             <button className="button" type="submit">Save</button>
           </form>
+          {displayNameError && <p className="auth-note auth-note--error">{displayNameError}</p>}
         </div>
       )}
 
@@ -199,42 +214,45 @@ function PredictionsPageContent() {
                 <span className="fixture-card__competition">{fixture.competition}</span>
                 <span className="fixture-card__kickoff">{formatKickoff(fixture.kickoff_at)}</span>
               </div>
-              <div className="fixture-card__teams">
-                <span className="fixture-card__team">
-                  <TeamCrest src={fixture.home_logo} />
-                  {fixture.home_team}
-                </span>
-                <ScoreStepper
-                  value={picks[fixture.id]?.home ?? existing?.home_score_pick ?? 0}
-                  onChange={(v) => updatePick(fixture.id, 'home', v)}
-                />
+              <div className="fixture-card__matchup">
+                <div className="fixture-card__row">
+                  <span className="fixture-card__team">
+                    <TeamCrest src={fixture.home_logo} name={fixture.home_team} />
+                    <span className="fixture-card__team-name">{fixture.home_team}</span>
+                  </span>
+                  <ScoreStepper
+                    value={picks[fixture.id]?.home ?? existing?.home_score_pick ?? 0}
+                    onChange={(v) => updatePick(fixture.id, 'home', v)}
+                  />
+                </div>
+                <div className="fixture-card__row">
+                  <span className="fixture-card__team">
+                    <TeamCrest src={fixture.away_logo} name={fixture.away_team} />
+                    <span className="fixture-card__team-name">{fixture.away_team}</span>
+                  </span>
+                  <ScoreStepper
+                    value={picks[fixture.id]?.away ?? existing?.away_score_pick ?? 0}
+                    onChange={(v) => updatePick(fixture.id, 'away', v)}
+                  />
+                </div>
                 <span className="fixture-card__vs">v</span>
-                <ScoreStepper
-                  value={picks[fixture.id]?.away ?? existing?.away_score_pick ?? 0}
-                  onChange={(v) => updatePick(fixture.id, 'away', v)}
-                />
-                <span className="fixture-card__team">
-                  <TeamCrest src={fixture.away_logo} />
-                  {fixture.away_team}
-                </span>
               </div>
-              <button
-                className="button button--small"
-                onClick={() =>
-                  submitPick(
-                    fixture.id,
-                    picks[fixture.id]?.home ?? existing?.home_score_pick ?? 0,
-                    picks[fixture.id]?.away ?? existing?.away_score_pick ?? 0,
-                  )
-                }
-              >
-                {existing ? 'Update pick' : 'Save pick'}
-              </button>
             </div>
           )
         })}
         {upcoming.length === 0 && <p className="auth-note">No upcoming fixtures open for picks right now.</p>}
       </div>
+
+      {upcoming.length > 0 && (
+        <div className="predictions-submit">
+          <button className="button" onClick={submitAllPicks} disabled={submitting}>
+            {submitting ? 'Submitting...' : 'Submit Predictions'}
+          </button>
+          {submitNotice && (
+            <p className={`form-notice form-notice--${submitNotice.type}`}>{submitNotice.text}</p>
+          )}
+        </div>
+      )}
 
       {awaitingResult.length > 0 && (
         <>
@@ -247,12 +265,12 @@ function PredictionsPageContent() {
                   <span className="result-row__round">{fixture.competition}</span>
                   <span className="result-row__match">
                     <span className="result-row__team">
-                      <TeamCrest src={fixture.home_logo} />
+                      <TeamCrest src={fixture.home_logo} name={fixture.home_team} />
                       <span className="result-row__team-name">{fixture.home_team}</span>
                     </span>
                     <span className="result-row__score">v</span>
                     <span className="result-row__team">
-                      <TeamCrest src={fixture.away_logo} />
+                      <TeamCrest src={fixture.away_logo} name={fixture.away_team} />
                       <span className="result-row__team-name">{fixture.away_team}</span>
                     </span>
                   </span>
@@ -277,12 +295,12 @@ function PredictionsPageContent() {
                   <span className="result-row__round">{fixture.competition}</span>
                   <span className="result-row__match">
                     <span className="result-row__team">
-                      <TeamCrest src={fixture.home_logo} />
+                      <TeamCrest src={fixture.home_logo} name={fixture.home_team} />
                       <span className="result-row__team-name">{fixture.home_team}</span>
                     </span>
                     <span className="result-row__score">{fixture.home_score} - {fixture.away_score}</span>
                     <span className="result-row__team">
-                      <TeamCrest src={fixture.away_logo} />
+                      <TeamCrest src={fixture.away_logo} name={fixture.away_team} />
                       <span className="result-row__team-name">{fixture.away_team}</span>
                     </span>
                   </span>

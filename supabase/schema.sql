@@ -35,7 +35,7 @@ create table if not exists episodes (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   description text,
-  type text not null check (type in ('episode', 'clip')),
+  type text not null check (type in ('episode', 'clip', 'short')),
   source text not null check (source in ('spotify', 'youtube')),
   embed_url text not null,
   external_id text not null,

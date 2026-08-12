@@ -3,9 +3,11 @@ import { generateRankCardBlob } from '../lib/shareRankCard'
 
 export default function ShareRankButton({ displayName, rank, points }) {
   const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleShare() {
     setBusy(true)
+    setError('')
     try {
       const blob = await generateRankCardBlob({ displayName, rank, points })
       const file = new File([blob], 'cflb-rank.png', { type: 'image/png' })
@@ -25,15 +27,18 @@ export default function ShareRankButton({ displayName, rank, points }) {
         URL.revokeObjectURL(url)
       }
     } catch (err) {
-      if (err.name !== 'AbortError') window.alert('Could not generate the share image, try again.')
+      if (err.name !== 'AbortError') setError('Could not generate the share image, try again.')
     } finally {
       setBusy(false)
     }
   }
 
   return (
-    <button className="button button--small button--secondary" onClick={handleShare} disabled={busy}>
-      {busy ? 'Generating...' : 'Share your rank'}
-    </button>
+    <span className="share-rank">
+      <button className="button button--small button--secondary" onClick={handleShare} disabled={busy}>
+        {busy ? 'Generating...' : 'Share your rank'}
+      </button>
+      {error && <span className="share-rank__error">{error}</span>}
+    </span>
   )
 }
