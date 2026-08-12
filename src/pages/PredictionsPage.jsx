@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { placeholderFixtures, placeholderLeaderboard } from '../lib/placeholderData'
 import { PREDICTIONS_COMING_SOON } from '../lib/featureFlags'
 import TeamCrest from '../components/TeamCrest'
+import Leagues from '../components/Leagues'
 
 export default function PredictionsPage() {
   if (PREDICTIONS_COMING_SOON) {
@@ -316,6 +317,8 @@ function PredictionsPageContent() {
           </ul>
         </>
       )}
+
+      <Leagues />
 
       <h2>Leaderboard</h2>
       <ol className="leaderboard">
