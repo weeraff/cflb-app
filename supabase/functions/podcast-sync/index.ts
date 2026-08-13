@@ -147,7 +147,7 @@ async function syncYoutube(
         embed_url: `https://www.youtube.com/embed/${videoId}`,
         published_at: new Date(item.snippet.publishedAt).toISOString(),
       },
-      { onConflict: 'source,external_id', ignoreDuplicates: true },
+      { onConflict: 'source,external_id' },
     )
     if (!error) {
       count += 1
