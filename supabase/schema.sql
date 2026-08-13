@@ -120,8 +120,9 @@ create table if not exists fixtures (
   home_score int,
   away_score int,
   status text not null default 'scheduled' check (status in ('scheduled', 'locked', 'completed')),
-  -- Each week the show features 12 fixtures for predictions (4 per
-  -- competition), hand-picked, not every fixture that syncs in.
+  -- Each week the show features 9 fixtures for predictions ("Champagne
+  -- Nine": 4 NPL NSW, 3 League One, 2 League Two), hand-picked, not every
+  -- fixture that syncs in.
   featured boolean not null default false,
   -- Whether a "picks closing soon" / "full time" push has already gone
   -- out for this fixture, so the cron doesn't re-send it every run.
@@ -310,6 +311,20 @@ create or replace view leaderboard as
   from predictions p
   left join profiles pr on pr.id = p.user_id
   group by p.user_id, pr.display_name;
+
+-- Powers the "X% picked the same result" stat on a submitted Champagne
+-- Nine pick; same aggregated-view pattern as `leaderboard` above.
+create or replace view fixture_result_stats as
+  select
+    fixture_id,
+    case
+      when home_score_pick > away_score_pick then 'home'
+      when home_score_pick < away_score_pick then 'away'
+      else 'draw'
+    end as predicted_result,
+    count(*) as pick_count
+  from predictions
+  group by fixture_id, predicted_result;
 
 create policy "users manage their own push subscriptions" on push_subscriptions
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

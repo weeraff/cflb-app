@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { placeholderFixtures, placeholderLeaderboard } from '../lib/placeholderData'
@@ -6,6 +6,9 @@ import { PREDICTIONS_COMING_SOON } from '../lib/featureFlags'
 import TeamCrest from '../components/TeamCrest'
 import Leagues from '../components/Leagues'
 import CompetitionReference from '../components/CompetitionReference'
+import ChampagneNineWizard, { buildChampagneNineFixtures } from '../components/ChampagneNineWizard'
+import ChampagneNineSummary, { pickResult } from '../components/ChampagneNineSummary'
+import useCompetitionData from '../hooks/useCompetitionData'
 
 export default function PredictionsPage() {
   if (PREDICTIONS_COMING_SOON) {
@@ -37,6 +40,11 @@ function PredictionsPageContent() {
   const [displayNameError, setDisplayNameError] = useState('')
   const [submitNotice, setSubmitNotice] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  const [reviewing, setReviewing] = useState(false)
+  const [editStep, setEditStep] = useState(null)
+  const [resultStats, setResultStats] = useState({})
+
+  const { standings, results } = useCompetitionData()
 
   useEffect(() => {
     if (!isSupabaseConfigured) return
@@ -83,6 +91,36 @@ function PredictionsPageContent() {
       })
   }, [auth?.user])
 
+  useEffect(() => {
+    if (!isSupabaseConfigured || !submittedAll) return
+
+    supabase
+      .from('fixture_result_stats')
+      .select('*')
+      .in('fixture_id', champagneNine.map((f) => f.id))
+      .then(({ data, error }) => {
+        if (error || !data) return
+
+        const totalsByFixture = {}
+        for (const row of data) {
+          totalsByFixture[row.fixture_id] ??= { total: 0, byResult: {} }
+          totalsByFixture[row.fixture_id].total += row.pick_count
+          totalsByFixture[row.fixture_id].byResult[row.predicted_result] = row.pick_count
+        }
+
+        const stats = {}
+        for (const fixture of champagneNine) {
+          const pick = myPredictions[fixture.id]
+          if (!pick) continue
+          const result = pickResult(pick.home_score_pick, pick.away_score_pick)
+          const entry = totalsByFixture[fixture.id]
+          if (!entry || entry.total === 0) continue
+          stats[fixture.id] = Math.round(((entry.byResult[result] ?? 0) / entry.total) * 100)
+        }
+        setResultStats(stats)
+      })
+  }, [submittedAll, myPredictions])
+
   function refreshLeaderboard() {
     supabase
       .from('leaderboard')
@@ -124,10 +162,10 @@ function PredictionsPageContent() {
       setSubmitNotice({ type: 'info', text: 'Sign in above to submit your predictions.' })
       return
     }
-    if (upcoming.length === 0) return
+    if (champagneNine.length === 0) return
 
     setSubmitting(true)
-    const rows = upcoming.map((fixture) => ({
+    const rows = champagneNine.map((fixture) => ({
       user_id: auth.user.id,
       fixture_id: fixture.id,
       home_score_pick: picks[fixture.id]?.home ?? myPredictions[fixture.id]?.home_score_pick ?? 0,
@@ -144,7 +182,8 @@ function PredictionsPageContent() {
       const byFixture = { ...myPredictions }
       for (const row of data) byFixture[row.fixture_id] = row
       setMyPredictions(byFixture)
-      setSubmitNotice({ type: 'success', text: 'Predictions submitted.' })
+      setSubmitNotice({ type: 'success', text: 'Champagne Nine submitted.' })
+      setReviewing(false)
     } else {
       setSubmitNotice({ type: 'error', text: 'Could not submit your predictions, try again.' })
     }
@@ -158,6 +197,8 @@ function PredictionsPageContent() {
   }
 
   const upcoming = fixtures.filter((f) => f.status === 'scheduled')
+  const champagneNine = useMemo(() => buildChampagneNineFixtures(upcoming), [upcoming])
+  const submittedAll = champagneNine.length > 0 && champagneNine.every((f) => myPredictions[f.id])
   const awaitingResult = fixtures.filter((f) => f.status === 'locked')
   const recentlyDecided = fixtures
     .filter((f) => f.status === 'completed')
@@ -169,7 +210,7 @@ function PredictionsPageContent() {
   return (
     <section>
       <h1>Predictions</h1>
-      <p className="section-subtitle">12 fixtures each week, 4 from each competition. Pick the scoreline before kickoff, 3 points for an exact score, 1 for the right result.</p>
+      <p className="section-subtitle">Champagne Nine: 9 fixtures each week, 4 NPL NSW, 3 League One, 2 League Two. Pick the scoreline before kickoff, 3 points for an exact score, 1 for the right result.</p>
 
       {!auth?.user && (
         <div className="auth-card">
@@ -211,54 +252,61 @@ function PredictionsPageContent() {
         <CompetitionReference heading={null} />
       </details>
 
-      <h2>Upcoming Fixtures</h2>
-      <div className="fixture-list">
-        {upcoming.map((fixture) => {
-          const existing = myPredictions[fixture.id]
-          return (
-            <div key={fixture.id} className="fixture-card">
-              <div className="fixture-card__meta">
-                <span className="fixture-card__competition">{fixture.competition}</span>
-                <span className="fixture-card__kickoff">{formatKickoff(fixture.kickoff_at)}</span>
-              </div>
-              <div className="fixture-card__matchup">
-                <div className="fixture-card__row">
-                  <span className="fixture-card__team">
-                    <TeamCrest src={fixture.home_logo} name={fixture.home_team} />
-                    <span className="fixture-card__team-name">{fixture.home_team}</span>
-                  </span>
-                  <ScoreStepper
-                    value={picks[fixture.id]?.home ?? existing?.home_score_pick ?? 0}
-                    onChange={(v) => updatePick(fixture.id, 'home', v)}
-                  />
-                </div>
-                <div className="fixture-card__row">
-                  <span className="fixture-card__team">
-                    <TeamCrest src={fixture.away_logo} name={fixture.away_team} />
-                    <span className="fixture-card__team-name">{fixture.away_team}</span>
-                  </span>
-                  <ScoreStepper
-                    value={picks[fixture.id]?.away ?? existing?.away_score_pick ?? 0}
-                    onChange={(v) => updatePick(fixture.id, 'away', v)}
-                  />
-                </div>
-                <span className="fixture-card__vs">v</span>
-              </div>
-            </div>
-          )
-        })}
-        {upcoming.length === 0 && <p className="auth-note">No upcoming fixtures open for picks right now.</p>}
-      </div>
+      <h2>Champagne Nine</h2>
 
-      {upcoming.length > 0 && (
-        <div className="predictions-submit">
-          <button className="button" onClick={submitAllPicks} disabled={submitting}>
-            {submitting ? 'Submitting...' : 'Submit Predictions'}
-          </button>
-          {submitNotice && (
-            <p className={`form-notice form-notice--${submitNotice.type}`}>{submitNotice.text}</p>
+      {champagneNine.length === 0 && <p className="auth-note">No fixtures open for picks right now.</p>}
+
+      {champagneNine.length > 0 && submittedAll && (
+        <ChampagneNineSummary
+          fixtures={champagneNine}
+          picks={Object.fromEntries(
+            champagneNine.map((f) => [
+              f.id,
+              { home: myPredictions[f.id]?.home_score_pick ?? 0, away: myPredictions[f.id]?.away_score_pick ?? 0 },
+            ]),
           )}
-        </div>
+          locked
+          resultStats={resultStats}
+        />
+      )}
+
+      {champagneNine.length > 0 && !submittedAll && reviewing && (
+        <ChampagneNineSummary
+          fixtures={champagneNine}
+          picks={Object.fromEntries(
+            champagneNine.map((f) => [
+              f.id,
+              { home: picks[f.id]?.home ?? myPredictions[f.id]?.home_score_pick ?? 0, away: picks[f.id]?.away ?? myPredictions[f.id]?.away_score_pick ?? 0 },
+            ]),
+          )}
+          onEdit={(fixtureId) => {
+            setEditStep(champagneNine.findIndex((f) => f.id === fixtureId))
+            setReviewing(false)
+          }}
+          onSubmit={submitAllPicks}
+          submitting={submitting}
+        />
+      )}
+
+      {champagneNine.length > 0 && !submittedAll && !reviewing && (
+        <ChampagneNineWizard
+          key={editStep ?? 'wizard'}
+          fixtures={champagneNine}
+          picks={picks}
+          updatePick={updatePick}
+          standings={standings}
+          results={results}
+          initialStep={editStep ?? 0}
+          initialCompletedCount={editStep != null ? champagneNine.length - 1 : 0}
+          onComplete={() => {
+            setEditStep(null)
+            setReviewing(true)
+          }}
+        />
+      )}
+
+      {submitNotice && (
+        <p className={`form-notice form-notice--${submitNotice.type}`}>{submitNotice.text}</p>
       )}
 
       {awaitingResult.length > 0 && (
@@ -342,38 +390,4 @@ function PredictionsPageContent() {
       )}
     </section>
   )
-}
-
-function ScoreStepper({ value, onChange }) {
-  return (
-    <div className="score-stepper">
-      <button
-        type="button"
-        className="score-stepper__btn"
-        onClick={() => onChange(Math.max(0, value - 1))}
-        aria-label="Decrease score"
-      >
-        −
-      </button>
-      <span className="score-stepper__value">{value}</span>
-      <button
-        type="button"
-        className="score-stepper__btn"
-        onClick={() => onChange(value + 1)}
-        aria-label="Increase score"
-      >
-        +
-      </button>
-    </div>
-  )
-}
-
-function formatKickoff(iso) {
-  return new Date(iso).toLocaleString('en-AU', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    hour: 'numeric',
-    minute: '2-digit',
-  })
 }

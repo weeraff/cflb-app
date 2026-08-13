@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { COMPETITIONS } from '../lib/placeholderData'
+import { computeForm } from '../lib/form'
 import TeamCrest from './TeamCrest'
 import useCompetitionData from '../hooks/useCompetitionData'
 
@@ -9,23 +10,7 @@ const COMPETITION_LABELS = {
   'League Two': 'Football NSW League Two',
 }
 
-function computeForm(team, results, competition) {
-  return results
-    .filter((r) => r.competition === competition && (r.home_team === team || r.away_team === team))
-    .sort((a, b) => new Date(b.played_at) - new Date(a.played_at))
-    .slice(0, 5)
-    .reverse()
-    .map((r) => {
-      const isHome = r.home_team === team
-      const gf = isHome ? r.home_score : r.away_score
-      const ga = isHome ? r.away_score : r.home_score
-      if (gf > ga) return 'W'
-      if (gf < ga) return 'L'
-      return 'D'
-    })
-}
-
-function FormGuide({ picks }) {
+export function FormGuide({ picks }) {
   if (picks.length === 0) return <span className="form-guide form-guide--empty">—</span>
   return (
     <span className="form-guide">
