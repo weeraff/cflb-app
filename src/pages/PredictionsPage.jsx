@@ -91,36 +91,6 @@ function PredictionsPageContent() {
       })
   }, [auth?.user])
 
-  useEffect(() => {
-    if (!isSupabaseConfigured || !submittedAll) return
-
-    supabase
-      .from('fixture_result_stats')
-      .select('*')
-      .in('fixture_id', champagneNine.map((f) => f.id))
-      .then(({ data, error }) => {
-        if (error || !data) return
-
-        const totalsByFixture = {}
-        for (const row of data) {
-          totalsByFixture[row.fixture_id] ??= { total: 0, byResult: {} }
-          totalsByFixture[row.fixture_id].total += row.pick_count
-          totalsByFixture[row.fixture_id].byResult[row.predicted_result] = row.pick_count
-        }
-
-        const stats = {}
-        for (const fixture of champagneNine) {
-          const pick = myPredictions[fixture.id]
-          if (!pick) continue
-          const result = pickResult(pick.home_score_pick, pick.away_score_pick)
-          const entry = totalsByFixture[fixture.id]
-          if (!entry || entry.total === 0) continue
-          stats[fixture.id] = Math.round(((entry.byResult[result] ?? 0) / entry.total) * 100)
-        }
-        setResultStats(stats)
-      })
-  }, [submittedAll, myPredictions])
-
   function refreshLeaderboard() {
     supabase
       .from('leaderboard')
@@ -199,6 +169,36 @@ function PredictionsPageContent() {
   const upcoming = fixtures.filter((f) => f.status === 'scheduled')
   const champagneNine = useMemo(() => buildChampagneNineFixtures(upcoming), [upcoming])
   const submittedAll = champagneNine.length > 0 && champagneNine.every((f) => myPredictions[f.id])
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !submittedAll) return
+
+    supabase
+      .from('fixture_result_stats')
+      .select('*')
+      .in('fixture_id', champagneNine.map((f) => f.id))
+      .then(({ data, error }) => {
+        if (error || !data) return
+
+        const totalsByFixture = {}
+        for (const row of data) {
+          totalsByFixture[row.fixture_id] ??= { total: 0, byResult: {} }
+          totalsByFixture[row.fixture_id].total += row.pick_count
+          totalsByFixture[row.fixture_id].byResult[row.predicted_result] = row.pick_count
+        }
+
+        const stats = {}
+        for (const fixture of champagneNine) {
+          const pick = myPredictions[fixture.id]
+          if (!pick) continue
+          const result = pickResult(pick.home_score_pick, pick.away_score_pick)
+          const entry = totalsByFixture[fixture.id]
+          if (!entry || entry.total === 0) continue
+          stats[fixture.id] = Math.round(((entry.byResult[result] ?? 0) / entry.total) * 100)
+        }
+        setResultStats(stats)
+      })
+  }, [submittedAll, myPredictions])
   const awaitingResult = fixtures.filter((f) => f.status === 'locked')
   const recentlyDecided = fixtures
     .filter((f) => f.status === 'completed')
