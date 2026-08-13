@@ -6,8 +6,10 @@ import { PREDICTIONS_COMING_SOON } from '../lib/featureFlags'
 import TeamCrest from '../components/TeamCrest'
 import Leagues from '../components/Leagues'
 import CompetitionReference from '../components/CompetitionReference'
-import ChampagneNineWizard, { buildChampagneNineFixtures } from '../components/ChampagneNineWizard'
-import ChampagneNineSummary, { pickResult } from '../components/ChampagneNineSummary'
+import SponsorModule from '../components/SponsorModule'
+import TheEightWizard from '../components/TheEightWizard'
+import TheEightSummary, { pickResult } from '../components/TheEightSummary'
+import { buildTheEightFixtures, computeRoundKey } from '../lib/theEight'
 import useCompetitionData from '../hooks/useCompetitionData'
 
 export default function PredictionsPage() {
@@ -43,6 +45,8 @@ function PredictionsPageContent() {
   const [reviewing, setReviewing] = useState(false)
   const [editStep, setEditStep] = useState(null)
   const [resultStats, setResultStats] = useState({})
+  const [tiebreakerPick, setTiebreakerPick] = useState(null)
+  const [savedTiebreakers, setSavedTiebreakers] = useState({})
 
   const { standings, results } = useCompetitionData()
 
@@ -89,6 +93,18 @@ function PredictionsPageContent() {
           setMyPredictions(byFixture)
         }
       })
+
+    supabase
+      .from('tiebreaker_predictions')
+      .select('*')
+      .eq('user_id', auth.user.id)
+      .then(({ data, error }) => {
+        if (!error && data) {
+          const byRound = {}
+          for (const t of data) byRound[t.round_key] = t.minute_pick
+          setSavedTiebreakers(byRound)
+        }
+      })
   }, [auth?.user])
 
   function refreshLeaderboard() {
@@ -132,10 +148,10 @@ function PredictionsPageContent() {
       setSubmitNotice({ type: 'info', text: 'Sign in above to submit your predictions.' })
       return
     }
-    if (champagneNine.length === 0) return
+    if (theEight.length === 0) return
 
     setSubmitting(true)
-    const rows = champagneNine.map((fixture) => ({
+    const rows = theEight.map((fixture) => ({
       user_id: auth.user.id,
       fixture_id: fixture.id,
       home_score_pick: picks[fixture.id]?.home ?? myPredictions[fixture.id]?.home_score_pick ?? 0,
@@ -147,12 +163,26 @@ function PredictionsPageContent() {
       .upsert(rows, { onConflict: 'user_id,fixture_id' })
       .select()
 
+    if (!error && roundKey) {
+      await supabase.from('tiebreaker_predictions').upsert(
+        {
+          user_id: auth.user.id,
+          round_key: roundKey,
+          minute_pick: tiebreakerPick ?? savedTiebreakers[roundKey] ?? 0,
+        },
+        { onConflict: 'user_id,round_key' },
+      )
+    }
+
     setSubmitting(false)
     if (!error) {
       const byFixture = { ...myPredictions }
       for (const row of data) byFixture[row.fixture_id] = row
       setMyPredictions(byFixture)
-      setSubmitNotice({ type: 'success', text: 'Champagne Nine submitted.' })
+      if (roundKey) {
+        setSavedTiebreakers((prev) => ({ ...prev, [roundKey]: tiebreakerPick ?? prev[roundKey] ?? 0 }))
+      }
+      setSubmitNotice({ type: 'success', text: 'The Eight submitted.' })
       setReviewing(false)
     } else {
       setSubmitNotice({ type: 'error', text: 'Could not submit your predictions, try again.' })
@@ -167,8 +197,9 @@ function PredictionsPageContent() {
   }
 
   const upcoming = fixtures.filter((f) => f.status === 'scheduled')
-  const champagneNine = useMemo(() => buildChampagneNineFixtures(upcoming), [upcoming])
-  const submittedAll = champagneNine.length > 0 && champagneNine.every((f) => myPredictions[f.id])
+  const theEight = useMemo(() => buildTheEightFixtures(upcoming), [upcoming])
+  const roundKey = useMemo(() => computeRoundKey(theEight), [theEight])
+  const submittedAll = theEight.length > 0 && theEight.every((f) => myPredictions[f.id])
 
   useEffect(() => {
     if (!isSupabaseConfigured || !submittedAll) return
@@ -176,7 +207,7 @@ function PredictionsPageContent() {
     supabase
       .from('fixture_result_stats')
       .select('*')
-      .in('fixture_id', champagneNine.map((f) => f.id))
+      .in('fixture_id', theEight.map((f) => f.id))
       .then(({ data, error }) => {
         if (error || !data) return
 
@@ -188,7 +219,7 @@ function PredictionsPageContent() {
         }
 
         const stats = {}
-        for (const fixture of champagneNine) {
+        for (const fixture of theEight) {
           const pick = myPredictions[fixture.id]
           if (!pick) continue
           const result = pickResult(pick.home_score_pick, pick.away_score_pick)
@@ -210,7 +241,7 @@ function PredictionsPageContent() {
   return (
     <section>
       <h1>Predictions</h1>
-      <p className="section-subtitle">Champagne Nine: 9 fixtures each week, 4 NPL NSW, 3 League One, 2 League Two. Pick the scoreline before kickoff, 3 points for an exact score, 1 for the right result.</p>
+      <p className="section-subtitle">The Eight: 8 fixtures each week, 4 NPL NSW, 3 League One, 1 League Two. Pick the scoreline before kickoff, 3 points for an exact score, 1 for the right result.</p>
 
       {!auth?.user && (
         <div className="auth-card">
@@ -252,52 +283,58 @@ function PredictionsPageContent() {
         <CompetitionReference heading={null} />
       </details>
 
-      <h2>Champagne Nine</h2>
+      <h2>The Eight</h2>
 
-      {champagneNine.length === 0 && <p className="auth-note">No fixtures open for picks right now.</p>}
+      <SponsorModule slot="predictions_top" rotateKey={roundKey ?? ''} />
 
-      {champagneNine.length > 0 && submittedAll && (
-        <ChampagneNineSummary
-          fixtures={champagneNine}
+      {theEight.length === 0 && <p className="auth-note">No fixtures open for picks right now.</p>}
+
+      {theEight.length > 0 && submittedAll && (
+        <TheEightSummary
+          fixtures={theEight}
           picks={Object.fromEntries(
-            champagneNine.map((f) => [
+            theEight.map((f) => [
               f.id,
               { home: myPredictions[f.id]?.home_score_pick ?? 0, away: myPredictions[f.id]?.away_score_pick ?? 0 },
             ]),
           )}
           locked
           resultStats={resultStats}
+          tiebreaker={savedTiebreakers[roundKey]}
+          roundKey={roundKey ?? ''}
         />
       )}
 
-      {champagneNine.length > 0 && !submittedAll && reviewing && (
-        <ChampagneNineSummary
-          fixtures={champagneNine}
+      {theEight.length > 0 && !submittedAll && reviewing && (
+        <TheEightSummary
+          fixtures={theEight}
           picks={Object.fromEntries(
-            champagneNine.map((f) => [
+            theEight.map((f) => [
               f.id,
               { home: picks[f.id]?.home ?? myPredictions[f.id]?.home_score_pick ?? 0, away: picks[f.id]?.away ?? myPredictions[f.id]?.away_score_pick ?? 0 },
             ]),
           )}
           onEdit={(fixtureId) => {
-            setEditStep(champagneNine.findIndex((f) => f.id === fixtureId))
+            setEditStep(theEight.findIndex((f) => f.id === fixtureId))
             setReviewing(false)
           }}
           onSubmit={submitAllPicks}
           submitting={submitting}
+          tiebreaker={tiebreakerPick ?? savedTiebreakers[roundKey] ?? 0}
+          onTiebreakerChange={setTiebreakerPick}
         />
       )}
 
-      {champagneNine.length > 0 && !submittedAll && !reviewing && (
-        <ChampagneNineWizard
+      {theEight.length > 0 && !submittedAll && !reviewing && (
+        <TheEightWizard
           key={editStep ?? 'wizard'}
-          fixtures={champagneNine}
+          fixtures={theEight}
           picks={picks}
           updatePick={updatePick}
           standings={standings}
           results={results}
           initialStep={editStep ?? 0}
-          initialCompletedCount={editStep != null ? champagneNine.length - 1 : 0}
+          initialCompletedCount={editStep != null ? theEight.length - 1 : 0}
           onComplete={() => {
             setEditStep(null)
             setReviewing(true)

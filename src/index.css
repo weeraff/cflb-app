@@ -1627,7 +1627,7 @@ h2 {
 }
 
 /* Champagne Nine — step-by-step prediction wizard */
-.champagne-nine {
+.the-eight {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1635,14 +1635,14 @@ h2 {
   margin-bottom: 2rem;
 }
 
-.champagne-nine__progress {
+.the-eight__progress {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
   justify-content: center;
 }
 
-.champagne-nine__dot {
+.the-eight__dot {
   width: 28px;
   height: 28px;
   flex: none;
@@ -1659,23 +1659,23 @@ h2 {
   padding: 0;
 }
 
-.champagne-nine__dot:disabled {
+.the-eight__dot:disabled {
   cursor: not-allowed;
   opacity: 0.4;
 }
 
-.champagne-nine__dot--done {
+.the-eight__dot--done {
   border-color: var(--accent-dim);
   color: var(--text);
 }
 
-.champagne-nine__dot--active {
+.the-eight__dot--active {
   border-color: var(--accent);
   color: var(--accent);
   background: var(--accent-soft);
 }
 
-.champagne-nine__card {
+.the-eight__card {
   width: 100%;
   max-width: 420px;
   border: 1px solid var(--border);
@@ -1687,7 +1687,7 @@ h2 {
   gap: 0.85rem;
 }
 
-.champagne-nine__meta {
+.the-eight__meta {
   display: flex;
   justify-content: space-between;
   gap: 0.75rem;
@@ -1699,32 +1699,32 @@ h2 {
   color: var(--text-dim);
 }
 
-.champagne-nine__competition {
+.the-eight__competition {
   color: var(--accent);
 }
 
-.champagne-nine__team {
+.the-eight__team {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
 }
 
-.champagne-nine__team-identity {
+.the-eight__team-identity {
   display: flex;
   align-items: center;
   gap: 0.6rem;
   min-width: 0;
 }
 
-.champagne-nine__team-info {
+.the-eight__team-info {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
   min-width: 0;
 }
 
-.champagne-nine__team-name {
+.the-eight__team-name {
   font-family: var(--font-body);
   font-weight: 700;
   font-size: 0.95rem;
@@ -1733,20 +1733,20 @@ h2 {
   white-space: nowrap;
 }
 
-.champagne-nine__team-meta {
+.the-eight__team-meta {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.champagne-nine__position {
+.the-eight__position {
   font-family: var(--font-display);
   font-size: 0.7rem;
   font-weight: 700;
   color: var(--gold);
 }
 
-.champagne-nine__vs {
+.the-eight__vs {
   align-self: center;
   font-family: var(--font-display);
   font-size: 0.7rem;
@@ -1755,22 +1755,67 @@ h2 {
   text-transform: uppercase;
 }
 
-.champagne-nine__next {
+.the-eight__next {
   align-self: stretch;
   margin-top: 0.5rem;
 }
 
-.champagne-nine__step-count {
+.the-eight__step-count {
   margin: 0;
   font-size: 0.8rem;
   color: var(--text-dim);
 }
 
-.champagne-nine-summary {
+.the-eight__pundit {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--gold);
+}
+
+.the-eight__crowd {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.the-eight__crowd-label {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.the-eight__crowd-bar {
+  display: flex;
+  height: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.the-eight__crowd-seg--home {
+  background: var(--accent);
+}
+
+.the-eight__crowd-seg--draw {
+  background: var(--text-dim);
+}
+
+.the-eight__crowd-seg--away {
+  background: var(--gold);
+}
+
+.the-eight__crowd-legend {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+.the-eight-summary {
   margin-bottom: 2rem;
 }
 
-.champagne-nine-summary__list {
+.the-eight-summary__list {
   list-style: none;
   margin: 0 0 1rem;
   padding: 0;
@@ -1779,7 +1824,7 @@ h2 {
   gap: 0.6rem;
 }
 
-.champagne-nine-summary__row {
+.the-eight-summary__row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1789,14 +1834,14 @@ h2 {
   padding: 0.75rem 1rem;
 }
 
-.champagne-nine-summary__match {
+.the-eight-summary__match {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
   min-width: 0;
 }
 
-.champagne-nine-summary__competition {
+.the-eight-summary__competition {
   font-family: var(--font-display);
   font-size: 0.65rem;
   font-weight: 700;
@@ -1805,7 +1850,7 @@ h2 {
   color: var(--accent);
 }
 
-.champagne-nine-summary__teams {
+.the-eight-summary__teams {
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -1814,20 +1859,20 @@ h2 {
   font-size: 0.9rem;
 }
 
-.champagne-nine-summary__team {
+.the-eight-summary__team {
   display: flex;
   align-items: center;
   gap: 0.4rem;
   min-width: 0;
 }
 
-.champagne-nine-summary__team span {
+.the-eight-summary__team span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.champagne-nine-summary__score {
+.the-eight-summary__score {
   font-family: var(--font-splash);
   font-weight: 400;
   font-size: 1.1rem;
@@ -1835,12 +1880,12 @@ h2 {
   flex: none;
 }
 
-.champagne-nine-summary__kickoff {
+.the-eight-summary__kickoff {
   font-size: 0.75rem;
   color: var(--text-dim);
 }
 
-.champagne-nine-summary__edit {
+.the-eight-summary__edit {
   flex: none;
   background: transparent;
   border: 1px solid var(--border);
@@ -1854,12 +1899,12 @@ h2 {
   cursor: pointer;
 }
 
-.champagne-nine-summary__edit:hover {
+.the-eight-summary__edit:hover {
   border-color: var(--accent);
   color: var(--accent);
 }
 
-.champagne-nine-summary__stat {
+.the-eight-summary__stat {
   flex: none;
   font-size: 0.75rem;
   color: var(--text-dim);
@@ -1867,19 +1912,140 @@ h2 {
   max-width: 8rem;
 }
 
-.champagne-nine-summary__submit {
+.the-eight-summary__submit {
   width: 100%;
 }
 
+.the-eight-summary__share {
+  width: 100%;
+  margin-top: 0.6rem;
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+}
+
+.the-eight-summary__share:hover {
+  background: var(--gold-soft);
+}
+
+.the-eight-summary__pundit {
+  font-size: 0.75rem;
+  color: var(--gold);
+}
+
+.the-eight-summary__tiebreaker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px dashed var(--border);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.the-eight-summary__tiebreaker-label {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.the-eight-summary__tiebreaker-value {
+  font-family: var(--font-splash);
+  font-weight: 400;
+  font-size: 1.2rem;
+  color: var(--gold);
+  flex: none;
+}
+
+.the-eight-summary__beat-host {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin: 0 0 1rem;
+}
+
 @media (max-width: 640px) {
-  .champagne-nine-summary__row {
+  .the-eight-summary__row {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .champagne-nine-summary__stat {
+  .the-eight-summary__stat {
     text-align: left;
     max-width: none;
+  }
+
+  .the-eight-summary__tiebreaker {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+}
+
+/* Sponsor module — reusable content-driven placement */
+.sponsor-module {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.sponsor-module__logo {
+  width: 52px;
+  height: 52px;
+  flex: none;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.sponsor-module__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.sponsor-module__headline {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.sponsor-module__text {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.sponsor-module__cta {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--accent);
+}
+
+.sponsor-module__attribution {
+  flex: none;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  align-self: flex-start;
+}
+
+@media (max-width: 640px) {
+  .sponsor-module {
+    flex-wrap: wrap;
+  }
+
+  .sponsor-module__attribution {
+    order: 3;
+    width: 100%;
   }
 }
 

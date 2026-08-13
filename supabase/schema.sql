@@ -120,8 +120,8 @@ create table if not exists fixtures (
   home_score int,
   away_score int,
   status text not null default 'scheduled' check (status in ('scheduled', 'locked', 'completed')),
-  -- Each week the show features 9 fixtures for predictions ("Champagne
-  -- Nine": 4 NPL NSW, 3 League One, 2 League Two), hand-picked, not every
+  -- Each week the show features 8 fixtures for predictions ("The Eight":
+  -- 4 NPL NSW, 3 League One, 1 League Two), hand-picked, not every
   -- fixture that syncs in.
   featured boolean not null default false,
   -- Whether a "picks closing soon" / "full time" push has already gone
@@ -132,6 +132,11 @@ create table if not exists fixtures (
   -- `status`/`home_score`/`away_score` above, which stay governed by the
   -- official Dribl-driven standings-sync pipeline.
   reported_status text not null default 'scheduled' check (reported_status in ('scheduled', 'live', 'full_time')),
+  -- Optional featured pundit pick ("Gaz picked 2-1"), manually entered
+  -- alongside the weekly featured-fixture curation. Null when unset.
+  pundit_name text,
+  pundit_home_pick int,
+  pundit_away_pick int,
   created_at timestamptz not null default now()
 );
 
@@ -156,6 +161,19 @@ create table if not exists predictions (
   points_awarded int,
   created_at timestamptz not null default now(),
   unique (user_id, fixture_id)
+);
+
+-- Golden-goal-style tiebreaker: one extra prediction per round (minute of
+-- the first goal across the round). Rounds aren't modelled as their own
+-- entity, so `round_key` is a stable, client-derived label (the earliest
+-- kickoff date among that round's 8 fixtures) rather than a foreign key.
+create table if not exists tiebreaker_predictions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  round_key text not null,
+  minute_pick int not null check (minute_pick >= 0 and minute_pick <= 120),
+  created_at timestamptz not null default now(),
+  unique (user_id, round_key)
 );
 
 -- ============ Flash reporter ============
@@ -223,7 +241,10 @@ create table if not exists sponsors (
   name text not null,
   logo_url text,
   link_url text not null,
-  slot text not null check (slot in ('header', 'feed', 'sidebar')),
+  slot text not null check (slot in ('header', 'feed', 'sidebar', 'predictions_top', 'predictions_post_submit')),
+  headline text,
+  body text,
+  cta_text text not null default 'Learn more',
   active boolean not null default true,
   created_at timestamptz not null default now()
 );
@@ -257,6 +278,7 @@ alter table leagues enable row level security;
 alter table league_members enable row level security;
 alter table match_events enable row level security;
 alter table match_lineups enable row level security;
+alter table tiebreaker_predictions enable row level security;
 
 -- Public read-only content: anyone (including anon) can read, only the
 -- service role (used by scheduled edge functions) can write.
@@ -302,6 +324,15 @@ create policy "users update their own predictions before kickoff" on predictions
       and fixtures.featured = true
     )
   );
+
+create policy "users read their own tiebreaker picks" on tiebreaker_predictions
+  for select using (auth.uid() = user_id);
+
+create policy "users manage their own tiebreaker picks" on tiebreaker_predictions
+  for insert with check (auth.uid() = user_id);
+
+create policy "users update their own tiebreaker picks" on tiebreaker_predictions
+  for update using (auth.uid() = user_id);
 
 -- Leaderboard is a public read of aggregated points; expose via a view
 -- rather than opening predictions to public select.
