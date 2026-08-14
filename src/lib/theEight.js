@@ -30,3 +30,11 @@ export function computeRoundKey(fixtures) {
   const earliest = fixtures.reduce((min, f) => (new Date(f.kickoff_at) < new Date(min.kickoff_at) ? f : min))
   return new Date(earliest.kickoff_at).toISOString().slice(0, 10)
 }
+
+// Picks lock at kickoff of the round's first fixture (chronologically
+// earliest, not necessarily first in the tier-grouped display order).
+export function computeLockTime(fixtures) {
+  if (fixtures.length === 0) return null
+  const earliest = fixtures.reduce((min, f) => (new Date(f.kickoff_at) < new Date(min.kickoff_at) ? f : min))
+  return new Date(earliest.kickoff_at)
+}

@@ -2049,6 +2049,237 @@ h2 {
   }
 }
 
+/* Predictions home-screen dashboard — its own token namespace (scoped
+   to this wrapper, not the global --bg/--accent/etc) so the champagne-
+   gold direction lives here without reskinning the rest of the site. */
+.predictions-dashboard {
+  --pd-bg: #0e0d0b;
+  --pd-card: #1c1a15;
+  --pd-gold: #c9a35c;
+  --pd-text: #f2e8d5;
+  --pd-muted: #8a8577;
+  --pd-border: #3a3527;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin: 1.5rem 0 2rem;
+  color: var(--pd-text);
+}
+
+.pd-card {
+  background: var(--pd-card);
+  border: 0.5px solid var(--pd-border);
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
+}
+
+.pd-label {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pd-gold);
+  margin-bottom: 0.5rem;
+}
+
+/* Countdown — top card, primary visual weight */
+.pd-card--countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.5rem;
+}
+
+.pd-countdown__time {
+  font-family: var(--font-splash);
+  font-weight: 400;
+  font-size: 2.6rem;
+  line-height: 1;
+  color: var(--pd-text);
+}
+
+.pd-countdown__time--locked {
+  color: var(--pd-muted);
+  font-size: 1.8rem;
+}
+
+.pd-cta {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: var(--pd-gold);
+  color: #171410;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  align-self: stretch;
+  text-align: center;
+}
+
+.pd-cta:disabled {
+  background: transparent;
+  border: 0.5px solid var(--pd-border);
+  color: var(--pd-muted);
+  cursor: default;
+}
+
+.pd-cta:not(:disabled):hover {
+  filter: brightness(1.08);
+}
+
+/* Rank + streak pair */
+.pd-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+.pd-card--stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.pd-stat {
+  font-family: var(--font-splash);
+  font-weight: 400;
+  font-size: 2rem;
+  color: var(--pd-text);
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.pd-movement {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.pd-movement--up {
+  color: #7fc27a;
+}
+
+.pd-movement--down {
+  color: #d9705f;
+}
+
+/* Beat the Host — equal or greater weight than the stat pair */
+.pd-card--host {
+  padding: 1.25rem;
+}
+
+.pd-host__empty {
+  margin: 0;
+  color: var(--pd-muted);
+  font-size: 0.85rem;
+}
+
+.pd-host__row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 0.5rem 0;
+}
+
+.pd-host__row + .pd-host__row {
+  border-top: 0.5px solid var(--pd-border);
+}
+
+.pd-host__side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  min-width: 4.5rem;
+}
+
+.pd-host__value {
+  font-family: var(--font-splash);
+  font-weight: 400;
+  font-size: 1.8rem;
+  color: var(--pd-text);
+}
+
+.pd-host__name {
+  font-size: 0.75rem;
+  color: var(--pd-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pd-host__vs {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--pd-muted);
+  text-transform: uppercase;
+}
+
+.pd-host__vs--ahead {
+  color: var(--pd-gold);
+}
+
+.pd-card--signin-prompt {
+  color: var(--pd-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* Round Wrap video + sponsor placeholders — static for now */
+.pd-card--video {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem;
+}
+
+.pd-video__thumb {
+  width: 56px;
+  height: 56px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--pd-border);
+  color: var(--pd-muted);
+  font-size: 1.1rem;
+}
+
+.pd-video__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.pd-video__runtime {
+  font-size: 0.75rem;
+  color: var(--pd-muted);
+}
+
+.pd-card--sponsor-slot {
+  min-height: 84px;
+}
+
+.pd-pair--placeholders {
+  align-items: stretch;
+}
+
+@media (max-width: 640px) {
+  .pd-pair {
+    grid-template-columns: 1fr;
+  }
+}
+
 .leaderboard {
   list-style: none;
   margin: 0;

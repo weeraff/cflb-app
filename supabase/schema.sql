@@ -149,6 +149,9 @@ create table if not exists profiles (
   -- Allowlisted flash reporters (toggled by hand in the Supabase
   -- dashboard, no admin UI in v1) can log live goal/card events.
   is_reporter boolean not null default false,
+  -- Distinct from is_reporter — who the "Beat the Host" widget compares a
+  -- user's season points against. Toggled by hand, same pattern.
+  is_host boolean not null default false,
   created_at timestamptz not null default now()
 );
 
@@ -174,6 +177,37 @@ create table if not exists tiebreaker_predictions (
   minute_pick int not null check (minute_pick >= 0 and minute_pick <= 120),
   created_at timestamptz not null default now(),
   unique (user_id, round_key)
+);
+
+-- Server-computed (standings-sync, after scoring) — never written to
+-- directly by users.
+create table if not exists streaks (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  current_streak int not null default 0,
+  longest_streak int not null default 0,
+  last_updated timestamptz not null default now()
+);
+
+-- One row per (user, host, season); user_points/host_points are each
+-- side's total scored season points, refreshed in full on every scoring
+-- run rather than incremented, so it can't drift out of sync with
+-- `leaderboard`.
+create table if not exists beat_host_season (
+  user_id uuid not null references auth.users (id) on delete cascade,
+  host_id uuid not null references auth.users (id) on delete cascade,
+  season_id text not null,
+  user_points int not null default 0,
+  host_points int not null default 0,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, host_id, season_id)
+);
+
+-- Tracks whether the "round results are final" push has gone out for a
+-- round (keyed the same way the frontend keys one: the earliest kickoff
+-- date among that round's featured fixtures), so it fires once per round.
+create table if not exists round_notifications (
+  round_key text primary key,
+  results_notified boolean not null default false
 );
 
 -- ============ Flash reporter ============
@@ -279,6 +313,9 @@ alter table league_members enable row level security;
 alter table match_events enable row level security;
 alter table match_lineups enable row level security;
 alter table tiebreaker_predictions enable row level security;
+alter table streaks enable row level security;
+alter table beat_host_season enable row level security;
+alter table round_notifications enable row level security;
 
 -- Public read-only content: anyone (including anon) can read, only the
 -- service role (used by scheduled edge functions) can write.
@@ -333,6 +370,15 @@ create policy "users manage their own tiebreaker picks" on tiebreaker_prediction
 
 create policy "users update their own tiebreaker picks" on tiebreaker_predictions
   for update using (auth.uid() = user_id);
+
+-- Streaks and beat_host_season are server-computed (standings-sync, using
+-- the service role which bypasses RLS) — users can read their own row but
+-- there's no insert/update policy for the authenticated role.
+create policy "users read their own streak" on streaks
+  for select using (auth.uid() = user_id);
+
+create policy "users read their own beat-host rows" on beat_host_season
+  for select using (auth.uid() = user_id);
 
 -- Leaderboard is a public read of aggregated points; expose via a view
 -- rather than opening predictions to public select.

@@ -7,9 +7,10 @@ import TeamCrest from '../components/TeamCrest'
 import Leagues from '../components/Leagues'
 import CompetitionReference from '../components/CompetitionReference'
 import SponsorModule from '../components/SponsorModule'
+import PredictionsDashboard from '../components/PredictionsDashboard'
 import TheEightWizard from '../components/TheEightWizard'
 import TheEightSummary, { pickResult } from '../components/TheEightSummary'
-import { buildTheEightFixtures, computeRoundKey } from '../lib/theEight'
+import { buildTheEightFixtures, computeRoundKey, computeLockTime } from '../lib/theEight'
 import useCompetitionData from '../hooks/useCompetitionData'
 
 export default function PredictionsPage() {
@@ -199,7 +200,12 @@ function PredictionsPageContent() {
   const upcoming = fixtures.filter((f) => f.status === 'scheduled')
   const theEight = useMemo(() => buildTheEightFixtures(upcoming), [upcoming])
   const roundKey = useMemo(() => computeRoundKey(theEight), [theEight])
+  const lockTime = useMemo(() => computeLockTime(theEight), [theEight])
   const submittedAll = theEight.length > 0 && theEight.every((f) => myPredictions[f.id])
+
+  const sortedLeaderboard = [...leaderboard].sort((a, b) => b.points - a.points)
+  const myLeaderboardIndex = auth?.user ? sortedLeaderboard.findIndex((entry) => entry.user_id === auth.user.id) : -1
+  const myRank = myLeaderboardIndex >= 0 ? myLeaderboardIndex + 1 : null
 
   useEffect(() => {
     if (!isSupabaseConfigured || !submittedAll) return
@@ -243,6 +249,15 @@ function PredictionsPageContent() {
       <h1>Predictions</h1>
       <p className="section-subtitle">The Eight: 8 fixtures each week, 4 NPL NSW, 3 League One, 1 League Two. Pick the scoreline before kickoff, 3 points for an exact score, 1 for the right result.</p>
 
+      <PredictionsDashboard
+        userId={auth?.user?.id ?? null}
+        lockTime={lockTime}
+        submittedAll={submittedAll}
+        hasFixtures={theEight.length > 0}
+        rank={myRank}
+        onCta={() => document.getElementById('the-eight-picks')?.scrollIntoView({ behavior: 'smooth' })}
+      />
+
       {!auth?.user && (
         <div className="auth-card">
           <p>Sign in to save your predictions and appear on the leaderboard.</p>
@@ -283,7 +298,7 @@ function PredictionsPageContent() {
         <CompetitionReference heading={null} />
       </details>
 
-      <h2>The Eight</h2>
+      <h2 id="the-eight-picks">The Eight</h2>
 
       <SponsorModule slot="predictions_top" rotateKey={roundKey ?? ''} />
 

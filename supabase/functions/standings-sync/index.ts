@@ -117,14 +117,21 @@ Deno.serve(async () => {
     await logError(supabase, 'notify-results', err)
   }
 
-  // Ranks can only move when points changed, so skip the leaderboard
-  // recompute entirely on runs where nothing was scored.
+  // Ranks (and Beat the Host) can only move when points changed, so skip
+  // the leaderboard-dependent recomputes entirely on runs where nothing
+  // was scored.
   let rankChangesNotified = 0
+  let beatHostUpdated = 0
   if (scored > 0) {
     try {
       rankChangesNotified = await notifyRankChanges(supabase)
     } catch (err) {
       await logError(supabase, 'notify-rank-change', err)
+    }
+    try {
+      beatHostUpdated = await updateBeatHostSeason(supabase)
+    } catch (err) {
+      await logError(supabase, 'update-beat-host-season', err)
     }
   }
 
@@ -133,6 +140,13 @@ Deno.serve(async () => {
     closingNotified = await notifyPicksClosingSoon(supabase)
   } catch (err) {
     await logError(supabase, 'notify-picks-closing', err)
+  }
+
+  let roundSummaryNotified = 0
+  try {
+    roundSummaryNotified = await notifyRoundResultsSummary(supabase)
+  } catch (err) {
+    await logError(supabase, 'notify-round-summary', err)
   }
 
   return new Response(
@@ -147,6 +161,8 @@ Deno.serve(async () => {
       resultsNotified,
       closingNotified,
       rankChangesNotified,
+      beatHostUpdated,
+      roundSummaryNotified,
     }),
     { headers: { 'Content-Type': 'application/json' } },
   )
@@ -355,7 +371,9 @@ async function notifyCompletedFeaturedFixtures(supabase: SupabaseClientAny) {
 }
 
 // A single reminder per fixture once it's within 24h of kickoff, not a
-// re-send every 15 minutes while it sits inside that window.
+// re-send every 15 minutes while it sits inside that window. Only reaches
+// users who haven't submitted a pick for every one of that round's
+// featured fixtures — no point nagging someone who's already in.
 async function notifyPicksClosingSoon(supabase: SupabaseClientAny) {
   const within24h = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
 
@@ -369,12 +387,39 @@ async function notifyPicksClosingSoon(supabase: SupabaseClientAny) {
   if (error) throw error
   if (!data?.length) return 0
 
+  const { data: allFeatured, error: featuredError } = await supabase
+    .from('fixtures')
+    .select('id')
+    .eq('featured', true)
+    .eq('status', 'scheduled')
+  if (featuredError) throw featuredError
+  const roundFixtureIds: string[] = (allFeatured ?? []).map((f: { id: string }) => f.id)
+
+  const { data: profiles, error: profilesError } = await supabase.from('profiles').select('id')
+  if (profilesError) throw profilesError
+
+  const { data: predictions, error: predictionsError } = await supabase
+    .from('predictions')
+    .select('user_id, fixture_id')
+    .in('fixture_id', roundFixtureIds)
+  if (predictionsError) throw predictionsError
+
+  const pickedFixturesByUser: Record<string, Set<string>> = {}
+  for (const p of predictions ?? []) {
+    pickedFixturesByUser[p.user_id] ??= new Set()
+    pickedFixturesByUser[p.user_id].add(p.fixture_id)
+  }
+
+  const incompleteUserIds = (profiles ?? [])
+    .map((p: { id: string }) => p.id)
+    .filter((userId: string) => (pickedFixturesByUser[userId]?.size ?? 0) < roundFixtureIds.length)
+
   const body =
     data.length === 1
       ? 'A featured fixture kicks off within 24 hours, get your pick in.'
       : `${data.length} featured fixtures kick off within 24 hours, get your picks in.`
 
-  const sent = await sendPushToAll(supabase, { title: 'Picks close soon', body, url: '/predictions' })
+  const sent = await sendPushToUsers(supabase, incompleteUserIds, { title: 'Picks close soon', body, url: '/predictions' })
 
   await supabase
     .from('fixtures')
@@ -389,32 +434,135 @@ async function notifyPicksClosingSoon(supabase: SupabaseClientAny) {
 async function scorePredictions(supabase: SupabaseClientAny) {
   const { data: completedFixtures, error: fixturesError } = await supabase
     .from('fixtures')
-    .select('id, home_score, away_score')
+    .select('id, home_score, away_score, kickoff_at')
     .eq('status', 'completed')
   if (fixturesError) throw fixturesError
   if (!completedFixtures?.length) return 0
 
   const { data: unscored, error: predictionsError } = await supabase
     .from('predictions')
-    .select('id, fixture_id, home_score_pick, away_score_pick')
+    .select('id, user_id, fixture_id, home_score_pick, away_score_pick')
     .in('fixture_id', completedFixtures.map((f: { id: string }) => f.id))
     .is('points_awarded', null)
   if (predictionsError) throw predictionsError
   if (!unscored?.length) return 0
 
-  const fixturesById: Record<string, { home_score: number; away_score: number }> = {}
+  const fixturesById: Record<string, { home_score: number; away_score: number; kickoff_at: string }> = {}
   for (const f of completedFixtures) fixturesById[f.id] = f
 
+  // Streaks are sequential per user, so picks must be scored in kickoff
+  // order even when a run completes several fixtures across different
+  // rounds at once.
+  const sorted = [...unscored].sort((a, b) => {
+    const ka = fixturesById[a.fixture_id]?.kickoff_at ?? ''
+    const kb = fixturesById[b.fixture_id]?.kickoff_at ?? ''
+    return ka.localeCompare(kb)
+  })
+
   let count = 0
-  for (const pick of unscored) {
+  for (const pick of sorted) {
     const fixture = fixturesById[pick.fixture_id]
     if (!fixture) continue
 
     const points = scoreOnePrediction(fixture, pick)
     const { error } = await supabase.from('predictions').update({ points_awarded: points }).eq('id', pick.id)
-    if (!error) count += 1
+    if (!error) {
+      count += 1
+      await updateStreak(supabase, pick.user_id, points > 0)
+    }
   }
   return count
+}
+
+// "Correct" for streak purposes means any points at all (right result,
+// exact score or not) — the more generous, natural reading of a streak.
+async function updateStreak(supabase: SupabaseClientAny, userId: string, correct: boolean) {
+  const { data: existing } = await supabase
+    .from('streaks')
+    .select('current_streak, longest_streak')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  const current = correct ? (existing?.current_streak ?? 0) + 1 : 0
+  const longest = Math.max(existing?.longest_streak ?? 0, current)
+
+  await supabase.from('streaks').upsert(
+    { user_id: userId, current_streak: current, longest_streak: longest, last_updated: new Date().toISOString() },
+    { onConflict: 'user_id' },
+  )
+}
+
+// Full recompute rather than an incremental add, so it can never drift
+// out of sync with `leaderboard` — mirrors how notifyRankChanges already
+// treats the leaderboard as the source of truth on every scoring run.
+async function updateBeatHostSeason(supabase: SupabaseClientAny) {
+  const { data: hosts, error: hostsError } = await supabase.from('profiles').select('id').eq('is_host', true)
+  if (hostsError) throw hostsError
+  if (!hosts?.length) return 0
+
+  const { data: leaderboard, error: leaderboardError } = await supabase.from('leaderboard').select('user_id, points')
+  if (leaderboardError) throw leaderboardError
+  if (!leaderboard?.length) return 0
+
+  const seasonId = new Date().getFullYear().toString()
+  const pointsByUserId: Record<string, number> = {}
+  for (const entry of leaderboard) pointsByUserId[entry.user_id] = entry.points
+
+  const rows = []
+  for (const entry of leaderboard) {
+    for (const host of hosts) {
+      rows.push({
+        user_id: entry.user_id,
+        host_id: host.id,
+        season_id: seasonId,
+        user_points: entry.points,
+        host_points: pointsByUserId[host.id] ?? 0,
+        updated_at: new Date().toISOString(),
+      })
+    }
+  }
+  if (rows.length === 0) return 0
+
+  const { error } = await supabase.from('beat_host_season').upsert(rows, { onConflict: 'user_id,host_id,season_id' })
+  if (error) throw error
+  return rows.length
+}
+
+// Fires once per round (not once per fixture) once every currently
+// featured fixture has a final result. Round key mirrors the frontend's
+// computeRoundKey: the earliest kickoff date among featured fixtures.
+async function notifyRoundResultsSummary(supabase: SupabaseClientAny) {
+  const { data: featured, error } = await supabase
+    .from('fixtures')
+    .select('status, kickoff_at')
+    .eq('featured', true)
+  if (error) throw error
+  if (!featured?.length) return 0
+  if (featured.some((f: { status: string }) => f.status !== 'completed')) return 0
+
+  const earliest = featured.reduce((min: { kickoff_at: string }, f: { kickoff_at: string }) =>
+    f.kickoff_at < min.kickoff_at ? f : min,
+  )
+  const roundKey = earliest.kickoff_at.slice(0, 10)
+
+  const { data: existing } = await supabase
+    .from('round_notifications')
+    .select('results_notified')
+    .eq('round_key', roundKey)
+    .maybeSingle()
+  if (existing?.results_notified) return 0
+
+  const sent = await sendPushToAll(supabase, {
+    title: 'Round results are in',
+    body: 'The full round is final, see how your picks stacked up on the leaderboard.',
+    url: '/predictions',
+  })
+
+  await supabase
+    .from('round_notifications')
+    .upsert({ round_key: roundKey, results_notified: true }, { onConflict: 'round_key' })
+
+  return sent
 }
 
 // Compares each user's current leaderboard position against their
