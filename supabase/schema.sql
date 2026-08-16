@@ -165,6 +165,10 @@ create table if not exists profiles (
   -- Distinct from is_reporter — who the "Beat the Host" widget compares a
   -- user's season points against. Toggled by hand, same pattern.
   is_host boolean not null default false,
+  -- Powers the personalised Home dashboard (next fixture, watch/
+  -- highlights). Free text, not a foreign key — team names aren't a
+  -- dedicated table anywhere in this schema.
+  followed_team text,
   created_at timestamptz not null default now()
 );
 

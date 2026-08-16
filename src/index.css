@@ -2639,6 +2639,103 @@ h2 {
   color: var(--accent);
 }
 
+/* My Team — personalised Home dashboard */
+.my-team {
+  margin-bottom: 2rem;
+}
+
+.my-team__picker {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.my-team__picker select {
+  flex: 1;
+  min-height: 44px;
+  font-family: var(--font-body);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0 0.75rem;
+}
+
+.my-team__grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .my-team__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.my-team__card {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.my-team__label {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.my-team__fixture {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 700;
+}
+
+.my-team__team {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.my-team__vs {
+  flex: none;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.my-team__kickoff {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.my-team__actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.my-team__card--episode {
+  justify-content: center;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.my-team__episode-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
 .recent-result__events {
   list-style: none;
   margin: 0.5rem 0 0;
