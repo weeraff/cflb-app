@@ -1307,6 +1307,37 @@ h2 {
   flex: none;
 }
 
+/* Interactive result rows (CompetitionReference, NPL NSW only) nest the
+   original row layout inside a toggle button, then stack the highlights
+   button / match-detail dropdown below it — plain result-row usage
+   elsewhere (PredictionsPage) is untouched. */
+.result-row--interactive {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex-wrap: nowrap;
+}
+
+.result-row__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.result-row__toggle:disabled {
+  cursor: default;
+}
+
 .scorers-list {
   list-style: none;
   margin: 0;
@@ -2592,54 +2623,8 @@ h2 {
   gap: 0.35rem;
 }
 
-/* Recent Results — same expand-in-place shape as .live-card, plus a
-   second, independent toggle for highlights. */
-.recent-results {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.recent-result {
-  border-top: 1px solid var(--border);
-  padding: 0.6rem 0;
-}
-
-.recent-result__summary {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  background: none;
-  border: none;
-  color: var(--text);
-  padding: 0;
-  cursor: pointer;
-  font-family: var(--font-body);
-  text-align: left;
-}
-
-.recent-result__team {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex: 1;
-  min-width: 0;
-  font-weight: 600;
-  font-size: 0.85rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.recent-result__score {
-  flex: none;
-  font-family: var(--font-splash);
-  font-size: 1.1rem;
-  color: var(--gold);
-  font-variant-numeric: tabular-nums;
-}
-
+/* Highlights toggle + match-detail event list — used on the interactive
+   result rows in CompetitionReference (Home page, NPL NSW only). */
 .recent-result__highlights {
   margin-top: 0.35rem;
   background: none;

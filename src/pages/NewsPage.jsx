@@ -4,9 +4,7 @@ import { placeholderNews } from '../lib/placeholderData'
 import MatchdayBanner from '../components/MatchdayBanner'
 import PredictionsSnapshot from '../components/PredictionsSnapshot'
 import GamesComingUp from '../components/GamesComingUp'
-import RecentResults from '../components/RecentResults'
 import NotificationOptIn from '../components/NotificationOptIn'
-import LiveScoreStrip from '../components/LiveScoreStrip'
 
 export default function NewsPage() {
   const [articles, setArticles] = useState(placeholderNews)
@@ -35,8 +33,6 @@ export default function NewsPage() {
         {usingPlaceholder && ' (live snapshot from confirmed sources, auto-updates once news-sync is deployed)'}
       </p>
 
-      <LiveScoreStrip />
-
       <div className="news-cover">
         {articles[0] && (
           <a
@@ -62,7 +58,6 @@ export default function NewsPage() {
           <NotificationOptIn />
           <MatchdayBanner />
           <GamesComingUp />
-          <RecentResults />
         </div>
       </div>
 
