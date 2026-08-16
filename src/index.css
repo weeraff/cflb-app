@@ -1234,6 +1234,17 @@ h2 {
   padding: 0.1rem 0;
 }
 
+.mini-fixture__stream-note {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+.live-stream-embed {
+  margin: 0.75rem 0;
+}
+
 .result-row {
   display: flex;
   align-items: center;

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import TeamCrest from './TeamCrest'
+import LiveStreamEmbed from './LiveStreamEmbed'
 
 export default function LiveScoreStrip() {
   const [fixtures, setFixtures] = useState([])
@@ -87,6 +88,10 @@ export default function LiveScoreStrip() {
                   {fixture.away_team}
                 </span>
               </button>
+
+              {isExpanded && fixture.stream_status === 'live' && fixture.youtube_video_id && (
+                <LiveStreamEmbed videoId={fixture.youtube_video_id} title={`${fixture.home_team} v ${fixture.away_team}`} />
+              )}
 
               {isExpanded && (
                 <ul className="live-card__events">

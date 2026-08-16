@@ -42,6 +42,11 @@ export default function GamesComingUp() {
               <TeamCrest src={fixture.away_logo} name={fixture.away_team} />
               <span>{fixture.away_team}</span>
             </div>
+            {fixture.competition === 'NPL NSW' && (
+              <span className="mini-fixture__stream-note">
+                {fixture.stream_status === 'scheduled' ? 'Live stream starting soon' : 'Stream starts at kickoff'}
+              </span>
+            )}
           </li>
         ))}
       </ul>

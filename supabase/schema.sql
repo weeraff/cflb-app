@@ -137,6 +137,14 @@ create table if not exists fixtures (
   pundit_name text,
   pundit_home_pick int,
   pundit_away_pick int,
+  -- Inline live-stream embed, matched against Football NSW's YouTube
+  -- channel by stream-sync. youtube_video_id_override is pasted by hand
+  -- in the table editor when auto-match fails or picks the wrong game,
+  -- and takes priority over the auto-matched youtube_video_id.
+  youtube_video_id text,
+  youtube_video_id_override text,
+  stream_status text not null default 'none' check (stream_status in ('none', 'scheduled', 'live', 'ended')),
+  stream_last_checked_at timestamptz,
   created_at timestamptz not null default now()
 );
 
