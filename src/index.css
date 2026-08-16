@@ -2568,10 +2568,97 @@ h2 {
   font-variant-numeric: tabular-nums;
 }
 
+.live-card__watch {
+  flex: none;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.live-card__watch--unavailable {
+  color: var(--text-dim);
+}
+
 .live-card__events {
   list-style: none;
   margin: 0 0 0.75rem;
   padding: 0 0 0.5rem;
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* Recent Results — same expand-in-place shape as .live-card, plus a
+   second, independent toggle for highlights. */
+.recent-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.recent-result {
+  border-top: 1px solid var(--border);
+  padding: 0.6rem 0;
+}
+
+.recent-result__summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text);
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-body);
+  text-align: left;
+}
+
+.recent-result__team {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-result__score {
+  flex: none;
+  font-family: var(--font-splash);
+  font-size: 1.1rem;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.recent-result__highlights {
+  margin-top: 0.35rem;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.recent-result__events {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0 0;
+  border-top: 1px dashed var(--border);
   font-size: 0.85rem;
   display: flex;
   flex-direction: column;

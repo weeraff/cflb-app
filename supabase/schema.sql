@@ -145,6 +145,11 @@ create table if not exists fixtures (
   youtube_video_id_override text,
   stream_status text not null default 'none' check (stream_status in ('none', 'scheduled', 'live', 'ended')),
   stream_last_checked_at timestamptz,
+  -- Highlights: same auto-match + manual-override pattern as the live
+  -- stream fields above.
+  highlights_video_id text,
+  highlights_video_id_override text,
+  highlights_checked_at timestamptz,
   created_at timestamptz not null default now()
 );
 
@@ -228,7 +233,7 @@ create table if not exists round_notifications (
 create table if not exists match_events (
   id uuid primary key default gen_random_uuid(),
   fixture_id uuid not null references fixtures(id) on delete cascade,
-  type text not null check (type in ('goal', 'card')),
+  type text not null check (type in ('goal', 'card', 'missed_penalty')),
   minute int not null check (minute >= 0),
   team text not null check (team in ('home', 'away')),
   player_name text not null,

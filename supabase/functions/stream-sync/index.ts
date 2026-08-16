@@ -22,6 +22,10 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const FOOTBALL_NSW_CHANNEL_ID = 'UCToFlwuKwvsT0g2jTS2VcOA'
+// Channel's uploads playlist (UC -> UU swap, same convention podcast-sync
+// uses) — playlistItems.list is a ~1-unit call vs. search.list's 100, so
+// highlights matching goes through this instead of another search.
+const FOOTBALL_NSW_UPLOADS_PLAYLIST_ID = 'UUToFlwuKwvsT0g2jTS2VcOA'
 const YOUTUBE_API_KEY = Deno.env.get('YOUTUBE_API_KEY') ?? ''
 
 // How far either side of "now" a fixture counts as being in its matchday
@@ -29,6 +33,10 @@ const YOUTUBE_API_KEY = Deno.env.get('YOUTUBE_API_KEY') ?? ''
 // for a slow finish before we stop looking for/at its stream.
 const WINDOW_BEFORE_MS = 2 * 60 * 60 * 1000
 const WINDOW_AFTER_MS = 150 * 60 * 1000
+
+// Highlights are "often uploaded within 24-48h of full time" — check for
+// that long, then stop rather than searching a completed match forever.
+const HIGHLIGHTS_WINDOW_MS = 48 * 60 * 60 * 1000
 
 // deno-lint-ignore no-explicit-any
 type SupabaseClientAny = any
@@ -41,6 +49,14 @@ type Fixture = {
   stream_status: string
   youtube_video_id_override: string | null
 }
+type ResultFixture = {
+  id: string
+  home_team: string
+  away_team: string
+  kickoff_at: string
+  highlights_video_id: string | null
+  highlights_video_id_override: string | null
+}
 
 Deno.serve(async () => {
   const supabase = createClient(
@@ -48,13 +64,23 @@ Deno.serve(async () => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   )
 
+  const result: Record<string, unknown> = {}
+
   try {
-    const result = await syncStreams(supabase)
-    return new Response(JSON.stringify(result), { headers: { 'Content-Type': 'application/json' } })
+    result.streams = await syncStreams(supabase)
   } catch (err) {
     await logError(supabase, 'stream-sync', err)
-    return new Response(JSON.stringify({ error: String(err) }), { status: 500 })
+    result.streamsError = String(err)
   }
+
+  try {
+    result.highlights = await syncHighlights(supabase)
+  } catch (err) {
+    await logError(supabase, 'highlights-sync', err)
+    result.highlightsError = String(err)
+  }
+
+  return new Response(JSON.stringify(result), { headers: { 'Content-Type': 'application/json' } })
 })
 
 async function syncStreams(supabase: SupabaseClientAny) {
@@ -212,20 +238,130 @@ function normalizeTeamName(name: string) {
     .trim()
 }
 
+// Highlights uploads land within days of full time, so a video published
+// well before kickoff or more than a week after can't be this match, no
+// matter how well the team names line up — cuts down false positives from
+// a rematch later in the season with an identical title shape.
+const HIGHLIGHTS_MATCH_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
+
 // Requires both team names to appear in the title, and refuses to pick a
 // side if more than one candidate fixture matches the same video — an
-// ambiguous match is treated the same as no match.
-function findMatch(fixture: Fixture, videos: { videoId: string; title: string }[]) {
+// ambiguous match is treated the same as no match. `referenceKickoffAt`
+// additionally constrains by publish date, used for highlights matching
+// only (live/upcoming broadcast search results carry no publish date).
+function findMatch(
+  fixture: { home_team: string; away_team: string },
+  videos: { videoId: string; title: string; publishedAt?: string }[],
+  referenceKickoffAt?: string,
+) {
   const home = normalizeTeamName(fixture.home_team)
   const away = normalizeTeamName(fixture.away_team)
   if (!home || !away) return null
 
   const hits = videos.filter((v) => {
     const title = normalizeTeamName(v.title)
-    return title.includes(home) && title.includes(away)
+    if (!title.includes(home) || !title.includes(away)) return false
+    if (referenceKickoffAt && v.publishedAt) {
+      const published = new Date(v.publishedAt).getTime()
+      const kickoff = new Date(referenceKickoffAt).getTime()
+      if (published < kickoff || published > kickoff + HIGHLIGHTS_MATCH_WINDOW_MS) return false
+    }
+    return true
   })
 
   return hits.length === 1 ? hits[0] : null
+}
+
+async function syncHighlights(supabase: SupabaseClientAny) {
+  if (!YOUTUBE_API_KEY) throw new Error('YOUTUBE_API_KEY not set')
+
+  const windowStart = new Date(Date.now() - HIGHLIGHTS_WINDOW_MS).toISOString()
+
+  const { data: overridden, error: overrideError } = await supabase
+    .from('fixtures')
+    .select('id, home_team, away_team, kickoff_at, highlights_video_id, highlights_video_id_override')
+    .eq('competition', 'NPL NSW')
+    .not('highlights_video_id_override', 'is', null)
+  if (overrideError) throw overrideError
+
+  // Only resolve overrides that are new or changed, not ones already
+  // matching what's stored — no point re-spending quota confirming the
+  // same manual pick every 10 minutes.
+  const unresolvedOverrides = (overridden ?? []).filter(
+    (f: ResultFixture) => f.highlights_video_id !== f.highlights_video_id_override,
+  )
+
+  const { data: candidates, error: candidatesError } = await supabase
+    .from('fixtures')
+    .select('id, home_team, away_team, kickoff_at, highlights_video_id, highlights_video_id_override')
+    .eq('competition', 'NPL NSW')
+    .eq('status', 'completed')
+    .is('highlights_video_id_override', null)
+    .is('highlights_video_id', null)
+    .gte('kickoff_at', windowStart)
+  if (candidatesError) throw candidatesError
+
+  if (unresolvedOverrides.length === 0 && !candidates?.length) {
+    return { checked: 0, matched: 0, note: 'no completed fixtures awaiting highlights' }
+  }
+
+  let matched = 0
+  const checkedAt = new Date().toISOString()
+
+  if (unresolvedOverrides.length > 0) {
+    const ids = unresolvedOverrides.map((f: ResultFixture) => f.highlights_video_id_override).join(',')
+    const url = `https://www.googleapis.com/youtube/v3/videos?part=id&id=${ids}&key=${YOUTUBE_API_KEY}`
+    const res = await fetch(url)
+    if (!res.ok) throw new Error(`videos.list HTTP ${res.status}`)
+    const json = await res.json()
+    const validIds = new Set((json.items ?? []).map((item: { id: string }) => item.id))
+
+    for (const fixture of unresolvedOverrides) {
+      const videoId = fixture.highlights_video_id_override!
+      if (!validIds.has(videoId)) continue
+      const { error } = await supabase
+        .from('fixtures')
+        .update({ highlights_video_id: videoId, highlights_checked_at: checkedAt })
+        .eq('id', fixture.id)
+      if (!error) matched += 1
+    }
+  }
+
+  if (candidates?.length) {
+    const uploads = await fetchRecentUploads()
+
+    for (const fixture of candidates as ResultFixture[]) {
+      const hit = findMatch(fixture, uploads, fixture.kickoff_at)
+      if (hit) {
+        const { error } = await supabase
+          .from('fixtures')
+          .update({ highlights_video_id: hit.videoId, highlights_checked_at: checkedAt })
+          .eq('id', fixture.id)
+        if (!error) matched += 1
+      } else {
+        await supabase.from('fixtures').update({ highlights_checked_at: checkedAt }).eq('id', fixture.id)
+      }
+    }
+  }
+
+  return { checked: unresolvedOverrides.length + (candidates?.length ?? 0), matched }
+}
+
+async function fetchRecentUploads() {
+  const url =
+    `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${FOOTBALL_NSW_UPLOADS_PLAYLIST_ID}` +
+    `&maxResults=25&key=${YOUTUBE_API_KEY}`
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`playlistItems.list HTTP ${res.status}`)
+  const json = await res.json()
+
+  return (json.items ?? [])
+    .map((item: { snippet: { resourceId: { videoId: string }; title: string; publishedAt: string } }) => ({
+      videoId: item.snippet.resourceId.videoId,
+      title: item.snippet.title,
+      publishedAt: item.snippet.publishedAt,
+    }))
+    .filter((v: { title: string }) => !isWomensContent(v.title))
 }
 
 async function logError(supabase: SupabaseClientAny, source: string, err: unknown) {

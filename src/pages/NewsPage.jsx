@@ -4,6 +4,7 @@ import { placeholderNews } from '../lib/placeholderData'
 import MatchdayBanner from '../components/MatchdayBanner'
 import PredictionsSnapshot from '../components/PredictionsSnapshot'
 import GamesComingUp from '../components/GamesComingUp'
+import RecentResults from '../components/RecentResults'
 import NotificationOptIn from '../components/NotificationOptIn'
 import LiveScoreStrip from '../components/LiveScoreStrip'
 
@@ -61,6 +62,7 @@ export default function NewsPage() {
           <NotificationOptIn />
           <MatchdayBanner />
           <GamesComingUp />
+          <RecentResults />
         </div>
       </div>
 

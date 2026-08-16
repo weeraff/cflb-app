@@ -31,7 +31,11 @@ export default function LiveScoreStrip() {
     supabase
       .from('fixtures')
       .select('*')
-      .in('reported_status', ['live', 'full_time'])
+      // Two independent "this is live" signals: reported_status is the
+      // flash reporter manually toggling a match, stream_status is the
+      // automated YouTube match going live on its own — a fixture can hit
+      // either without the other, so both need to surface a card here.
+      .or('reported_status.in.(live,full_time),stream_status.eq.live')
       .gte('kickoff_at', since)
       .order('kickoff_at', { ascending: true })
       .then(({ data, error }) => {
@@ -67,6 +71,8 @@ export default function LiveScoreStrip() {
           const homeGoals = fixtureEvents.filter((e) => e.type === 'goal' && e.team === 'home').length
           const awayGoals = fixtureEvents.filter((e) => e.type === 'goal' && e.team === 'away').length
           const isExpanded = expandedId === fixture.id
+          const isLive = fixture.reported_status === 'live' || fixture.stream_status === 'live'
+          const hasStream = fixture.stream_status === 'live' && fixture.youtube_video_id
 
           return (
             <div key={fixture.id} className="live-card">
@@ -75,8 +81,8 @@ export default function LiveScoreStrip() {
                 onClick={() => setExpandedId(isExpanded ? null : fixture.id)}
                 aria-expanded={isExpanded}
               >
-                <span className={`live-card__badge live-card__badge--${fixture.reported_status}`}>
-                  {fixture.reported_status === 'live' ? 'Live' : 'FT'}
+                <span className={`live-card__badge live-card__badge--${isLive ? 'live' : 'full_time'}`}>
+                  {isLive ? 'Live' : 'FT'}
                 </span>
                 <span className="live-card__team">
                   <TeamCrest src={fixture.home_logo} name={fixture.home_team} />
@@ -87,9 +93,14 @@ export default function LiveScoreStrip() {
                   <TeamCrest src={fixture.away_logo} name={fixture.away_team} />
                   {fixture.away_team}
                 </span>
+                {isLive && (
+                  <span className={`live-card__watch${hasStream ? '' : ' live-card__watch--unavailable'}`}>
+                    {hasStream ? '▶ Watch' : 'Stream unavailable'}
+                  </span>
+                )}
               </button>
 
-              {isExpanded && fixture.stream_status === 'live' && fixture.youtube_video_id && (
+              {isExpanded && hasStream && (
                 <LiveStreamEmbed videoId={fixture.youtube_video_id} title={`${fixture.home_team} v ${fixture.away_team}`} />
               )}
 
