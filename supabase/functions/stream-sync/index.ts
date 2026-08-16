@@ -34,9 +34,15 @@ const YOUTUBE_API_KEY = Deno.env.get('YOUTUBE_API_KEY') ?? ''
 const WINDOW_BEFORE_MS = 2 * 60 * 60 * 1000
 const WINDOW_AFTER_MS = 150 * 60 * 1000
 
-// Highlights are "often uploaded within 24-48h of full time" — check for
-// that long, then stop rather than searching a completed match forever.
-const HIGHLIGHTS_WINDOW_MS = 48 * 60 * 60 * 1000
+// Originally 48h on the assumption highlights land within a day or two
+// of full time — in practice Football NSW's channel also carries First
+// Grade highlights buried among a much higher-volume mix (U20s, League
+// One/Two, other content) uploaded in between, so the 25-most-recent
+// lookup was missing real, already-uploaded highlights simply because
+// they'd scrolled past that window before this ever checked. A week
+// gives real uploads much more room to be found without checking a
+// match forever.
+const HIGHLIGHTS_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 
 // deno-lint-ignore no-explicit-any
 type SupabaseClientAny = any
@@ -347,21 +353,38 @@ async function syncHighlights(supabase: SupabaseClientAny) {
   return { checked: unresolvedOverrides.length + (candidates?.length ?? 0), matched }
 }
 
-async function fetchRecentUploads() {
-  const url =
-    `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${FOOTBALL_NSW_UPLOADS_PLAYLIST_ID}` +
-    `&maxResults=25&key=${YOUTUBE_API_KEY}`
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`playlistItems.list HTTP ${res.status}`)
-  const json = await res.json()
+// The channel's upload volume (First Grade + U20s + League One/Two +
+// other content, across a whole week) can easily push a real highlights
+// video past the first 25-50 most recent uploads — playlistItems.list is
+// ~1 unit regardless of maxResults, so paging a few times to cover a
+// week's worth of uploads is cheap insurance against missing a real match.
+const UPLOADS_PAGES_TO_FETCH = 3
 
-  return (json.items ?? [])
-    .map((item: { snippet: { resourceId: { videoId: string }; title: string; publishedAt: string } }) => ({
-      videoId: item.snippet.resourceId.videoId,
-      title: item.snippet.title,
-      publishedAt: item.snippet.publishedAt,
-    }))
-    .filter((v: { title: string }) => !isWomensContent(v.title))
+async function fetchRecentUploads() {
+  const uploads: { videoId: string; title: string; publishedAt: string }[] = []
+  let pageToken = ''
+
+  for (let page = 0; page < UPLOADS_PAGES_TO_FETCH; page++) {
+    const url =
+      `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${FOOTBALL_NSW_UPLOADS_PLAYLIST_ID}` +
+      `&maxResults=50&key=${YOUTUBE_API_KEY}${pageToken ? `&pageToken=${pageToken}` : ''}`
+    const res = await fetch(url)
+    if (!res.ok) throw new Error(`playlistItems.list HTTP ${res.status}`)
+    const json = await res.json()
+
+    for (const item of json.items ?? []) {
+      uploads.push({
+        videoId: item.snippet.resourceId.videoId,
+        title: item.snippet.title,
+        publishedAt: item.snippet.publishedAt,
+      })
+    }
+
+    if (!json.nextPageToken) break
+    pageToken = json.nextPageToken
+  }
+
+  return uploads.filter((v) => !isWomensContent(v.title))
 }
 
 async function logError(supabase: SupabaseClientAny, source: string, err: unknown) {

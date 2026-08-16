@@ -2626,6 +2626,7 @@ h2 {
 /* Highlights toggle + match-detail event list — used on the interactive
    result rows in CompetitionReference (Home page, NPL NSW only). */
 .recent-result__highlights {
+  align-self: flex-start;
   margin-top: 0.35rem;
   background: none;
   border: none;
@@ -2636,6 +2637,7 @@ h2 {
   font-size: 0.7rem;
   letter-spacing: 0.03em;
   text-transform: uppercase;
+  text-align: left;
   color: var(--accent);
 }
 
