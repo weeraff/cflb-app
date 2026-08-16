@@ -112,6 +112,84 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
         ))}
       </select>
 
+      <h3 className="results-heading">Recent Results{lastRound ? ` — ${lastRound}` : ''}</h3>
+      <ul className="results-list">
+        {recentResults.map((r) => {
+          const key = r.id ?? `${r.home_team}-${r.away_team}-${r.played_at}`
+          const fixture = streamData[r.dribl_id]
+          const fixtureEvents = fixture ? events.filter((e) => e.fixture_id === fixture.id) : []
+          const detailOpen = detailId === key
+          const watchOpen = watchId === key
+          const hasHighlights = Boolean(fixture?.highlights_video_id)
+
+          return (
+            <li key={key} className="result-row result-row--interactive">
+              <button
+                type="button"
+                className="result-row__toggle"
+                onClick={() => setDetailId(detailOpen ? null : key)}
+                disabled={!fixture}
+                aria-expanded={detailOpen}
+              >
+                <div className="result-row__meta">
+                  <span>{r.round}</span>
+                  {r.ground && <span>{r.ground}</span>}
+                </div>
+                <div className="result-row__matchup">
+                  <div className="result-row__side">
+                    <span className="result-row__side-team">
+                      <TeamCrest src={r.home_logo} name={r.home_team} />
+                      {r.home_team}
+                    </span>
+                    <span className={`result-row__side-score${r.home_score > r.away_score ? ' result-row__winner' : ''}`}>{r.home_score}</span>
+                  </div>
+                  <div className="result-row__side">
+                    <span className="result-row__side-team">
+                      <TeamCrest src={r.away_logo} name={r.away_team} />
+                      {r.away_team}
+                    </span>
+                    <span className={`result-row__side-score${r.away_score > r.home_score ? ' result-row__winner' : ''}`}>{r.away_score}</span>
+                  </div>
+                </div>
+              </button>
+
+              {hasHighlights && (
+                <button
+                  type="button"
+                  className="recent-result__highlights"
+                  onClick={() => setWatchId(watchOpen ? null : key)}
+                  aria-expanded={watchOpen}
+                >
+                  {watchOpen ? 'Hide highlights' : '▶ Highlights'}
+                </button>
+              )}
+
+              {watchOpen && hasHighlights && (
+                <LiveStreamEmbed videoId={fixture.highlights_video_id} title={`${r.home_team} v ${r.away_team} highlights`} />
+              )}
+
+              {detailOpen && (
+                <ul className="recent-result__events">
+                  {fixtureEvents.length === 0 && <li className="auth-note">Match details not available.</li>}
+                  {fixtureEvents.map((ev) => (
+                    <li key={ev.id}>
+                      <span className="reporter-event__minute">{ev.minute}'</span>
+                      {ev.type === 'goal' &&
+                        `${ev.team === 'home' ? r.home_team : r.away_team} — ${ev.player_name}${ev.assist_name ? ` (assist: ${ev.assist_name})` : ''}`}
+                      {ev.type === 'card' &&
+                        `${ev.card_type === 'red' ? 'Red' : 'Yellow'} card — ${ev.player_name} (${ev.team === 'home' ? r.home_team : r.away_team})`}
+                      {ev.type === 'missed_penalty' &&
+                        `Missed penalty — ${ev.player_name} (${ev.team === 'home' ? r.home_team : r.away_team})`}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+
+      <h3 className="results-heading">Ladder</h3>
       <div className="table-scroll">
         <table className="standings-table">
           <thead>
@@ -180,76 +258,6 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
           Loss
         </span>
       </div>
-
-      <h3 className="results-heading">Recent Results{lastRound ? ` — ${lastRound}` : ''}</h3>
-      <ul className="results-list">
-        {recentResults.map((r) => {
-          const key = r.id ?? `${r.home_team}-${r.away_team}-${r.played_at}`
-          const fixture = streamData[r.dribl_id]
-          const fixtureEvents = fixture ? events.filter((e) => e.fixture_id === fixture.id) : []
-          const detailOpen = detailId === key
-          const watchOpen = watchId === key
-          const hasHighlights = Boolean(fixture?.highlights_video_id)
-
-          return (
-            <li key={key} className="result-row result-row--interactive">
-              <button
-                type="button"
-                className="result-row__toggle"
-                onClick={() => setDetailId(detailOpen ? null : key)}
-                disabled={!fixture}
-                aria-expanded={detailOpen}
-              >
-                <span className="result-row__round">{r.round}</span>
-                <span className="result-row__match">
-                  <span className={`result-row__team${r.home_score > r.away_score ? ' result-row__winner' : ''}`}>
-                    <TeamCrest src={r.home_logo} name={r.home_team} />
-                    <span className="result-row__team-name">{r.home_team}</span>
-                  </span>
-                  <span className="result-row__score">{r.home_score} - {r.away_score}</span>
-                  <span className={`result-row__team${r.away_score > r.home_score ? ' result-row__winner' : ''}`}>
-                    <TeamCrest src={r.away_logo} name={r.away_team} />
-                    <span className="result-row__team-name">{r.away_team}</span>
-                  </span>
-                </span>
-                {r.ground && <span className="result-row__ground">{r.ground}</span>}
-              </button>
-
-              {hasHighlights && (
-                <button
-                  type="button"
-                  className="recent-result__highlights"
-                  onClick={() => setWatchId(watchOpen ? null : key)}
-                  aria-expanded={watchOpen}
-                >
-                  {watchOpen ? 'Hide highlights' : '▶ Highlights'}
-                </button>
-              )}
-
-              {watchOpen && hasHighlights && (
-                <LiveStreamEmbed videoId={fixture.highlights_video_id} title={`${r.home_team} v ${r.away_team} highlights`} />
-              )}
-
-              {detailOpen && (
-                <ul className="recent-result__events">
-                  {fixtureEvents.length === 0 && <li className="auth-note">Match details not available.</li>}
-                  {fixtureEvents.map((ev) => (
-                    <li key={ev.id}>
-                      <span className="reporter-event__minute">{ev.minute}'</span>
-                      {ev.type === 'goal' &&
-                        `${ev.team === 'home' ? r.home_team : r.away_team} — ${ev.player_name}${ev.assist_name ? ` (assist: ${ev.assist_name})` : ''}`}
-                      {ev.type === 'card' &&
-                        `${ev.card_type === 'red' ? 'Red' : 'Yellow'} card — ${ev.player_name} (${ev.team === 'home' ? r.home_team : r.away_team})`}
-                      {ev.type === 'missed_penalty' &&
-                        `Missed penalty — ${ev.player_name} (${ev.team === 'home' ? r.home_team : r.away_team})`}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          )
-        })}
-      </ul>
 
       <h3 className="results-heading">Top Scorers</h3>
       <ol className="scorers-list">

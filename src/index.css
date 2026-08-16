@@ -1320,9 +1320,8 @@ h2 {
 
 .result-row__toggle {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.4rem;
   width: 100%;
   background: none;
   border: none;
@@ -1336,6 +1335,57 @@ h2 {
 
 .result-row__toggle:disabled {
   cursor: default;
+}
+
+.result-row__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.result-row__matchup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.result-row__side {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.result-row__side-team {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.result-row__side-score {
+  flex: none;
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  font-weight: 700;
+  min-width: 1.5rem;
+  text-align: right;
+}
+
+.result-row__side-score.result-row__winner {
+  color: var(--accent);
 }
 
 .scorers-list {
