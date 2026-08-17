@@ -62,7 +62,20 @@ type ResultFixture = {
   kickoff_at: string
   highlights_video_id: string | null
   highlights_video_id_override: string | null
+  highlights_checked_at?: string | null
 }
+
+// Below this age, only the cheap recent-uploads scan runs for a
+// candidate. Above it, a targeted per-fixture search.list call (100
+// units, ~100x a playlist page) also runs — confirmed necessary: a real,
+// already-uploaded highlights video was still missing the recent-uploads
+// scan (even at 250 items) simply because the channel's total upload
+// volume across all its content buried it. Search is content-matched,
+// not recency-limited, so it doesn't have that failure mode. Throttled to
+// once an hour per fixture rather than every 10-minute tick so an
+// unmatched fixture doesn't quietly burn quota while genuinely waiting on
+// Football NSW to publish.
+const SEARCH_FALLBACK_AFTER_MS = 60 * 60 * 1000
 
 Deno.serve(async () => {
   const supabase = createClient(
@@ -275,7 +288,23 @@ function findMatch(
     return true
   })
 
-  return hits.length === 1 ? hits[0] : null
+  if (hits.length === 1) return hits[0]
+
+  // Confirmed against real data: Football NSW posts two videos per
+  // fixture with near-identical, both-team-matching titles — one an
+  // edited highlights reel ("Round 28 Highlights – Team A v Team B"),
+  // the other a plain full match upload ("NPL Men's NSW - Team A v Team
+  // B"), which without this made every fixture with both videos in reach
+  // register as ambiguous even though only one is actually the highlights
+  // video. This isn't guessing between different games — it's picking
+  // the one video, among candidates that all already passed the team and
+  // date checks, whose own title says what it is.
+  if (hits.length > 1) {
+    const labelled = hits.filter((v) => /highlights?/i.test(v.title))
+    if (labelled.length === 1) return labelled[0]
+  }
+
+  return null
 }
 
 async function syncHighlights(supabase: SupabaseClientAny) {
@@ -299,7 +328,7 @@ async function syncHighlights(supabase: SupabaseClientAny) {
 
   const { data: candidates, error: candidatesError } = await supabase
     .from('fixtures')
-    .select('id, home_team, away_team, kickoff_at, highlights_video_id, highlights_video_id_override')
+    .select('id, home_team, away_team, kickoff_at, highlights_video_id, highlights_video_id_override, highlights_checked_at')
     .eq('competition', 'NPL NSW')
     .eq('status', 'completed')
     .is('highlights_video_id_override', null)
@@ -313,6 +342,8 @@ async function syncHighlights(supabase: SupabaseClientAny) {
 
   let matched = 0
   const checkedAt = new Date().toISOString()
+  // deno-lint-ignore no-explicit-any
+  const diagnostics: any[] = []
 
   if (unresolvedOverrides.length > 0) {
     const ids = unresolvedOverrides.map((f: ResultFixture) => f.highlights_video_id_override).join(',')
@@ -337,7 +368,45 @@ async function syncHighlights(supabase: SupabaseClientAny) {
     const uploads = await fetchRecentUploads()
 
     for (const fixture of candidates as ResultFixture[]) {
-      const hit = findMatch(fixture, uploads, fixture.kickoff_at)
+      let hit = findMatch(fixture, uploads, fixture.kickoff_at)
+
+      const lastChecked = fixture.highlights_checked_at ? new Date(fixture.highlights_checked_at).getTime() : 0
+      const dueForSearchFallback = Date.now() - lastChecked > SEARCH_FALLBACK_AFTER_MS
+
+      let searchResults: { videoId: string; title: string; publishedAt: string }[] = []
+      if (!hit && dueForSearchFallback) {
+        searchResults = await searchChannelForHighlights(fixture.home_team, fixture.away_team)
+        hit = findMatch(fixture, searchResults, fixture.kickoff_at)
+      }
+
+      // Diagnostic for the next unmatched-title edge case: shows which
+      // uploads/search results at least partially matched (one team name,
+      // not necessarily both) so a genuine miss is distinguishable from a
+      // still-unresolved ambiguity at a glance. Returned in the response
+      // rather than written to ingestion_errors, which is service-role-
+      // only by RLS design and unreadable via the anon key this function
+      // gets manually invoked with.
+      if (!hit && dueForSearchFallback) {
+        const home = normalizeTeamName(fixture.home_team)
+        const away = normalizeTeamName(fixture.away_team)
+        const partialUploads = uploads.filter((v) => {
+          const t = normalizeTeamName(v.title)
+          return t.includes(home) || t.includes(away)
+        })
+        const partialSearch = searchResults.filter((v) => {
+          const t = normalizeTeamName(v.title)
+          return t.includes(home) || t.includes(away)
+        })
+        diagnostics.push({
+          fixture: `${fixture.home_team} v ${fixture.away_team}`,
+          kickoff_at: fixture.kickoff_at,
+          uploadsFetched: uploads.length,
+          uploadsPartialMatch: partialUploads.map((v) => ({ id: v.videoId, title: v.title, publishedAt: v.publishedAt })),
+          searchResultsFetched: searchResults.length,
+          searchPartialMatch: partialSearch.map((v) => ({ id: v.videoId, title: v.title, publishedAt: v.publishedAt })),
+        })
+      }
+
       if (hit) {
         const { error } = await supabase
           .from('fixtures')
@@ -350,15 +419,20 @@ async function syncHighlights(supabase: SupabaseClientAny) {
     }
   }
 
-  return { checked: unresolvedOverrides.length + (candidates?.length ?? 0), matched }
+  return { checked: unresolvedOverrides.length + (candidates?.length ?? 0), matched, diagnostics }
 }
 
 // The channel's upload volume (First Grade + U20s + League One/Two +
 // other content, across a whole week) can easily push a real highlights
-// video past the first 25-50 most recent uploads — playlistItems.list is
-// ~1 unit regardless of maxResults, so paging a few times to cover a
-// week's worth of uploads is cheap insurance against missing a real match.
-const UPLOADS_PAGES_TO_FETCH = 3
+// video past the first 150 most recent uploads — confirmed directly: a
+// real, hours-old highlights video was still missing at 3 pages (150
+// items), and search.list's order=date fallback also missed it, because
+// search relies on YouTube's separate search index which lags behind a
+// brand-new upload by hours (a well-documented API behaviour, distinct
+// from playlistItems.list, which is a direct un-indexed feed with no such
+// lag). playlistItems.list is ~1 unit regardless of maxResults, so paging
+// further to cover more of a week's uploads is still cheap insurance.
+const UPLOADS_PAGES_TO_FETCH = 10
 
 async function fetchRecentUploads() {
   const uploads: { videoId: string; title: string; publishedAt: string }[] = []
@@ -385,6 +459,35 @@ async function fetchRecentUploads() {
   }
 
   return uploads.filter((v) => !isWomensContent(v.title))
+}
+
+// Content-matched rather than recency-limited, so a real highlights video
+// can't be missed just because the channel posted a lot else that week.
+// No publishedAfter/publishedBefore constraint here — findMatch's own
+// publish-date proximity check (against kickoff_at) still applies once
+// results come back.
+async function searchChannelForHighlights(homeTeam: string, awayTeam: string) {
+  const query = encodeURIComponent(`${homeTeam} ${awayTeam} highlights`)
+  // order=date, not the default order=relevance — a highlights video
+  // uploaded hours ago has no view/engagement signal yet, so relevance
+  // ranking buries it behind older videos for the same two teams from
+  // past rounds with the same title shape (confirmed: this was the exact
+  // failure mode for a real, already-uploaded video). Newest-first is
+  // also just the correct answer for "did this just get posted".
+  const url =
+    `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${FOOTBALL_NSW_CHANNEL_ID}` +
+    `&type=video&order=date&maxResults=15&q=${query}&key=${YOUTUBE_API_KEY}`
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`search.list HTTP ${res.status}`)
+  const json = await res.json()
+
+  return (json.items ?? [])
+    .map((item: { id: { videoId: string }; snippet: { title: string; publishedAt: string } }) => ({
+      videoId: item.id.videoId,
+      title: item.snippet.title,
+      publishedAt: item.snippet.publishedAt,
+    }))
+    .filter((v: { title: string }) => !isWomensContent(v.title))
 }
 
 async function logError(supabase: SupabaseClientAny, source: string, err: unknown) {
