@@ -246,10 +246,15 @@ create table if not exists match_events (
   -- cards only
   card_type text check (card_type in ('yellow', 'red')),
   created_by uuid references auth.users(id) on delete set null,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  -- Distinguishes automated Dribl-sourced rows (mc-api.dribl.com/api/
+  -- matchcentre/{match_hash_id}) from human-entered flash-reporter ones,
+  -- so a Dribl sync can safely replace only its own rows for a fixture.
+  source text not null default 'reporter' check (source in ('reporter', 'dribl'))
 );
 
 create index if not exists match_events_fixture_id_idx on match_events (fixture_id);
+create index if not exists match_events_fixture_source_idx on match_events (fixture_id, source);
 
 create table if not exists match_lineups (
   fixture_id uuid not null references fixtures(id) on delete cascade,

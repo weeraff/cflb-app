@@ -110,6 +110,13 @@ Deno.serve(async () => {
     await logError(supabase, 'score-predictions', err)
   }
 
+  let matchEventsSynced = 0
+  try {
+    matchEventsSynced = await syncMatchEvents(supabase)
+  } catch (err) {
+    await logError(supabase, 'sync-match-events', err)
+  }
+
   let resultsNotified = 0
   try {
     resultsNotified = await notifyCompletedFeaturedFixtures(supabase)
@@ -158,6 +165,7 @@ Deno.serve(async () => {
       locked,
       completed,
       scored,
+      matchEventsSynced,
       resultsNotified,
       closingNotified,
       rankChangesNotified,
@@ -340,6 +348,113 @@ async function completeFixturesFromResults(supabase: SupabaseClientAny) {
     if (!error) count += 1
   }
   return count
+}
+
+// Match events (scorers with minute, cards, subs) — found by capturing
+// the real network traffic of Football NSW's own match-centre page in a
+// browser, not documented anywhere: mc-api.dribl.com/api/matchcentre/
+// {match_hash_id}?tenant={tenant}, no auth needed. Every fixtures/results/
+// moments endpoint tried earlier only ever had scoreline or season-
+// aggregate data — this is the one that actually has it.
+//
+// Only within a week of kickoff, same reasoning as highlights: Dribl's
+// matchsheet can get corrected for a day or two after full time, so this
+// re-syncs (replacing only its own 'dribl'-sourced rows, never touching
+// flash-reporter ones for the same fixture) within that window, then
+// stops rather than re-checking a settled match forever.
+const MATCH_EVENTS_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
+
+async function syncMatchEvents(supabase: SupabaseClientAny) {
+  const windowStart = new Date(Date.now() - MATCH_EVENTS_WINDOW_MS).toISOString()
+
+  const { data: fixtures, error } = await supabase
+    .from('fixtures')
+    .select('id, dribl_id')
+    .eq('status', 'completed')
+    .not('dribl_id', 'is', null)
+    .gte('kickoff_at', windowStart)
+  if (error) throw error
+  if (!fixtures?.length) return 0
+
+  let synced = 0
+  for (const fixture of fixtures as { id: string; dribl_id: string }[]) {
+    try {
+      const res = await fetch(
+        `https://mc-api.dribl.com/api/matchcentre/${fixture.dribl_id}?tenant=${DRIBL_TENANT}`,
+        { headers: { Accept: 'application/json' } },
+      )
+      if (!res.ok) continue
+      const json = await res.json()
+      const a = json.data?.attributes
+      if (!a?.match_events) continue
+
+      const homeHashId = a.home_team_hash_id
+      const rows = mapDriblMatchEvents(fixture.id, homeHashId, a.match_events)
+
+      // Replace this fixture's own Dribl-sourced rows only — a
+      // flash-reporter's rows for the same fixture (source: 'reporter')
+      // are never touched.
+      await supabase.from('match_events').delete().eq('fixture_id', fixture.id).eq('source', 'dribl')
+      if (rows.length > 0) {
+        const { error: insertError } = await supabase.from('match_events').insert(rows)
+        if (!insertError) synced += 1
+      } else {
+        synced += 1
+      }
+    } catch (err) {
+      await logError(supabase, `match-events-${fixture.dribl_id}`, err)
+    }
+  }
+  return synced
+}
+
+type DriblMatchEvent = {
+  type: string
+  team_id: string
+  minute: number
+  name?: string
+  final_card_type?: string
+  penalty_kick?: boolean
+  penalty_scored?: boolean
+}
+
+function mapDriblMatchEvents(fixtureId: string, homeTeamHashId: string, events: DriblMatchEvent[]) {
+  const rows = []
+  for (const ev of events) {
+    const team = ev.team_id === homeTeamHashId ? 'home' : 'away'
+
+    if (ev.type === 'goal' && ev.name) {
+      // A penalty scored is still a goal; a taken-but-missed penalty
+      // isn't in this array at all in every match seen so far — if Dribl
+      // ever does put one here, penalty_scored: false is the signal.
+      if (ev.penalty_kick && ev.penalty_scored === false) continue
+      rows.push({
+        fixture_id: fixtureId,
+        type: 'goal',
+        minute: ev.minute,
+        team,
+        player_name: titleCase(ev.name),
+        source: 'dribl',
+      })
+    } else if (ev.type === 'card' && ev.name && ev.final_card_type) {
+      rows.push({
+        fixture_id: fixtureId,
+        type: 'card',
+        minute: ev.minute,
+        team,
+        player_name: titleCase(ev.name),
+        card_type: ev.final_card_type.toLowerCase().includes('red') ? 'red' : 'yellow',
+        source: 'dribl',
+      })
+    }
+    // 'sub' events exist in Dribl's data but match_events has no type for
+    // them yet — skipped, not dropped by mistake.
+  }
+  return rows
+}
+
+function titleCase(name: string) {
+  return name.replace(/\w\S*/g, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase())
 }
 
 // Only notifies for featured fixtures, the ones people could actually
