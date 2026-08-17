@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import TeamCrest from './TeamCrest'
 import LiveStreamEmbed from './LiveStreamEmbed'
+import MatchEventRow from './MatchEventRow'
 
 export default function LiveScoreStrip() {
   const [fixtures, setFixtures] = useState([])
@@ -108,12 +109,7 @@ export default function LiveScoreStrip() {
                 <ul className="live-card__events">
                   {fixtureEvents.length === 0 && <li className="auth-note">No events logged yet.</li>}
                   {fixtureEvents.map((ev) => (
-                    <li key={ev.id}>
-                      <span className="reporter-event__minute">{ev.minute}'</span>
-                      {ev.type === 'goal'
-                        ? `${ev.team === 'home' ? fixture.home_team : fixture.away_team} — ${ev.player_name}${ev.assist_name ? ` (assist: ${ev.assist_name})` : ''}`
-                        : `${ev.card_type === 'red' ? 'Red' : 'Yellow'} card — ${ev.player_name} (${ev.team === 'home' ? fixture.home_team : fixture.away_team})`}
-                    </li>
+                    <MatchEventRow key={ev.id} event={ev} homeTeam={fixture.home_team} awayTeam={fixture.away_team} />
                   ))}
                 </ul>
               )}

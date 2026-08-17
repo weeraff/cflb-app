@@ -1068,6 +1068,31 @@ h2 {
   box-shadow: 2px 0 6px rgba(0, 0, 0, 0.5);
 }
 
+/* Compact ladder — Recent Results is the main visual on Home, the ladder
+   is reference material and should read small and dense by contrast. */
+.standings-table {
+  min-width: 360px;
+  font-size: 0.78rem;
+}
+
+.standings-table th,
+.standings-table td {
+  padding: 0.35rem 0.4rem;
+}
+
+.standings-table th {
+  font-size: 0.58rem;
+}
+
+.standings-table td:first-child {
+  font-size: 0.85rem;
+}
+
+.standings-table .team-crest {
+  width: 15px;
+  height: 15px;
+}
+
 .table-legend {
   display: flex;
   flex-wrap: wrap;
@@ -1316,6 +1341,28 @@ h2 {
   flex-direction: column;
   align-items: stretch;
   flex-wrap: nowrap;
+  border-top: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.result-row--interactive .team-crest {
+  width: 26px;
+  height: 26px;
+}
+
+.result-row--interactive .result-row__side-team {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.result-row--interactive .result-row__side-score {
+  font-family: var(--font-splash);
+  font-weight: 400;
+  font-size: 1.4rem;
+  min-width: 2rem;
 }
 
 .result-row__toggle {
@@ -2788,6 +2835,34 @@ h2 {
   font-size: 0.95rem;
 }
 
+.my-team__rank {
+  margin-bottom: 0.85rem;
+}
+
+.my-team__rank-value {
+  font-family: var(--font-splash);
+  font-weight: 400;
+  font-size: 2rem;
+  color: var(--gold);
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.my-team__rank-movement {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.my-team__rank-movement--up {
+  color: var(--accent);
+}
+
+.my-team__rank-movement--down {
+  color: var(--danger);
+}
+
 .recent-result__events {
   list-style: none;
   margin: 0.5rem 0 0;
@@ -2797,4 +2872,34 @@ h2 {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+}
+
+.match-event-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.match-event-icon {
+  flex: none;
+}
+
+.match-event-row__minute {
+  flex: none;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 2rem;
+}
+
+.match-event-row__text {
+  min-width: 0;
+}
+
+.match-event-row__team {
+  color: var(--text-dim);
+}
+
+.match-event-row__assist {
+  color: var(--text-dim);
 }

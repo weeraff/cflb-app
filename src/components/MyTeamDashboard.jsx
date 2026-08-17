@@ -5,6 +5,24 @@ import { placeholderEpisodes } from '../lib/placeholderData'
 import TeamCrest from './TeamCrest'
 import LiveStreamEmbed from './LiveStreamEmbed'
 
+function RankCard({ rank, previousRank }) {
+  const movement = previousRank != null && rank != null ? previousRank - rank : null
+
+  return (
+    <div className="my-team__card my-team__rank">
+      <span className="my-team__label">Leaderboard rank</span>
+      <span className="my-team__rank-value">
+        {rank != null ? `#${rank}` : '—'}
+        {movement != null && movement !== 0 && (
+          <span className={`my-team__rank-movement my-team__rank-movement--${movement > 0 ? 'up' : 'down'}`}>
+            {movement > 0 ? '▲' : '▼'} {Math.abs(movement)}
+          </span>
+        )}
+      </span>
+    </div>
+  )
+}
+
 function formatKickoff(iso) {
   return new Date(iso).toLocaleString('en-AU', {
     weekday: 'short',
@@ -26,6 +44,8 @@ export default function MyTeamDashboard() {
   const [latestEpisode, setLatestEpisode] = useState(null)
   const [watchOpen, setWatchOpen] = useState(false)
   const [highlightsOpen, setHighlightsOpen] = useState(false)
+  const [rank, setRank] = useState(null)
+  const [previousRank, setPreviousRank] = useState(null)
 
   useEffect(() => {
     if (!isSupabaseConfigured || !auth?.user) {
@@ -44,6 +64,26 @@ export default function MyTeamDashboard() {
         setProfileChecked(true)
       })
   }, [auth?.user])
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !auth?.user) {
+      setRank(null)
+      setPreviousRank(null)
+      return
+    }
+
+    setPreviousRank(profile?.last_rank ?? null)
+
+    supabase
+      .from('leaderboard')
+      .select('*')
+      .order('points', { ascending: false })
+      .then(({ data, error }) => {
+        if (error || !data) return
+        const index = data.findIndex((entry) => entry.user_id === auth.user.id)
+        setRank(index >= 0 ? index + 1 : null)
+      })
+  }, [auth?.user, profile?.last_rank])
 
   useEffect(() => {
     if (!isSupabaseConfigured || profile?.followed_team) return
@@ -131,6 +171,7 @@ export default function MyTeamDashboard() {
   if (!profile?.followed_team) {
     return (
       <div className="my-team">
+        <RankCard rank={rank} previousRank={previousRank} />
         <p>Pick a team to follow for their next fixture, watch and highlights right here.</p>
         <form onSubmit={saveTeam} className="my-team__picker">
           <select value={teamDraft} onChange={(e) => setTeamDraft(e.target.value)}>
@@ -150,6 +191,7 @@ export default function MyTeamDashboard() {
 
   return (
     <div className="my-team">
+      <RankCard rank={rank} previousRank={previousRank} />
       <div className="my-team__grid">
         <div className="my-team__card">
           <span className="my-team__label">{profile.followed_team} — Next Fixture</span>

@@ -4,6 +4,7 @@ import { COMPETITIONS } from '../lib/placeholderData'
 import { computeForm } from '../lib/form'
 import TeamCrest from './TeamCrest'
 import LiveStreamEmbed from './LiveStreamEmbed'
+import MatchEventRow from './MatchEventRow'
 import useCompetitionData from '../hooks/useCompetitionData'
 
 const COMPETITION_LABELS = {
@@ -172,15 +173,7 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
                 <ul className="recent-result__events">
                   {fixtureEvents.length === 0 && <li className="auth-note">Match details not available.</li>}
                   {fixtureEvents.map((ev) => (
-                    <li key={ev.id}>
-                      <span className="reporter-event__minute">{ev.minute}'</span>
-                      {ev.type === 'goal' &&
-                        `${ev.team === 'home' ? r.home_team : r.away_team} — ${ev.player_name}${ev.assist_name ? ` (assist: ${ev.assist_name})` : ''}`}
-                      {ev.type === 'card' &&
-                        `${ev.card_type === 'red' ? 'Red' : 'Yellow'} card — ${ev.player_name} (${ev.team === 'home' ? r.home_team : r.away_team})`}
-                      {ev.type === 'missed_penalty' &&
-                        `Missed penalty — ${ev.player_name} (${ev.team === 'home' ? r.home_team : r.away_team})`}
-                    </li>
+                    <MatchEventRow key={ev.id} event={ev} homeTeam={r.home_team} awayTeam={r.away_team} />
                   ))}
                 </ul>
               )}
