@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
-import TeamCrest from './TeamCrest'
+import FixtureTeamRow from './FixtureTeamRow'
 
 export default function MatchdayBanner() {
   const [fixtures, setFixtures] = useState([])
@@ -34,15 +34,9 @@ export default function MatchdayBanner() {
           <li key={fixture.id} className="matchday-fixture">
             <span className="matchday-fixture__competition">{fixture.competition}</span>
             <span className="matchday-fixture__match">
-              <span className="matchday-fixture__team">
-                <TeamCrest src={fixture.home_logo} name={fixture.home_team} />
-                {fixture.home_team}
-              </span>
+              <FixtureTeamRow className="matchday-fixture__team" logo={fixture.home_logo} name={fixture.home_team} />
               <MatchdayStatus fixture={fixture} />
-              <span className="matchday-fixture__team">
-                <TeamCrest src={fixture.away_logo} name={fixture.away_team} />
-                {fixture.away_team}
-              </span>
+              <FixtureTeamRow className="matchday-fixture__team" logo={fixture.away_logo} name={fixture.away_team} />
             </span>
           </li>
         ))}

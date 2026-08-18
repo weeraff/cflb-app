@@ -3,7 +3,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { placeholderFixtures, placeholderLeaderboard } from '../lib/placeholderData'
 import { PREDICTIONS_COMING_SOON } from '../lib/featureFlags'
-import TeamCrest from '../components/TeamCrest'
+import FixtureTeamRow from '../components/FixtureTeamRow'
 import Leagues from '../components/Leagues'
 import CompetitionReference from '../components/CompetitionReference'
 import SponsorModule from '../components/SponsorModule'
@@ -371,15 +371,19 @@ function PredictionsPageContent() {
                 <li key={fixture.id} className="result-row">
                   <span className="result-row__round">{fixture.competition}</span>
                   <span className="result-row__match">
-                    <span className="result-row__team">
-                      <TeamCrest src={fixture.home_logo} name={fixture.home_team} />
-                      <span className="result-row__team-name">{fixture.home_team}</span>
-                    </span>
+                    <FixtureTeamRow
+                      className="result-row__team"
+                      nameClassName="result-row__team-name"
+                      logo={fixture.home_logo}
+                      name={fixture.home_team}
+                    />
                     <span className="result-row__score">v</span>
-                    <span className="result-row__team">
-                      <TeamCrest src={fixture.away_logo} name={fixture.away_team} />
-                      <span className="result-row__team-name">{fixture.away_team}</span>
-                    </span>
+                    <FixtureTeamRow
+                      className="result-row__team"
+                      nameClassName="result-row__team-name"
+                      logo={fixture.away_logo}
+                      name={fixture.away_team}
+                    />
                   </span>
                   <span className="result-row__ground">
                     {pick ? `Your pick: ${pick.home_score_pick}-${pick.away_score_pick}` : 'No pick made'}
@@ -401,15 +405,19 @@ function PredictionsPageContent() {
                 <li key={fixture.id} className="result-row">
                   <span className="result-row__round">{fixture.competition}</span>
                   <span className="result-row__match">
-                    <span className="result-row__team">
-                      <TeamCrest src={fixture.home_logo} name={fixture.home_team} />
-                      <span className="result-row__team-name">{fixture.home_team}</span>
-                    </span>
+                    <FixtureTeamRow
+                      className="result-row__team"
+                      nameClassName="result-row__team-name"
+                      logo={fixture.home_logo}
+                      name={fixture.home_team}
+                    />
                     <span className="result-row__score">{fixture.home_score} - {fixture.away_score}</span>
-                    <span className="result-row__team">
-                      <TeamCrest src={fixture.away_logo} name={fixture.away_team} />
-                      <span className="result-row__team-name">{fixture.away_team}</span>
-                    </span>
+                    <FixtureTeamRow
+                      className="result-row__team"
+                      nameClassName="result-row__team-name"
+                      logo={fixture.away_logo}
+                      name={fixture.away_team}
+                    />
                   </span>
                   {pick && (
                     <span className="result-row__ground">

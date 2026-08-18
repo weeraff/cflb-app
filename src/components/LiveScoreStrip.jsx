@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
-import TeamCrest from './TeamCrest'
+import FixtureTeamRow from './FixtureTeamRow'
 import LiveStreamEmbed from './LiveStreamEmbed'
 import MatchEventRow from './MatchEventRow'
 
@@ -85,15 +85,9 @@ export default function LiveScoreStrip() {
                 <span className={`live-card__badge live-card__badge--${isLive ? 'live' : 'full_time'}`}>
                   {isLive ? 'Live' : 'FT'}
                 </span>
-                <span className="live-card__team">
-                  <TeamCrest src={fixture.home_logo} name={fixture.home_team} />
-                  {fixture.home_team}
-                </span>
+                <FixtureTeamRow className="live-card__team" logo={fixture.home_logo} name={fixture.home_team} />
                 <span className="live-card__score">{homeGoals} - {awayGoals}</span>
-                <span className="live-card__team">
-                  <TeamCrest src={fixture.away_logo} name={fixture.away_team} />
-                  {fixture.away_team}
-                </span>
+                <FixtureTeamRow className="live-card__team" logo={fixture.away_logo} name={fixture.away_team} />
                 {isLive && (
                   <span className={`live-card__watch${hasStream ? '' : ' live-card__watch--unavailable'}`}>
                     {hasStream ? '▶ Watch' : 'Stream unavailable'}

@@ -2,16 +2,7 @@ import { useState } from 'react'
 import TeamCrest from './TeamCrest'
 import SponsorModule from './SponsorModule'
 import { buildShareImageBlob } from '../lib/shareImage'
-
-function formatKickoff(iso) {
-  return new Date(iso).toLocaleString('en-AU', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    hour: 'numeric',
-    minute: '2-digit',
-  })
-}
+import { formatKickoff } from '../lib/format'
 
 function pickResult(home, away) {
   if (home > away) return 'home'

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { placeholderFixtures } from '../lib/placeholderData'
-import TeamCrest from './TeamCrest'
+import FixtureTeamRow from './FixtureTeamRow'
+import { formatKickoff } from '../lib/format'
 
 export default function GamesComingUp() {
   const [fixtures, setFixtures] = useState(
@@ -34,14 +35,8 @@ export default function GamesComingUp() {
               <span>{fixture.competition}</span>
               <span>{formatKickoff(fixture.kickoff_at)}</span>
             </div>
-            <div className="mini-fixture__team">
-              <TeamCrest src={fixture.home_logo} name={fixture.home_team} />
-              <span>{fixture.home_team}</span>
-            </div>
-            <div className="mini-fixture__team">
-              <TeamCrest src={fixture.away_logo} name={fixture.away_team} />
-              <span>{fixture.away_team}</span>
-            </div>
+            <FixtureTeamRow tag="div" className="mini-fixture__team" logo={fixture.home_logo} name={fixture.home_team} />
+            <FixtureTeamRow tag="div" className="mini-fixture__team" logo={fixture.away_logo} name={fixture.away_team} />
             {fixture.competition === 'NPL NSW' && (
               <span className="mini-fixture__stream-note">
                 {fixture.stream_status === 'scheduled' ? 'Live stream starting soon' : 'Stream starts at kickoff'}
@@ -52,14 +47,4 @@ export default function GamesComingUp() {
       </ul>
     </section>
   )
-}
-
-function formatKickoff(iso) {
-  return new Date(iso).toLocaleString('en-AU', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    hour: 'numeric',
-    minute: '2-digit',
-  })
 }

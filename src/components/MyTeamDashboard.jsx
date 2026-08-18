@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { placeholderEpisodes } from '../lib/placeholderData'
-import TeamCrest from './TeamCrest'
+import FixtureTeamRow from './FixtureTeamRow'
 import LiveStreamEmbed from './LiveStreamEmbed'
+import { formatKickoff } from '../lib/format'
 
 function RankCard({ rank, previousRank }) {
   const movement = previousRank != null && rank != null ? previousRank - rank : null
@@ -23,15 +24,6 @@ function RankCard({ rank, previousRank }) {
   )
 }
 
-function formatKickoff(iso) {
-  return new Date(iso).toLocaleString('en-AU', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    hour: 'numeric',
-    minute: '2-digit',
-  })
-}
 
 export default function MyTeamDashboard() {
   const auth = useAuth()
@@ -198,15 +190,9 @@ export default function MyTeamDashboard() {
           {nextFixture ? (
             <>
               <div className="my-team__fixture">
-                <span className="my-team__team">
-                  <TeamCrest src={nextFixture.home_logo} name={nextFixture.home_team} />
-                  {nextFixture.home_team}
-                </span>
+                <FixtureTeamRow className="my-team__team" logo={nextFixture.home_logo} name={nextFixture.home_team} />
                 <span className="my-team__vs">v</span>
-                <span className="my-team__team">
-                  <TeamCrest src={nextFixture.away_logo} name={nextFixture.away_team} />
-                  {nextFixture.away_team}
-                </span>
+                <FixtureTeamRow className="my-team__team" logo={nextFixture.away_logo} name={nextFixture.away_team} />
               </div>
               <span className="my-team__kickoff">{formatKickoff(nextFixture.kickoff_at)}</span>
 

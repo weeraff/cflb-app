@@ -3,6 +3,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import TeamCrest from './TeamCrest'
 import { FormGuide } from './CompetitionReference'
 import { computeForm, findStandingPosition } from '../lib/form'
+import { formatKickoff } from '../lib/format'
 
 function TeamBlock({ name, logo, standings, results, competition, score, onChange }) {
   const position = findStandingPosition(name, standings, competition)
@@ -41,16 +42,6 @@ function ordinal(n) {
   const s = ['th', 'st', 'nd', 'rd']
   const v = n % 100
   return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`
-}
-
-function formatKickoff(iso) {
-  return new Date(iso).toLocaleString('en-AU', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    hour: 'numeric',
-    minute: '2-digit',
-  })
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import { formatKickoff } from '../lib/format'
 
 export default function ReporterPage() {
   const auth = useAuth()
@@ -301,14 +302,4 @@ function FixtureReporter({ fixture, onStatusChange }) {
       ))}
     </div>
   )
-}
-
-function formatKickoff(iso) {
-  return new Date(iso).toLocaleString('en-AU', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    hour: 'numeric',
-    minute: '2-digit',
-  })
 }

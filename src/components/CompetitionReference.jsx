@@ -3,6 +3,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { COMPETITIONS } from '../lib/placeholderData'
 import { computeForm } from '../lib/form'
 import TeamCrest from './TeamCrest'
+import FixtureTeamRow from './FixtureTeamRow'
 import LiveStreamEmbed from './LiveStreamEmbed'
 import MatchEventRow from './MatchEventRow'
 import useCompetitionData from '../hooks/useCompetitionData'
@@ -138,17 +139,11 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
                 </div>
                 <div className="result-row__matchup">
                   <div className="result-row__side">
-                    <span className="result-row__side-team">
-                      <TeamCrest src={r.home_logo} name={r.home_team} />
-                      {r.home_team}
-                    </span>
+                    <FixtureTeamRow className="result-row__side-team" logo={r.home_logo} name={r.home_team} />
                     <span className={`result-row__side-score${r.home_score > r.away_score ? ' result-row__winner' : ''}`}>{r.home_score}</span>
                   </div>
                   <div className="result-row__side">
-                    <span className="result-row__side-team">
-                      <TeamCrest src={r.away_logo} name={r.away_team} />
-                      {r.away_team}
-                    </span>
+                    <FixtureTeamRow className="result-row__side-team" logo={r.away_logo} name={r.away_team} />
                     <span className={`result-row__side-score${r.away_score > r.home_score ? ' result-row__winner' : ''}`}>{r.away_score}</span>
                   </div>
                 </div>
