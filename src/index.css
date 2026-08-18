@@ -403,12 +403,19 @@ h2 {
   flex: none;
 }
 
-.matchday-fixture__score {
+/* Shared "score" typography — bold/tabular family. Colour and layout
+   still vary per context, only the font recipe itself is shared. */
+.matchday-fixture__score,
+.result-row__score,
+.result-row__side-score {
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.matchday-fixture__score {
   color: var(--accent);
   flex: none;
-  font-weight: 700;
 }
 
 .matchday-fixture__live {
@@ -1324,10 +1331,7 @@ h2 {
 }
 
 .result-row__score {
-  font-family: var(--font-display);
-  font-variant-numeric: tabular-nums;
   color: var(--accent);
-  font-weight: 700;
   flex: none;
 }
 
@@ -1423,10 +1427,7 @@ h2 {
 
 .result-row__side-score {
   flex: none;
-  font-family: var(--font-display);
-  font-variant-numeric: tabular-nums;
   color: var(--text-dim);
-  font-weight: 700;
   min-width: 1.5rem;
   text-align: right;
 }
@@ -1762,13 +1763,20 @@ h2 {
   color: var(--danger);
 }
 
+/* Shared "score" typography — lighter splash/gold family (score
+   inputs, big result numbers). Size still varies per context. */
+.score-stepper__value,
+.the-eight-summary__score,
+.live-card__score {
+  font-family: var(--font-splash);
+  font-weight: 400;
+  color: var(--gold);
+}
+
 .score-stepper__value {
   min-width: 1.4rem;
   text-align: center;
-  font-family: var(--font-splash);
-  font-weight: 400;
   font-size: 1.3rem;
-  color: var(--gold);
   font-variant-numeric: tabular-nums;
 }
 
@@ -2025,10 +2033,7 @@ h2 {
 }
 
 .the-eight-summary__score {
-  font-family: var(--font-splash);
-  font-weight: 400;
   font-size: 1.1rem;
-  color: var(--gold);
   flex: none;
 }
 
@@ -2699,9 +2704,7 @@ h2 {
 
 .live-card__score {
   flex: none;
-  font-family: var(--font-splash);
   font-size: 1.3rem;
-  color: var(--gold);
   font-variant-numeric: tabular-nums;
 }
 
