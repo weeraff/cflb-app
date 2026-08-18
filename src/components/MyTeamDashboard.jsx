@@ -5,6 +5,7 @@ import { placeholderEpisodes } from '../lib/placeholderData'
 import FixtureTeamRow from './FixtureTeamRow'
 import LiveStreamEmbed from './LiveStreamEmbed'
 import { formatKickoff } from '../lib/format'
+import useMyRank from '../hooks/useMyRank'
 
 function RankCard({ rank, previousRank }) {
   const movement = previousRank != null && rank != null ? previousRank - rank : null
@@ -36,8 +37,8 @@ export default function MyTeamDashboard() {
   const [latestEpisode, setLatestEpisode] = useState(null)
   const [watchOpen, setWatchOpen] = useState(false)
   const [highlightsOpen, setHighlightsOpen] = useState(false)
-  const [rank, setRank] = useState(null)
   const [previousRank, setPreviousRank] = useState(null)
+  const { rank } = useMyRank(auth?.user?.id)
 
   useEffect(() => {
     if (!isSupabaseConfigured || !auth?.user) {
@@ -58,23 +59,7 @@ export default function MyTeamDashboard() {
   }, [auth?.user])
 
   useEffect(() => {
-    if (!isSupabaseConfigured || !auth?.user) {
-      setRank(null)
-      setPreviousRank(null)
-      return
-    }
-
-    setPreviousRank(profile?.last_rank ?? null)
-
-    supabase
-      .from('leaderboard')
-      .select('*')
-      .order('points', { ascending: false })
-      .then(({ data, error }) => {
-        if (error || !data) return
-        const index = data.findIndex((entry) => entry.user_id === auth.user.id)
-        setRank(index >= 0 ? index + 1 : null)
-      })
+    setPreviousRank(auth?.user ? (profile?.last_rank ?? null) : null)
   }, [auth?.user, profile?.last_rank])
 
   useEffect(() => {

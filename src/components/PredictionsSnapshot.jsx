@@ -2,33 +2,18 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import useMyRank from '../hooks/useMyRank'
 import ShareRankButton from './ShareRankButton'
 
 export default function PredictionsSnapshot() {
   const auth = useAuth()
-  const [rank, setRank] = useState(null)
-  const [points, setPoints] = useState(0)
-  const [displayName, setDisplayName] = useState('')
+  const { rank, points, displayName } = useMyRank(auth?.user?.id)
   const [picksMade, setPicksMade] = useState(0)
   const [fixturesOpen, setFixturesOpen] = useState(0)
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     if (!isSupabaseConfigured || !auth?.user) return
-
-    supabase
-      .from('leaderboard')
-      .select('*')
-      .order('points', { ascending: false })
-      .then(({ data, error }) => {
-        if (error || !data) return
-        const index = data.findIndex((entry) => entry.user_id === auth.user.id)
-        if (index !== -1) {
-          setRank(index + 1)
-          setPoints(data[index].points)
-          setDisplayName(data[index].display_name)
-        }
-      })
 
     supabase
       .from('fixtures')
