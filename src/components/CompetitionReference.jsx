@@ -139,11 +139,11 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
                 </div>
                 <div className="result-row__matchup">
                   <div className="result-row__side">
-                    <FixtureTeamRow className="result-row__side-team" logo={r.home_logo} name={r.home_team} />
+                    <FixtureTeamRow className="result-row__side-team" logo={r.home_logo} name={r.home_team} crestSize="lg" />
                     <span className={`result-row__side-score${r.home_score > r.away_score ? ' result-row__winner' : ''}`}>{r.home_score}</span>
                   </div>
                   <div className="result-row__side">
-                    <FixtureTeamRow className="result-row__side-team" logo={r.away_logo} name={r.away_team} />
+                    <FixtureTeamRow className="result-row__side-team" logo={r.away_logo} name={r.away_team} crestSize="lg" />
                     <span className={`result-row__side-score${r.away_score > r.home_score ? ' result-row__winner' : ''}`}>{r.away_score}</span>
                   </div>
                 </div>
@@ -206,7 +206,7 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
                   <td>{row.position}</td>
                   <td>
                     <span className="standings-table__team">
-                      <TeamCrest src={row.logo_url} name={row.team} />
+                      <TeamCrest src={row.logo_url} name={row.team} size="sm" />
                       {row.team}
                     </span>
                   </td>

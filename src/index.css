@@ -1021,6 +1021,16 @@ h2 {
   object-fit: contain;
 }
 
+.team-crest--sm {
+  width: 15px;
+  height: 15px;
+}
+
+.team-crest--lg {
+  width: 26px;
+  height: 26px;
+}
+
 .team-crest--placeholder {
   background: var(--surface-alt);
 }
@@ -1086,11 +1096,6 @@ h2 {
 
 .standings-table td:first-child {
   font-size: 0.85rem;
-}
-
-.standings-table .team-crest {
-  width: 15px;
-  height: 15px;
 }
 
 .table-legend {
@@ -1346,11 +1351,6 @@ h2 {
   border: 1px solid var(--border);
   padding: 0.85rem 1rem;
   margin-bottom: 0.6rem;
-}
-
-.result-row--interactive .team-crest {
-  width: 26px;
-  height: 26px;
 }
 
 .result-row--interactive .result-row__side-team {

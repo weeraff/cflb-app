@@ -29,13 +29,19 @@ function initialsFor(name) {
   return (words[0][0] + words[1][0]).toUpperCase()
 }
 
-export default function TeamCrest({ src, name }) {
-  if (src) return <img className="team-crest" src={src} alt="" loading="lazy" />
-  if (!name) return <span className="team-crest team-crest--placeholder" />
+// size="md" (20px) is the default used almost everywhere; "sm" (15px)
+// is the dense standings table, "lg" (26px) is the Recent Results cards
+// where the crest carries more visual weight. Named variants here
+// instead of per-page descendant-selector overrides in CSS.
+export default function TeamCrest({ src, name, size = 'md' }) {
+  const sizeClass = size !== 'md' ? ` team-crest--${size}` : ''
+
+  if (src) return <img className={`team-crest${sizeClass}`} src={src} alt="" loading="lazy" />
+  if (!name) return <span className={`team-crest team-crest--placeholder${sizeClass}`} />
 
   const color = CREST_PALETTE[hashString(name) % CREST_PALETTE.length]
   return (
-    <span className="team-crest team-crest--badge" style={{ background: color }} aria-hidden="true">
+    <span className={`team-crest team-crest--badge${sizeClass}`} style={{ background: color }} aria-hidden="true">
       {initialsFor(name)}
     </span>
   )
