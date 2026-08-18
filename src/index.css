@@ -466,11 +466,11 @@ h2 {
 }
 
 .rank-panel--gold {
-  border-left-color: var(--gold);
+  border-left-color: var(--pd-gold);
 }
 
 .rank-panel--gold .rank-panel__ordinal {
-  color: var(--gold);
+  color: var(--pd-gold);
 }
 
 .rank-panel__suffix {
@@ -2209,14 +2209,21 @@ h2 {
 /* Predictions home-screen dashboard — its own token namespace (scoped
    to this wrapper, not the global --bg/--accent/etc) so the champagne-
    gold direction lives here without reskinning the rest of the site. */
-.predictions-dashboard {
+/* Shared champagne-gold token set for any "your stats" card — originally
+   scoped to .predictions-dashboard only, now also applied to MyTeamDashboard
+   (Home) and PredictionsSnapshot (News) so a signed-in user's rank reads as
+   one consistent visual language everywhere it shows up, not three
+   different colour systems that happen to look similar. */
+.stat-card-theme {
   --pd-bg: #0e0d0b;
   --pd-card: #1c1a15;
   --pd-gold: #c9a35c;
   --pd-text: #f2e8d5;
   --pd-muted: #8a8577;
   --pd-border: #3a3527;
+}
 
+.predictions-dashboard {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
@@ -2851,7 +2858,7 @@ h2 {
   font-family: var(--font-splash);
   font-weight: 400;
   font-size: 2rem;
-  color: var(--gold);
+  color: var(--pd-gold);
   display: flex;
   align-items: baseline;
   gap: 0.5rem;

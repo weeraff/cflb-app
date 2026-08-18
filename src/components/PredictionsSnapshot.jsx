@@ -41,7 +41,7 @@ export default function PredictionsSnapshot() {
 
   if (!auth?.user) {
     return (
-      <section className="rank-panel rank-panel--empty">
+      <section className="rank-panel rank-panel--empty stat-card-theme">
         <span className="rank-panel__ordinal rank-panel__ordinal--ghost">?</span>
         <div className="rank-panel__meta">
           <p className="rank-panel__prompt">Sign in and pick this week's scorelines to see where you land on the leaderboard.</p>
@@ -53,7 +53,7 @@ export default function PredictionsSnapshot() {
 
   if (!rank) {
     return (
-      <section className="rank-panel rank-panel--empty">
+      <section className="rank-panel rank-panel--empty stat-card-theme">
         <span className="rank-panel__ordinal rank-panel__ordinal--ghost">?</span>
         <div className="rank-panel__meta">
           <p className="rank-panel__prompt">Make a pick to enter the leaderboard.</p>
@@ -64,7 +64,7 @@ export default function PredictionsSnapshot() {
   }
 
   return (
-    <section className={`rank-panel${rank === 1 ? ' rank-panel--gold' : ''}`}>
+    <section className={`rank-panel stat-card-theme${rank === 1 ? ' rank-panel--gold' : ''}`}>
       <div className="rank-panel__main">
         <span className="rank-panel__ordinal">
           {rank}

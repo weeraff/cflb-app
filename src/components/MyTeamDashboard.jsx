@@ -137,7 +137,7 @@ export default function MyTeamDashboard() {
 
   if (!auth?.user) {
     return (
-      <div className="my-team">
+      <div className="my-team stat-card-theme">
         <p className="auth-note">Sign in on the Predictions page to personalise this with your team.</p>
       </div>
     )
@@ -147,7 +147,7 @@ export default function MyTeamDashboard() {
 
   if (!profile?.followed_team) {
     return (
-      <div className="my-team">
+      <div className="my-team stat-card-theme">
         <RankCard rank={rank} previousRank={previousRank} />
         <p>Pick a team to follow for their next fixture, watch and highlights right here.</p>
         <form onSubmit={saveTeam} className="my-team__picker">
@@ -167,7 +167,7 @@ export default function MyTeamDashboard() {
   const canWatchHighlights = Boolean(recentFixture?.highlights_video_id)
 
   return (
-    <div className="my-team">
+    <div className="my-team stat-card-theme">
       <RankCard rank={rank} previousRank={previousRank} />
       <div className="my-team__grid">
         <div className="my-team__card">

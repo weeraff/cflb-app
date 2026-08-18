@@ -182,7 +182,7 @@ export default function PredictionsDashboard({ userId, lockTime, submittedAll, h
   }, [userId])
 
   return (
-    <div className="predictions-dashboard">
+    <div className="predictions-dashboard stat-card-theme">
       <CountdownLockCard lockTime={lockTime} submittedAll={submittedAll} hasFixtures={hasFixtures} onCta={onCta} />
       {userId ? (
         <>
