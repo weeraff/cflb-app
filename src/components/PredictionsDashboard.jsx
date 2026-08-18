@@ -133,25 +133,16 @@ function SponsorPlaceholderCard() {
   return <div className="pd-card pd-card--sponsor-slot" aria-hidden="true" />
 }
 
-export default function PredictionsDashboard({ userId, lockTime, submittedAll, hasFixtures, rank, onCta }) {
-  const [previousRank, setPreviousRank] = useState(null)
+export default function PredictionsDashboard({ userId, lockTime, submittedAll, hasFixtures, rank, previousRank, onCta }) {
   const [streak, setStreak] = useState(null)
   const [hostEntries, setHostEntries] = useState(null)
 
   useEffect(() => {
     if (!isSupabaseConfigured || !userId) {
-      setPreviousRank(null)
       setStreak(null)
       setHostEntries(null)
       return
     }
-
-    supabase
-      .from('profiles')
-      .select('last_rank')
-      .eq('id', userId)
-      .maybeSingle()
-      .then(({ data }) => setPreviousRank(data?.last_rank ?? null))
 
     supabase
       .from('streaks')

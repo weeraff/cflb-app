@@ -6,6 +6,7 @@ import FixtureTeamRow from './FixtureTeamRow'
 import LiveStreamEmbed from './LiveStreamEmbed'
 import { formatKickoff } from '../lib/format'
 import useMyRank from '../hooks/useMyRank'
+import useMyProfile from '../hooks/useMyProfile'
 
 function RankCard({ rank, previousRank }) {
   const movement = previousRank != null && rank != null ? previousRank - rank : null
@@ -28,8 +29,7 @@ function RankCard({ rank, previousRank }) {
 
 export default function MyTeamDashboard() {
   const auth = useAuth()
-  const [profile, setProfile] = useState(null)
-  const [profileChecked, setProfileChecked] = useState(false)
+  const { profile, setProfile, checked: profileChecked } = useMyProfile(auth?.user?.id)
   const [teamOptions, setTeamOptions] = useState([])
   const [teamDraft, setTeamDraft] = useState('')
   const [nextFixture, setNextFixture] = useState(null)
@@ -37,30 +37,8 @@ export default function MyTeamDashboard() {
   const [latestEpisode, setLatestEpisode] = useState(null)
   const [watchOpen, setWatchOpen] = useState(false)
   const [highlightsOpen, setHighlightsOpen] = useState(false)
-  const [previousRank, setPreviousRank] = useState(null)
   const { rank } = useMyRank(auth?.user?.id)
-
-  useEffect(() => {
-    if (!isSupabaseConfigured || !auth?.user) {
-      setProfile(null)
-      setProfileChecked(true)
-      return
-    }
-
-    supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', auth.user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        setProfile(data)
-        setProfileChecked(true)
-      })
-  }, [auth?.user])
-
-  useEffect(() => {
-    setPreviousRank(auth?.user ? (profile?.last_rank ?? null) : null)
-  }, [auth?.user, profile?.last_rank])
+  const previousRank = auth?.user ? (profile?.last_rank ?? null) : null
 
   useEffect(() => {
     if (!isSupabaseConfigured || profile?.followed_team) return

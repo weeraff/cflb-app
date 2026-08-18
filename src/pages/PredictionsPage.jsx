@@ -12,6 +12,7 @@ import TheEightWizard from '../components/TheEightWizard'
 import TheEightSummary, { pickResult } from '../components/TheEightSummary'
 import { buildTheEightFixtures, computeRoundKey, computeLockTime } from '../lib/theEight'
 import useCompetitionData from '../hooks/useCompetitionData'
+import useMyProfile from '../hooks/useMyProfile'
 
 export default function PredictionsPage() {
   if (PREDICTIONS_COMING_SOON) {
@@ -37,8 +38,7 @@ function PredictionsPageContent() {
   const [picks, setPicks] = useState({})
   const [email, setEmail] = useState('')
   const [magicLinkSent, setMagicLinkSent] = useState(false)
-  const [profile, setProfile] = useState(null)
-  const [profileChecked, setProfileChecked] = useState(false)
+  const { profile, setProfile, checked: profileChecked } = useMyProfile(auth?.user?.id)
   const [displayNameInput, setDisplayNameInput] = useState('')
   const [displayNameError, setDisplayNameError] = useState('')
   const [submitNotice, setSubmitNotice] = useState(null)
@@ -67,21 +67,7 @@ function PredictionsPageContent() {
   }, [])
 
   useEffect(() => {
-    if (!isSupabaseConfigured || !auth?.user) {
-      setProfile(null)
-      setProfileChecked(true)
-      return
-    }
-
-    supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', auth.user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        setProfile(data)
-        setProfileChecked(true)
-      })
+    if (!isSupabaseConfigured || !auth?.user) return
 
     supabase
       .from('predictions')
@@ -255,6 +241,7 @@ function PredictionsPageContent() {
         submittedAll={submittedAll}
         hasFixtures={theEight.length > 0}
         rank={myRank}
+        previousRank={profile?.last_rank ?? null}
         onCta={() => document.getElementById('the-eight-picks')?.scrollIntoView({ behavior: 'smooth' })}
       />
 
