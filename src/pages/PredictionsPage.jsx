@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { placeholderFixtures, placeholderLeaderboard } from '../lib/placeholderData'
 import { PREDICTIONS_COMING_SOON } from '../lib/featureFlags'
 import FixtureTeamRow from '../components/FixtureTeamRow'
 import Leagues from '../components/Leagues'
-import CompetitionReference from '../components/CompetitionReference'
+import CompactFormGuide from '../components/CompactFormGuide'
 import SponsorModule from '../components/SponsorModule'
 import PredictionsDashboard from '../components/PredictionsDashboard'
 import TheEightWizard from '../components/TheEightWizard'
@@ -281,8 +282,9 @@ function PredictionsPageContent() {
       )}
 
       <details className="reference-panel">
-        <summary className="reference-panel__toggle">Check the table, results &amp; form before you pick</summary>
-        <CompetitionReference heading={null} />
+        <summary className="reference-panel__toggle">Check form before you pick</summary>
+        <CompactFormGuide fixtures={theEight} standings={standings} results={results} />
+        <Link className="reference-panel__full-link" to="/">See the full table, results &amp; top scorers →</Link>
       </details>
 
       <h2 id="the-eight-picks">The Eight</h2>

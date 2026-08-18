@@ -1195,8 +1195,59 @@ h2 {
   border-bottom: 1px solid var(--border);
 }
 
-.reference-panel .competition-reference {
-  padding: 1.25rem 0 1.5rem;
+.reference-panel__full-link {
+  display: inline-block;
+  margin: 0 0 1.25rem;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.compact-form-guide {
+  display: flex;
+  flex-direction: column;
+  padding-top: 0.5rem;
+}
+
+.compact-form-guide__fixture {
+  border-top: 1px dashed var(--border);
+  padding: 0.6rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.compact-form-guide__competition {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.compact-form-guide__team {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.compact-form-guide__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.compact-form-guide__position {
+  flex: none;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  color: var(--text-dim);
 }
 
 .competition-select-label {
