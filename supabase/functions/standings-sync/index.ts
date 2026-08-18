@@ -110,6 +110,13 @@ Deno.serve(async () => {
     await logError(supabase, 'score-predictions', err)
   }
 
+  let nextRoundFeatured = 0
+  try {
+    nextRoundFeatured = await autoFeatureNextRound(supabase)
+  } catch (err) {
+    await logError(supabase, 'auto-feature-next-round', err)
+  }
+
   let matchEventsSynced = 0
   try {
     matchEventsSynced = await syncMatchEvents(supabase)
@@ -165,6 +172,7 @@ Deno.serve(async () => {
       locked,
       completed,
       scored,
+      nextRoundFeatured,
       matchEventsSynced,
       resultsNotified,
       closingNotified,
@@ -348,6 +356,70 @@ async function completeFixturesFromResults(supabase: SupabaseClientAny) {
     if (!error) count += 1
   }
   return count
+}
+
+// The Eight's fixture selection ("featured") was a manual, hand-curated
+// step — a real person picking the most interesting 4 NPL NSW / 3 League
+// One / 1 League Two games each week via the Supabase table editor. That
+// worked until nobody did it in time and the round just sat empty. This
+// auto-opens the next round the moment the current one fully finishes, by
+// chronologically-soonest fixture per tier (mirrors the same cascading
+// quota logic buildTheEightFixtures uses client-side in src/lib/theEight.js,
+// just server-side since there's no shared package between the Vite app and
+// this Deno function). Trade-off: it can no longer prioritise derbies/
+// marquee matchups the way a human curator did — this guarantees a round
+// is never blank, it doesn't replace picking more interesting fixtures by
+// hand afterward if that still matters for a given week.
+const NEXT_ROUND_TIERS = [
+  { competition: 'NPL NSW', quota: 4 },
+  { competition: 'League One', quota: 3 },
+  { competition: 'League Two', quota: 1 },
+]
+
+async function autoFeatureNextRound(supabase: SupabaseClientAny) {
+  const { data: openFeatured, error: openError } = await supabase
+    .from('fixtures')
+    .select('id')
+    .eq('featured', true)
+    .neq('status', 'completed')
+  if (openError) throw openError
+  // Current round still has an unfinished featured fixture — not done yet.
+  if (openFeatured && openFeatured.length > 0) return 0
+
+  const { data: candidates, error: candidatesError } = await supabase
+    .from('fixtures')
+    .select('id, competition, kickoff_at')
+    .eq('status', 'scheduled')
+    .eq('featured', false)
+    .in('competition', NEXT_ROUND_TIERS.map((t) => t.competition))
+    .order('kickoff_at', { ascending: true })
+  if (candidatesError) throw candidatesError
+  if (!candidates?.length) return 0
+
+  const selected: { id: string }[] = []
+  let carry = 0
+  for (const tier of NEXT_ROUND_TIERS) {
+    const quota = tier.quota + carry
+    const inTier = candidates.filter((f: { competition: string }) => f.competition === tier.competition).slice(0, quota)
+    selected.push(...inTier)
+    carry = Math.max(0, quota - inTier.length)
+  }
+  if (selected.length === 0) return 0
+
+  const { error: updateError } = await supabase
+    .from('fixtures')
+    .update({ featured: true })
+    .in('id', selected.map((f) => f.id))
+  if (updateError) throw updateError
+
+  // Retire the just-finished round's featured flag so `featured = true`
+  // in the table editor always means "this week's round", not an ever-
+  // growing pile of every round that's ever been featured. Safe here
+  // unconditionally — reaching this point already confirmed every
+  // currently-featured fixture is completed.
+  await supabase.from('fixtures').update({ featured: false }).eq('featured', true).eq('status', 'completed')
+
+  return selected.length
 }
 
 // Match events (scorers with minute, cards, subs) — found by capturing
