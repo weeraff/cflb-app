@@ -246,6 +246,10 @@ function isWomensContent(title: string) {
   return WOMENS_PATTERN.test(title)
 }
 
+function isHighlightsVideo(title: string) {
+  return /highlights/i.test(title)
+}
+
 // Strips common club-name noise so "Sydney FC" matches "Sydney FC NPL
 // Men's" and similar upstream variations, without being loose enough to
 // cross-match different clubs.
@@ -365,7 +369,15 @@ async function syncHighlights(supabase: SupabaseClientAny) {
   }
 
   if (candidates?.length) {
-    const uploads = await fetchRecentUploads()
+    // Football NSW's channel carries full match replays and live-stream
+    // VODs alongside the actual highlights reel, and team names alone
+    // can't tell them apart — "NPL Men's NSW - Marconi v Sutherland"
+    // (a full match) matches on team names exactly as well as "NPL Men's
+    // NSW Round 28 Highlights - Marconi v Sutherland" (the real highlights
+    // video) does. Confirmed real highlights titles consistently say
+    // "Highlights"; requiring that word is what actually distinguishes
+    // the short reel from the long replay, not team-name matching alone.
+    const uploads = (await fetchRecentUploads()).filter((v) => isHighlightsVideo(v.title))
 
     for (const fixture of candidates as ResultFixture[]) {
       let hit = findMatch(fixture, uploads, fixture.kickoff_at)
@@ -375,7 +387,7 @@ async function syncHighlights(supabase: SupabaseClientAny) {
 
       let searchResults: { videoId: string; title: string; publishedAt: string }[] = []
       if (!hit && dueForSearchFallback) {
-        searchResults = await searchChannelForHighlights(fixture.home_team, fixture.away_team)
+        searchResults = (await searchChannelForHighlights(fixture.home_team, fixture.away_team)).filter((v) => isHighlightsVideo(v.title))
         hit = findMatch(fixture, searchResults, fixture.kickoff_at)
       }
 
