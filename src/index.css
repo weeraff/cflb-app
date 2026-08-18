@@ -1848,8 +1848,8 @@ h2 {
 }
 
 .the-eight__dot {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   flex: none;
   border: 1px solid var(--border);
   background: transparent;
@@ -2794,10 +2794,13 @@ h2 {
    result rows in CompetitionReference (Home page, NPL NSW only). */
 .recent-result__highlights {
   align-self: flex-start;
-  margin-top: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 0.35rem -0.5rem 0;
+  padding: 0 0.5rem;
   background: none;
   border: none;
-  padding: 0;
   cursor: pointer;
   font-family: var(--font-display);
   font-weight: 700;
