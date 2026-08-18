@@ -297,7 +297,7 @@ create table if not exists sponsors (
   name text not null,
   logo_url text,
   link_url text not null,
-  slot text not null check (slot in ('header', 'feed', 'sidebar', 'predictions_top', 'predictions_post_submit')),
+  slot text not null check (slot in ('header', 'feed', 'sidebar', 'predictions_top', 'predictions_post_submit', 'footer')),
   headline text,
   body text,
   cta_text text not null default 'Learn more',
