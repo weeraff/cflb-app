@@ -1,32 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
-
-function useCountdown(lockTime) {
-  const [now, setNow] = useState(() => new Date())
-
-  useEffect(() => {
-    if (!lockTime) return
-    const id = setInterval(() => setNow(new Date()), 1000)
-    return () => clearInterval(id)
-  }, [lockTime])
-
-  if (!lockTime) return { locked: true, label: '' }
-
-  const diffMs = lockTime - now
-  if (diffMs <= 0) return { locked: true, label: '' }
-
-  const totalMinutes = Math.floor(diffMs / 60000)
-  const days = Math.floor(totalMinutes / (60 * 24))
-  const hours = Math.floor((totalMinutes % (60 * 24)) / 60)
-  const minutes = totalMinutes % 60
-
-  let label
-  if (days > 0) label = `${days}d ${hours}h`
-  else if (hours > 0) label = `${hours}h ${minutes}m`
-  else label = `${minutes}m`
-
-  return { locked: false, label, diffMs }
-}
+import useCountdown from '../hooks/useCountdown'
 
 function CountdownLockCard({ lockTime, submittedAll, hasFixtures, onCta }) {
   const { locked, label, diffMs } = useCountdown(lockTime)
@@ -130,7 +104,12 @@ function VideoPlaceholderCard() {
 }
 
 function SponsorPlaceholderCard() {
-  return <div className="pd-card pd-card--sponsor-slot" aria-hidden="true" />
+  return (
+    <div className="pd-card pd-card--sponsor-slot">
+      <span className="pd-label">Sponsor slot</span>
+      <span className="pd-video__runtime">Coming soon</span>
+    </div>
+  )
 }
 
 export default function PredictionsDashboard({ userId, lockTime, submittedAll, hasFixtures, rank, previousRank, onCta }) {
@@ -175,15 +154,11 @@ export default function PredictionsDashboard({ userId, lockTime, submittedAll, h
   return (
     <div className="predictions-dashboard stat-card-theme">
       <CountdownLockCard lockTime={lockTime} submittedAll={submittedAll} hasFixtures={hasFixtures} onCta={onCta} />
-      {userId ? (
+      {userId && (
         <>
           <RankStreakPair rank={rank} previousRank={previousRank} streak={streak} />
           <BeatHostCard hostEntries={hostEntries} />
         </>
-      ) : (
-        <div className="pd-card pd-card--signin-prompt">
-          Sign in to see your rank, streak, and Beat the Host score.
-        </div>
       )}
       <div className="pd-pair pd-pair--placeholders">
         <VideoPlaceholderCard />

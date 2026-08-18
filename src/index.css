@@ -2443,12 +2443,6 @@ h2 {
   color: var(--pd-gold);
 }
 
-.pd-card--signin-prompt {
-  color: var(--pd-muted);
-  font-size: 0.85rem;
-  text-align: center;
-}
-
 /* Round Wrap video + sponsor placeholders — static for now */
 .pd-card--video {
   display: flex;
@@ -2483,6 +2477,10 @@ h2 {
 
 .pd-card--sponsor-slot {
   min-height: 84px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.3rem;
 }
 
 .pd-pair--placeholders {
@@ -2812,8 +2810,54 @@ h2 {
 }
 
 /* My Team — personalised Home dashboard */
+/* Home's Champagne Nine / The Eight teaser — the single primary CTA on
+   the app's entry point, so it gets the boldest treatment on the page:
+   full-width, gold border, gold CTA text, not just another stat card. */
+.home-teaser {
+  display: block;
+  border: 1px solid var(--pd-gold);
+  background: var(--pd-card);
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  text-decoration: none;
+  color: var(--pd-text);
+}
+
+.home-teaser__text {
+  display: block;
+  font-family: var(--font-splash);
+  font-weight: 400;
+  font-size: 1.5rem;
+  margin: 0.2rem 0 0.6rem;
+}
+
+.home-teaser__cta {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--pd-gold);
+}
+
 .my-team {
   margin-bottom: 2rem;
+}
+
+.my-team__signin {
+  border: 1px solid var(--pd-border);
+  background: var(--pd-card);
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.my-team__signin p {
+  margin: 0;
+  color: var(--pd-text);
 }
 
 .my-team__picker {

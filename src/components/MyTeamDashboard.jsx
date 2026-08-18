@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { placeholderEpisodes } from '../lib/placeholderData'
@@ -115,8 +116,9 @@ export default function MyTeamDashboard() {
 
   if (!auth?.user) {
     return (
-      <div className="my-team stat-card-theme">
-        <p className="auth-note">Sign in on the Predictions page to personalise this with your team.</p>
+      <div className="my-team stat-card-theme my-team__signin">
+        <p>Sign in to follow your team, track your rank and see your picks in one place.</p>
+        <Link className="button" to="/predictions">Sign in</Link>
       </div>
     )
   }
