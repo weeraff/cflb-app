@@ -1537,8 +1537,16 @@ h2 {
   margin: 0;
 }
 
-.auth-card {
+/* Shared border-top-only recipe — a row separator within a list, not a
+   standalone bordered block (see .the-eight__card/.my-team__card above
+   for that variant). Each keeps its own padding/gap/alignment. */
+.auth-card,
+.fixture-card,
+.live-card {
   border-top: 1px solid var(--border);
+}
+
+.auth-card {
   padding: 1.1rem 0;
   margin-bottom: 1.5rem;
   display: flex;
@@ -1626,7 +1634,6 @@ h2 {
 }
 
 .fixture-card {
-  border-top: 1px solid var(--border);
   padding: 0.85rem 0;
   display: flex;
   flex-direction: column;
@@ -1814,14 +1821,20 @@ h2 {
   background: var(--accent-soft);
 }
 
+/* Shared "bordered content block" recipe — .the-eight__card and
+   .my-team__card only override what actually differs (padding/gap). */
+.the-eight__card,
+.my-team__card {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+}
+
 .the-eight__card {
   width: 100%;
   max-width: 420px;
-  border: 1px solid var(--border);
-  background: var(--surface);
   padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
   align-items: stretch;
   gap: 0.85rem;
 }
@@ -2624,10 +2637,6 @@ h2 {
   flex-direction: column;
 }
 
-.live-card {
-  border-top: 1px solid var(--border);
-}
-
 .live-card__summary {
   display: flex;
   align-items: center;
@@ -2772,11 +2781,7 @@ h2 {
 }
 
 .my-team__card {
-  border: 1px solid var(--border);
-  background: var(--surface);
   padding: 1rem;
-  display: flex;
-  flex-direction: column;
   gap: 0.5rem;
 }
 
