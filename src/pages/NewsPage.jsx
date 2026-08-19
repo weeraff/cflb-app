@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { placeholderNews } from '../lib/placeholderData'
 import MatchdayBanner from '../components/MatchdayBanner'
-import PredictionsSnapshot from '../components/PredictionsSnapshot'
-import GamesComingUp from '../components/GamesComingUp'
 import NotificationOptIn from '../components/NotificationOptIn'
 
 export default function NewsPage() {
@@ -54,10 +52,8 @@ export default function NewsPage() {
         )}
 
         <div className="news-sidebar">
-          <PredictionsSnapshot />
           <NotificationOptIn />
           <MatchdayBanner />
-          <GamesComingUp />
         </div>
       </div>
 

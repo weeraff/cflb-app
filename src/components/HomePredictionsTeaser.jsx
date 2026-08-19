@@ -40,13 +40,13 @@ export default function HomePredictionsTeaser() {
 
   let ctaLabel = 'Make your picks'
   if (locked) ctaLabel = 'See this round'
-  else if (within24h) ctaLabel = `${label} left — pick now`
+  else if (within24h) ctaLabel = `${label} left, pick now`
 
   return (
     <Link to="/predictions" className="home-teaser stat-card-theme">
       <span className="pd-label">The Eight</span>
       <span className="home-teaser__text">
-        {locked ? "This round's picks are locked — check how you did" : `Picks lock in ${label}`}
+        {locked ? "This round's picks are locked. Check how you did" : `Picks lock in ${label}`}
       </span>
       <span className="home-teaser__cta">{ctaLabel} →</span>
     </Link>

@@ -28,7 +28,7 @@ The combination is the mechanism: aggregation alone (a news feed) or a predictio
 
 - Stack: React 19 + Vite + React Router, Supabase (Postgres, Auth, Edge Functions) as backend.
 - Predictions currently store per-fixture home/away scorelines; without Supabase configured or a signed-in user, picks are local-only (not persisted) and the app tells the user so.
-- Sponsor placements exist in the code at header, feed, and sidebar slots (`src/components/SponsorSlot.jsx`, `placeholderSponsors`) as a real monetization mechanic already wired into the layout — not yet confirmed as a binding design constraint, but present and functional, so treat as evidence to preserve rather than decoration to remove.
+- Sponsor placements exist in the code at header, feed, and sidebar slots (`src/components/SponsorShowcase.jsx`, `SponsorModule.jsx`) as a real monetization mechanic — kept in the codebase but switched off via `SPONSORS_ENABLED` in `src/lib/featureFlags.js` for the beta, so early testers see a clean, unbranded product. Flip the flag back on post-beta rather than re-add the slots from scratch.
 - No confirmed constraints beyond the above; the user was not able to name additional binding constraints at init time.
 
 ## Evidence on Hand

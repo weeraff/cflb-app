@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import useCountdown from '../hooks/useCountdown'
+import { SPONSORS_ENABLED } from '../lib/featureFlags'
 
 function CountdownLockCard({ lockTime, submittedAll, hasFixtures, onCta }) {
   const { locked, label, diffMs } = useCountdown(lockTime)
@@ -162,7 +163,7 @@ export default function PredictionsDashboard({ userId, lockTime, submittedAll, h
       )}
       <div className="pd-pair pd-pair--placeholders">
         <VideoPlaceholderCard />
-        <SponsorPlaceholderCard />
+        {SPONSORS_ENABLED && <SponsorPlaceholderCard />}
       </div>
     </div>
   )

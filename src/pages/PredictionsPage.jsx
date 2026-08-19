@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { placeholderFixtures, placeholderLeaderboard } from '../lib/placeholderData'
-import { PREDICTIONS_COMING_SOON } from '../lib/featureFlags'
+import { PREDICTIONS_COMING_SOON, SPONSORS_ENABLED } from '../lib/featureFlags'
 import FixtureTeamRow from '../components/FixtureTeamRow'
 import Leagues from '../components/Leagues'
 import CompactFormGuide from '../components/CompactFormGuide'
@@ -289,7 +289,7 @@ function PredictionsPageContent() {
 
       <h2 id="the-eight-picks">The Eight</h2>
 
-      <SponsorModule slot="predictions_top" rotateKey={roundKey ?? ''} />
+      {SPONSORS_ENABLED && <SponsorModule slot="predictions_top" rotateKey={roundKey ?? ''} />}
 
       {theEight.length === 0 && <p className="auth-note">No fixtures open for picks right now.</p>}
 
@@ -435,7 +435,7 @@ function PredictionsPageContent() {
           ))}
         </ol>
       ) : (
-        <p className="auth-note">Be the first on the board — make your picks before kickoff.</p>
+        <p className="auth-note">Be the first on the board. Make your picks before kickoff.</p>
       )}
     </section>
   )

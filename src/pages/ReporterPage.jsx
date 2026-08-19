@@ -83,7 +83,7 @@ export default function ReporterPage() {
         <option value="">Select a fixture…</option>
         {fixtures.map((f) => (
           <option key={f.id} value={f.id}>
-            {f.home_team} v {f.away_team} — {formatKickoff(f.kickoff_at)}
+            {f.home_team} v {f.away_team}, {formatKickoff(f.kickoff_at)}
           </option>
         ))}
       </select>
@@ -270,8 +270,8 @@ function FixtureReporter({ fixture, onStatusChange }) {
             <span className="reporter-event__minute">{ev.minute}'</span>
             <span className="reporter-event__body">
               {ev.type === 'goal'
-                ? `Goal — ${ev.player_name}${ev.assist_name ? ` (assist: ${ev.assist_name})` : ''}`
-                : `${ev.card_type === 'red' ? 'Red' : 'Yellow'} card — ${ev.player_name}`}
+                ? `Goal: ${ev.player_name}${ev.assist_name ? ` (assist: ${ev.assist_name})` : ''}`
+                : `${ev.card_type === 'red' ? 'Red' : 'Yellow'} card: ${ev.player_name}`}
               <span className="reporter-event__team"> ({ev.team === 'home' ? fixture.home_team : fixture.away_team})</span>
             </span>
             <button className="reporter-event__remove" onClick={() => removeEvent(ev.id)} aria-label="Remove event">✕</button>

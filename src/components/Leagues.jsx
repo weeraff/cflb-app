@@ -105,7 +105,7 @@ export default function Leagues() {
     }
 
     setLeagueName('')
-    setNotice({ type: 'success', text: `"${league.name}" created — invite code ${league.code}` })
+    setNotice({ type: 'success', text: `"${league.name}" created. Invite code ${league.code}` })
     refreshMyLeagues(league.id)
   }
 
@@ -204,7 +204,7 @@ export default function Leagues() {
 
           {selectedLeague && (
             <p className="league-invite">
-              Invite code: <strong>{selectedLeague.code}</strong> — share it so mates can join.
+              Invite code: <strong>{selectedLeague.code}</strong>. Share it so mates can join.
             </p>
           )}
 
@@ -219,7 +219,7 @@ export default function Leagues() {
               ))}
             </ol>
           ) : (
-            <p className="auth-note">No picks made in this league yet — be the first.</p>
+            <p className="auth-note">No picks made in this league yet. Be the first.</p>
           )}
         </div>
       )}

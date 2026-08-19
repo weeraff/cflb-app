@@ -158,7 +158,7 @@ export default function TheEightWizard({ fixtures, picks, updatePick, standings,
 
         {hasPunditPick && (
           <p className="the-eight__pundit">
-            🎙 {fixture.pundit_name} picked {fixture.pundit_home_pick}-{fixture.pundit_away_pick} — beat them?
+            🎙 {fixture.pundit_name} picked {fixture.pundit_home_pick}-{fixture.pundit_away_pick}. Beat them?
           </p>
         )}
 

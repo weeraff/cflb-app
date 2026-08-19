@@ -3,6 +3,7 @@ import TeamCrest from './TeamCrest'
 import SponsorModule from './SponsorModule'
 import { buildShareImageBlob } from '../lib/shareImage'
 import { formatKickoff } from '../lib/format'
+import { SPONSORS_ENABLED } from '../lib/featureFlags'
 
 function pickResult(home, away) {
   if (home > away) return 'home'
@@ -106,7 +107,7 @@ export default function TheEightSummary({ fixtures, picks, onEdit, onSubmit, sub
       {punditFixtures.length > 0 && (
         <p className="the-eight-summary__beat-host">
           {locked
-            ? `You'll go head-to-head with the hosts on ${punditFixtures.length} games — full time will tell who beat who.`
+            ? `You'll go head-to-head with the hosts on ${punditFixtures.length} games. Full time will tell who beat who.`
             : `Beat the host: your picks line up with the hosts on ${matchedPundit.length}/${punditFixtures.length} games so far.`}
         </p>
       )}
@@ -122,7 +123,7 @@ export default function TheEightSummary({ fixtures, picks, onEdit, onSubmit, sub
           <button type="button" className="button the-eight-summary__share" onClick={handleShare} disabled={sharing}>
             {sharing ? 'Preparing image...' : 'Share Predictions'}
           </button>
-          <SponsorModule slot="predictions_post_submit" rotateKey={roundKey} />
+          {SPONSORS_ENABLED && <SponsorModule slot="predictions_post_submit" rotateKey={roundKey} />}
         </>
       )}
     </div>

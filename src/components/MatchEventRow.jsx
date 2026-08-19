@@ -15,7 +15,7 @@ export default function MatchEventRow({ event, homeTeam, awayTeam }) {
         {event.type === 'goal' && (
           <>
             {event.player_name} <span className="match-event-row__team">({teamName})</span>
-            {event.assist_name && <span className="match-event-row__assist"> — assist: {event.assist_name}</span>}
+            {event.assist_name && <span className="match-event-row__assist"> (assist: {event.assist_name})</span>}
           </>
         )}
         {event.type === 'card' && (
@@ -25,7 +25,7 @@ export default function MatchEventRow({ event, homeTeam, awayTeam }) {
         )}
         {event.type === 'missed_penalty' && (
           <>
-            Missed penalty — {event.player_name} <span className="match-event-row__team">({teamName})</span>
+            Missed penalty: {event.player_name} <span className="match-event-row__team">({teamName})</span>
           </>
         )}
       </span>

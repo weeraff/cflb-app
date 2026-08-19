@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import SponsorShowcase from './SponsorShowcase'
 import { useAuth } from '../context/AuthContext'
-import { PREDICTIONS_COMING_SOON } from '../lib/featureFlags'
+import { PREDICTIONS_COMING_SOON, SPONSORS_ENABLED } from '../lib/featureFlags'
 
 const navItems = [
   { to: '/', label: 'Home', end: true },
@@ -44,7 +44,7 @@ export default function Layout() {
         <Outlet />
       </main>
 
-      <SponsorShowcase />
+      {SPONSORS_ENABLED && <SponsorShowcase />}
     </div>
   )
 }

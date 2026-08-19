@@ -114,7 +114,7 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
         ))}
       </select>
 
-      <h3 className="results-heading">Recent Results{lastRound ? ` — ${lastRound}` : ''}</h3>
+      <h3 className="results-heading">Recent Results{lastRound ? `: ${lastRound}` : ''}</h3>
       <ul className="results-list">
         {recentResults.map((r) => {
           const key = r.id ?? `${r.home_team}-${r.away_team}-${r.played_at}`
