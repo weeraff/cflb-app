@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import useCountdown from '../hooks/useCountdown'
 import { SPONSORS_ENABLED } from '../lib/featureFlags'
+import { computePredictionStats } from '../lib/predictionStats'
 
 function CountdownLockCard({ lockTime, submittedAll, hasFixtures, onCta }) {
   const { locked, label, diffMs } = useCountdown(lockTime)
@@ -35,7 +36,7 @@ function CountdownLockCard({ lockTime, submittedAll, hasFixtures, onCta }) {
   )
 }
 
-function RankStreakPair({ rank, previousRank, streak }) {
+function RankStreakPair({ rank, previousRank, streak, longestStreak }) {
   const movement = previousRank != null && rank != null ? previousRank - rank : null
 
   return (
@@ -53,8 +54,47 @@ function RankStreakPair({ rank, previousRank, streak }) {
       </div>
       <div className="pd-card pd-card--stat">
         <span className="pd-label">Correct-pick streak</span>
-        <span className="pd-stat">{streak != null ? streak : '—'}</span>
+        <span className="pd-stat">
+          {streak != null ? streak : '—'}
+          {longestStreak != null && longestStreak > 0 && (
+            <span className="pd-movement">best {longestStreak}</span>
+          )}
+        </span>
       </div>
+    </div>
+  )
+}
+
+function ConsistencyCard({ stats }) {
+  if (!stats || stats.totalScored === 0) return null
+
+  const { recentRecord, bySide, exactRate } = stats
+  const sideLabels = { home: 'Home picks', away: 'Away picks', draw: 'Draw picks' }
+
+  return (
+    <div className="pd-card pd-card--consistency">
+      <span className="pd-label">Your Form</span>
+      {recentRecord && (
+        <p className="pd-consistency__headline">
+          {recentRecord.correct}/{recentRecord.total} correct in your last {recentRecord.total} picks
+        </p>
+      )}
+      <ul className="pd-consistency__list">
+        {Object.entries(bySide)
+          .filter(([, side]) => side.total > 0)
+          .map(([key, side]) => (
+            <li key={key}>
+              <span>{sideLabels[key]}</span>
+              <span>{side.correct}/{side.total}</span>
+            </li>
+          ))}
+        {exactRate != null && (
+          <li>
+            <span>Exact scoreline rate</span>
+            <span>{exactRate}%</span>
+          </li>
+        )}
+      </ul>
     </div>
   )
 }
@@ -113,23 +153,29 @@ function SponsorPlaceholderCard() {
   )
 }
 
-export default function PredictionsDashboard({ userId, lockTime, submittedAll, hasFixtures, rank, previousRank, onCta }) {
+export default function PredictionsDashboard({ userId, lockTime, submittedAll, hasFixtures, rank, previousRank, onCta, predictions }) {
   const [streak, setStreak] = useState(null)
+  const [longestStreak, setLongestStreak] = useState(null)
   const [hostEntries, setHostEntries] = useState(null)
+  const stats = predictions ? computePredictionStats(predictions) : null
 
   useEffect(() => {
     if (!isSupabaseConfigured || !userId) {
       setStreak(null)
+      setLongestStreak(null)
       setHostEntries(null)
       return
     }
 
     supabase
       .from('streaks')
-      .select('current_streak')
+      .select('current_streak, longest_streak')
       .eq('user_id', userId)
       .maybeSingle()
-      .then(({ data }) => setStreak(data?.current_streak ?? 0))
+      .then(({ data }) => {
+        setStreak(data?.current_streak ?? 0)
+        setLongestStreak(data?.longest_streak ?? 0)
+      })
 
     const seasonId = new Date().getFullYear().toString()
     supabase
@@ -157,7 +203,8 @@ export default function PredictionsDashboard({ userId, lockTime, submittedAll, h
       <CountdownLockCard lockTime={lockTime} submittedAll={submittedAll} hasFixtures={hasFixtures} onCta={onCta} />
       {userId && (
         <>
-          <RankStreakPair rank={rank} previousRank={previousRank} streak={streak} />
+          <RankStreakPair rank={rank} previousRank={previousRank} streak={streak} longestStreak={longestStreak} />
+          <ConsistencyCard stats={stats} />
           <BeatHostCard hostEntries={hostEntries} />
         </>
       )}

@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import TeamCrest from './TeamCrest'
 import SponsorModule from './SponsorModule'
 import { buildShareImageBlob } from '../lib/shareImage'
 import { formatKickoff } from '../lib/format'
 import { SPONSORS_ENABLED } from '../lib/featureFlags'
+import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 
 function pickResult(home, away) {
   if (home > away) return 'home'
@@ -30,11 +31,46 @@ function TiebreakerRow({ value, onChange, locked }) {
 
 export default function TheEightSummary({ fixtures, picks, onEdit, onSubmit, submitting, locked, resultStats, tiebreaker, onTiebreakerChange, roundKey }) {
   const [sharing, setSharing] = useState(false)
+  const [punditsByFixture, setPunditsByFixture] = useState({})
 
-  const punditFixtures = fixtures.filter((f) => f.pundit_name && f.pundit_home_pick != null && f.pundit_away_pick != null)
+  useEffect(() => {
+    if (!isSupabaseConfigured || fixtures.length === 0) {
+      setPunditsByFixture({})
+      return
+    }
+
+    supabase
+      .from('fixture_pundits')
+      .select('*')
+      .in('fixture_id', fixtures.map((f) => f.id))
+      .then(({ data, error }) => {
+        if (error || !data) return
+        const byFixture = {}
+        for (const row of data) {
+          byFixture[row.fixture_id] ??= []
+          byFixture[row.fixture_id].push(row)
+        }
+        setPunditsByFixture(byFixture)
+      })
+  }, [fixtures])
+
+  // Multiple named pundits (fixture_pundits) take priority; fall back to
+  // the legacy single pundit_name/pundit_home_pick/pundit_away_pick
+  // columns on the fixture itself when no rows exist yet for it.
+  function punditsFor(fixture) {
+    const rows = punditsByFixture[fixture.id]
+    if (rows?.length) return rows
+    if (fixture.pundit_name && fixture.pundit_home_pick != null) {
+      return [{ pundit_name: fixture.pundit_name, home_pick: fixture.pundit_home_pick, away_pick: fixture.pundit_away_pick }]
+    }
+    return []
+  }
+
+  const punditFixtures = fixtures.filter((f) => punditsFor(f).length > 0)
   const matchedPundit = punditFixtures.filter((f) => {
     const pick = picks[f.id]
-    return pick && pickResult(pick.home ?? 0, pick.away ?? 0) === pickResult(f.pundit_home_pick, f.pundit_away_pick)
+    if (!pick) return false
+    return punditsFor(f).some((p) => pickResult(pick.home ?? 0, pick.away ?? 0) === pickResult(p.home_pick, p.away_pick))
   })
 
   async function handleShare() {
@@ -83,9 +119,9 @@ export default function TheEightSummary({ fixtures, picks, onEdit, onSubmit, sub
                   </span>
                 </div>
                 {locked && <span className="the-eight-summary__kickoff">{formatKickoff(fixture.kickoff_at)}</span>}
-                {fixture.pundit_name && fixture.pundit_home_pick != null && (
-                  <span className="the-eight-summary__pundit">🎙 {fixture.pundit_name}: {fixture.pundit_home_pick}-{fixture.pundit_away_pick}</span>
-                )}
+                {punditsFor(fixture).map((p) => (
+                  <span key={p.pundit_name} className="the-eight-summary__pundit">🎙 {p.pundit_name}: {p.home_pick}-{p.away_pick}</span>
+                ))}
               </div>
 
               {locked ? (

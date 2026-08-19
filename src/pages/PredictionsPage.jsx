@@ -222,6 +222,7 @@ function PredictionsPageContent() {
         rank={myRank}
         previousRank={profile?.last_rank ?? null}
         onCta={() => document.getElementById('the-eight-picks')?.scrollIntoView({ behavior: 'smooth' })}
+        predictions={Object.values(myPredictions)}
       />
 
       {!auth?.user && (
