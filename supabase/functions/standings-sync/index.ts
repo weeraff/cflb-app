@@ -721,7 +721,7 @@ async function updateBeatHostSeason(supabase: SupabaseClientAny) {
 async function notifyRoundResultsSummary(supabase: SupabaseClientAny) {
   const { data: featured, error } = await supabase
     .from('fixtures')
-    .select('status, kickoff_at')
+    .select('id, status, kickoff_at')
     .eq('featured', true)
   if (error) throw error
   if (!featured?.length) return 0
@@ -739,11 +739,33 @@ async function notifyRoundResultsSummary(supabase: SupabaseClientAny) {
     .maybeSingle()
   if (existing?.results_notified) return 0
 
-  const sent = await sendPushToAll(supabase, {
-    title: 'Round results are in',
-    body: 'The full round is final, see how your picks stacked up on the leaderboard.',
-    url: '/predictions',
-  })
+  // Personalize with each user's actual points this round rather than a
+  // generic "results are in" nudge — "you scored 9 points" is a much
+  // stronger reason to open the app than a blanket announcement.
+  const fixtureIds = featured.map((f: { id: string }) => f.id)
+  const { data: predictions, error: predictionsError } = await supabase
+    .from('predictions')
+    .select('user_id, points_awarded')
+    .in('fixture_id', fixtureIds)
+  if (predictionsError) throw predictionsError
+
+  const pointsByUser: Record<string, number> = {}
+  for (const p of predictions ?? []) {
+    pointsByUser[p.user_id] = (pointsByUser[p.user_id] ?? 0) + (p.points_awarded ?? 0)
+  }
+
+  let sent = 0
+  for (const [userId, points] of Object.entries(pointsByUser)) {
+    try {
+      sent += await sendPushToUsers(supabase, [userId], {
+        title: 'Round results are in',
+        body: `You scored ${points} point${points === 1 ? '' : 's'} this round — all games finished.`,
+        url: '/predictions',
+      })
+    } catch (err) {
+      await logError(supabase, 'notify-round-summary-send', err)
+    }
+  }
 
   await supabase
     .from('round_notifications')
