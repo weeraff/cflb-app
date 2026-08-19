@@ -1,7 +1,13 @@
 // src/components/OnboardingGate.jsx
+import { lazy, Suspense } from 'react'
 import { useAuth } from '../context/AuthContext'
 import useMyProfile from '../hooks/useMyProfile'
-import OnboardingFlow from './OnboardingFlow'
+
+// Lazy-loaded: OnboardingFlow pulls in placeholderData.js and is only ever
+// rendered once per first-time signed-in user, so it shouldn't ship in the
+// eager main bundle that every visitor (signed-out or already-onboarded)
+// downloads via Layout.
+const OnboardingFlow = lazy(() => import('./OnboardingFlow'))
 
 // Fires for a signed-in user with no role set yet, no matter which tab they
 // land on after Google sign-in — replaces the old inline "pick a display
@@ -16,7 +22,11 @@ export default function OnboardingGate({ children }) {
   const needsOnboarding = Boolean(auth?.user) && checked && !profile?.role
 
   if (needsOnboarding) {
-    return <OnboardingFlow userId={auth.user.id} onComplete={(row) => setProfile(row)} />
+    return (
+      <Suspense fallback={null}>
+        <OnboardingFlow userId={auth.user.id} onComplete={(row) => setProfile(row)} />
+      </Suspense>
+    )
   }
 
   return children
