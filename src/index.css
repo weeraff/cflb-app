@@ -1907,10 +1907,7 @@ h2 {
   background: var(--accent-soft);
 }
 
-/* Shared "bordered content block" recipe — .the-eight__card and
-   .my-team__card only override what actually differs (padding/gap). */
-.the-eight__card,
-.my-team__card {
+.the-eight__card {
   border: 1px solid var(--border);
   background: var(--surface);
   display: flex;
@@ -2914,8 +2911,11 @@ h2 {
 }
 
 .my-team__card {
-  padding: 1rem;
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
+  border-top: 1px solid var(--pd-border);
+  padding: 1rem 0 0;
 }
 
 .my-team__label {
@@ -2963,8 +2963,6 @@ h2 {
 }
 
 .my-team__card--episode {
-  justify-content: center;
-  text-decoration: none;
   color: var(--text);
 }
 
@@ -2973,18 +2971,71 @@ h2 {
   font-size: 0.95rem;
 }
 
-.my-team__rank {
-  margin-bottom: 0.85rem;
+.my-team__episode-embed {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
 }
 
-.my-team__rank-value {
+.my-team__episode-embed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.my-team__episode-audio {
+  width: 100%;
+}
+
+.my-team__episode-link {
+  align-self: flex-start;
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.my-team__stats {
+  display: flex;
+  margin-bottom: 1.25rem;
+}
+
+.my-team__stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding-right: 1rem;
+  border-left: 1px solid var(--pd-border);
+  padding-left: 1rem;
+}
+
+.my-team__stat:first-child {
+  border-left: none;
+  padding-left: 0;
+}
+
+.my-team__stat-value {
   font-family: var(--font-splash);
   font-weight: 400;
   font-size: 2rem;
   color: var(--pd-gold);
   display: flex;
   align-items: baseline;
-  gap: 0.5rem;
+  gap: 0.4rem;
+}
+
+.my-team__stat-label {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pd-muted);
 }
 
 .my-team__rank-movement {

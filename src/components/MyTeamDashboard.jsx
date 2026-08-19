@@ -9,20 +9,30 @@ import { formatKickoff } from '../lib/format'
 import useMyRank from '../hooks/useMyRank'
 import useMyProfile from '../hooks/useMyProfile'
 
-function RankCard({ rank, previousRank }) {
+function StatsRow({ rank, previousRank, points, lastRoundPoints }) {
   const movement = previousRank != null && rank != null ? previousRank - rank : null
 
   return (
-    <div className="my-team__card my-team__rank">
-      <span className="my-team__label">Leaderboard rank</span>
-      <span className="my-team__rank-value">
-        {rank != null ? `#${rank}` : '—'}
-        {movement != null && movement !== 0 && (
-          <span className={`my-team__rank-movement my-team__rank-movement--${movement > 0 ? 'up' : 'down'}`}>
-            {movement > 0 ? '▲' : '▼'} {Math.abs(movement)}
-          </span>
-        )}
-      </span>
+    <div className="my-team__stats">
+      <div className="my-team__stat">
+        <span className="my-team__stat-value">
+          {rank != null ? `#${rank}` : '—'}
+          {movement != null && movement !== 0 && (
+            <span className={`my-team__rank-movement my-team__rank-movement--${movement > 0 ? 'up' : 'down'}`}>
+              {movement > 0 ? '▲' : '▼'} {Math.abs(movement)}
+            </span>
+          )}
+        </span>
+        <span className="my-team__stat-label">Rank</span>
+      </div>
+      <div className="my-team__stat">
+        <span className="my-team__stat-value">{lastRoundPoints != null ? lastRoundPoints : '—'}</span>
+        <span className="my-team__stat-label">Last round</span>
+      </div>
+      <div className="my-team__stat">
+        <span className="my-team__stat-value">{points}</span>
+        <span className="my-team__stat-label">Total points</span>
+      </div>
     </div>
   )
 }
@@ -38,8 +48,36 @@ export default function MyTeamDashboard() {
   const [latestEpisode, setLatestEpisode] = useState(null)
   const [watchOpen, setWatchOpen] = useState(false)
   const [highlightsOpen, setHighlightsOpen] = useState(false)
-  const { rank } = useMyRank(auth?.user?.id)
+  const [lastRoundPoints, setLastRoundPoints] = useState(null)
+  const { rank, points } = useMyRank(auth?.user?.id)
   const previousRank = auth?.user ? (profile?.last_rank ?? null) : null
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !auth?.user) {
+      setLastRoundPoints(null)
+      return
+    }
+
+    supabase
+      .from('predictions')
+      .select('points_awarded, fixtures(round, kickoff_at, status)')
+      .eq('user_id', auth.user.id)
+      .then(({ data, error }) => {
+        if (error || !data) return
+        const completed = data.filter((p) => p.fixtures?.status === 'completed')
+        if (completed.length === 0) {
+          setLastRoundPoints(null)
+          return
+        }
+        const latestRound = completed.sort(
+          (a, b) => new Date(b.fixtures.kickoff_at) - new Date(a.fixtures.kickoff_at),
+        )[0].fixtures.round
+        const total = completed
+          .filter((p) => p.fixtures.round === latestRound)
+          .reduce((sum, p) => sum + (p.points_awarded ?? 0), 0)
+        setLastRoundPoints(total)
+      })
+  }, [auth?.user])
 
   useEffect(() => {
     if (!isSupabaseConfigured || profile?.followed_team) return
@@ -128,7 +166,7 @@ export default function MyTeamDashboard() {
   if (!profile?.followed_team) {
     return (
       <div className="my-team stat-card-theme">
-        <RankCard rank={rank} previousRank={previousRank} />
+        <StatsRow rank={rank} previousRank={previousRank} points={points} lastRoundPoints={lastRoundPoints} />
         <p>Pick a team to follow for their next fixture, watch and highlights right here.</p>
         <form onSubmit={saveTeam} className="my-team__picker">
           <select value={teamDraft} onChange={(e) => setTeamDraft(e.target.value)}>
@@ -148,7 +186,7 @@ export default function MyTeamDashboard() {
 
   return (
     <div className="my-team stat-card-theme">
-      <RankCard rank={rank} previousRank={previousRank} />
+      <StatsRow rank={rank} previousRank={previousRank} points={points} lastRoundPoints={lastRoundPoints} />
       <div className="my-team__grid">
         <div className="my-team__card">
           <span className="my-team__label">{profile.followed_team} — Next Fixture</span>
@@ -187,13 +225,18 @@ export default function MyTeamDashboard() {
         </div>
 
         {latestEpisode && (
-          <a
-            className="my-team__card my-team__card--episode"
-            href={latestEpisode.external_id ? `/podcast#episode-${latestEpisode.external_id}` : '/podcast'}
-          >
+          <div className="my-team__card my-team__card--episode">
             <span className="my-team__label">Latest Episode</span>
             <span className="my-team__episode-title">{latestEpisode.title}</span>
-          </a>
+            {latestEpisode.source === 'youtube' ? (
+              <div className="my-team__episode-embed">
+                <iframe title={latestEpisode.title} src={latestEpisode.embed_url} allow="encrypted-media" allowFullScreen />
+              </div>
+            ) : (
+              <audio controls src={latestEpisode.embed_url} className="my-team__episode-audio" />
+            )}
+            <Link className="my-team__episode-link" to="/podcast">All episodes →</Link>
+          </div>
         )}
       </div>
     </div>
