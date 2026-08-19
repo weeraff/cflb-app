@@ -118,7 +118,7 @@ export default function MyTeamDashboard() {
     return (
       <div className="my-team stat-card-theme my-team__signin">
         <p>Sign in to follow your team, track your rank and see your picks in one place.</p>
-        <Link className="button" to="/predictions">Sign in</Link>
+        <Link className="button" to="/sign-in">Sign in</Link>
       </div>
     )
   }
