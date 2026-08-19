@@ -18,6 +18,7 @@ const AUDIO_EPISODES_LIMIT = 8
 export default function PodcastPage() {
   const [episodes, setEpisodes] = useState(placeholderEpisodes)
   const [usingPlaceholder, setUsingPlaceholder] = useState(true)
+  const [heroMode, setHeroMode] = useState('watch')
 
   useEffect(() => {
     if (!isSupabaseConfigured) return
@@ -42,8 +43,17 @@ export default function PodcastPage() {
     .sort((a, b) => new Date(b.published_at) - new Date(a.published_at))
 
   const [latestEpisode, ...previousEpisodes] = fullEpisodes
+  const [latestAudio, ...previousAudio] = audioEpisodes
   const visiblePrevious = previousEpisodes.slice(0, PREVIOUS_EPISODES_LIMIT)
-  const visibleAudio = audioEpisodes.slice(0, AUDIO_EPISODES_LIMIT)
+  const visibleAudio = previousAudio.slice(0, AUDIO_EPISODES_LIMIT)
+
+  // Front and centre: whichever of watch/listen the visitor picks plays
+  // right there, no click-through needed. Default to whichever actually
+  // exists if only one does.
+  const canWatch = Boolean(latestEpisode)
+  const canListen = Boolean(latestAudio)
+  const activeHeroMode = heroMode === 'watch' && !canWatch ? 'listen' : heroMode === 'listen' && !canListen ? 'watch' : heroMode
+  const heroEpisode = activeHeroMode === 'watch' ? latestEpisode : latestAudio
 
   const episodesById = new Map(episodes.map((ep) => [episodeKey(ep), ep]))
   const guestLinks = podcastGuests.filter((g) => episodesById.has(g.episodeId))
@@ -58,16 +68,39 @@ export default function PodcastPage() {
 
       <div className="podcast-layout">
         <div className="podcast-main">
-          {latestEpisode && (
+          {heroEpisode && (
             <>
-              <h2 className="podcast-column-heading">Latest Episode</h2>
-              <div className="video-card video-card--hero" id={`episode-${episodeKey(latestEpisode)}`}>
-                <div className="video-card__embed">
-                  <iframe title={latestEpisode.title} src={latestEpisode.embed_url} allow="encrypted-media" allowFullScreen />
-                </div>
+              <div className="podcast-hero-header">
+                <h2 className="podcast-column-heading">Latest Episode</h2>
+                {canWatch && canListen && (
+                  <div className="podcast-hero-toggle">
+                    <button
+                      type="button"
+                      className={`podcast-hero-toggle__btn${activeHeroMode === 'watch' ? ' podcast-hero-toggle__btn--active' : ''}`}
+                      onClick={() => setHeroMode('watch')}
+                    >
+                      Watch
+                    </button>
+                    <button
+                      type="button"
+                      className={`podcast-hero-toggle__btn${activeHeroMode === 'listen' ? ' podcast-hero-toggle__btn--active' : ''}`}
+                      onClick={() => setHeroMode('listen')}
+                    >
+                      Listen
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="video-card video-card--hero" id={`episode-${episodeKey(heroEpisode)}`}>
+                {activeHeroMode === 'watch' ? (
+                  <div className="video-card__embed">
+                    <iframe title={heroEpisode.title} src={heroEpisode.embed_url} allow="encrypted-media" allowFullScreen />
+                  </div>
+                ) : (
+                  <audio controls src={heroEpisode.embed_url} className="podcast-hero-audio" />
+                )}
                 <div className="video-card__body">
-                  <h3>{latestEpisode.title}</h3>
-                  <p>{latestEpisode.description}</p>
+                  <h3>{heroEpisode.title}</h3>
                 </div>
               </div>
             </>
@@ -116,8 +149,8 @@ export default function PodcastPage() {
               </div>
             ))}
           </div>
-          {audioEpisodes.length > AUDIO_EPISODES_LIMIT && (
-            <p className="podcast-more-note">+{audioEpisodes.length - AUDIO_EPISODES_LIMIT} more episodes in the feed</p>
+          {previousAudio.length > AUDIO_EPISODES_LIMIT && (
+            <p className="podcast-more-note">+{previousAudio.length - AUDIO_EPISODES_LIMIT} more episodes in the feed</p>
           )}
 
           {guestLinks.length > 0 && (
