@@ -32,8 +32,9 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
   const [activeCompetition, setActiveCompetition] = useState(COMPETITIONS[0])
   const [streamData, setStreamData] = useState({})
   const [events, setEvents] = useState([])
-  const [detailId, setDetailId] = useState(null)
+  const [lineups, setLineups] = useState({})
   const [watchId, setWatchId] = useState(null)
+  const [lineupId, setLineupId] = useState(null)
 
   const rows = standings
     .filter((row) => row.competition === activeCompetition)
@@ -57,6 +58,7 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
     if (!isSupabaseConfigured || activeCompetition !== 'NPL NSW' || recentResults.length === 0) {
       setStreamData({})
       setEvents([])
+      setLineups({})
       return
     }
 
@@ -81,6 +83,20 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
           .order('minute', { ascending: true })
           .then(({ data: eventRows, error: eventsError }) => {
             if (!eventsError && eventRows) setEvents(eventRows)
+          })
+
+        supabase
+          .from('match_lineups')
+          .select('*')
+          .in('fixture_id', fixtureIds)
+          .then(({ data: lineupRows, error: lineupsError }) => {
+            if (lineupsError || !lineupRows) return
+            const byFixture = {}
+            for (const row of lineupRows) {
+              byFixture[row.fixture_id] ??= {}
+              byFixture[row.fixture_id][row.team] = row
+            }
+            setLineups(byFixture)
           })
       })
   }, [activeCompetition, lastRound])
@@ -115,62 +131,92 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
       </select>
 
       <h3 className="results-heading">Recent Results{lastRound ? `: ${lastRound}` : ''}</h3>
-      <ul className="results-list">
+      <ul className="results-list results-list--grid">
         {recentResults.map((r) => {
           const key = r.id ?? `${r.home_team}-${r.away_team}-${r.played_at}`
           const fixture = streamData[r.dribl_id]
           const fixtureEvents = fixture ? events.filter((e) => e.fixture_id === fixture.id) : []
-          const detailOpen = detailId === key
+          const homeEvents = fixtureEvents.filter((e) => e.team === 'home')
+          const awayEvents = fixtureEvents.filter((e) => e.team === 'away')
+          const fixtureLineups = fixture ? lineups[fixture.id] : null
           const watchOpen = watchId === key
+          const lineupOpen = lineupId === key
           const hasHighlights = Boolean(fixture?.highlights_video_id)
+          const hasLineups = Boolean(fixtureLineups?.home || fixtureLineups?.away)
 
           return (
             <li key={key} className="result-row result-row--interactive">
-              <button
-                type="button"
-                className="result-row__toggle"
-                onClick={() => setDetailId(detailOpen ? null : key)}
-                disabled={!fixture}
-                aria-expanded={detailOpen}
-              >
-                <div className="result-row__meta">
-                  <span>{r.round}</span>
-                  {r.ground && <span>{r.ground}</span>}
+              <div className="result-row__meta">
+                <span>{r.round}</span>
+                {r.ground && <span>{r.ground}</span>}
+              </div>
+              <div className="result-row__matchup">
+                <div className="result-row__side">
+                  <FixtureTeamRow className="result-row__side-team" logo={r.home_logo} name={r.home_team} crestSize="lg" />
+                  <span className={`result-row__side-score${r.home_score > r.away_score ? ' result-row__winner' : ''}`}>{r.home_score}</span>
                 </div>
-                <div className="result-row__matchup">
-                  <div className="result-row__side">
-                    <FixtureTeamRow className="result-row__side-team" logo={r.home_logo} name={r.home_team} crestSize="lg" />
-                    <span className={`result-row__side-score${r.home_score > r.away_score ? ' result-row__winner' : ''}`}>{r.home_score}</span>
-                  </div>
-                  <div className="result-row__side">
-                    <FixtureTeamRow className="result-row__side-team" logo={r.away_logo} name={r.away_team} crestSize="lg" />
-                    <span className={`result-row__side-score${r.away_score > r.home_score ? ' result-row__winner' : ''}`}>{r.away_score}</span>
-                  </div>
+                {homeEvents.length > 0 && (
+                  <ul className="recent-result__events">
+                    {homeEvents.map((ev) => (
+                      <MatchEventRow key={ev.id} event={ev} homeTeam={r.home_team} awayTeam={r.away_team} />
+                    ))}
+                  </ul>
+                )}
+                <div className="result-row__side">
+                  <FixtureTeamRow className="result-row__side-team" logo={r.away_logo} name={r.away_team} crestSize="lg" />
+                  <span className={`result-row__side-score${r.away_score > r.home_score ? ' result-row__winner' : ''}`}>{r.away_score}</span>
                 </div>
-              </button>
+                {awayEvents.length > 0 && (
+                  <ul className="recent-result__events">
+                    {awayEvents.map((ev) => (
+                      <MatchEventRow key={ev.id} event={ev} homeTeam={r.home_team} awayTeam={r.away_team} />
+                    ))}
+                  </ul>
+                )}
+              </div>
 
-              {hasHighlights && (
-                <button
-                  type="button"
-                  className="recent-result__highlights"
-                  onClick={() => setWatchId(watchOpen ? null : key)}
-                  aria-expanded={watchOpen}
-                >
-                  {watchOpen ? 'Hide highlights' : '▶ Highlights'}
-                </button>
+              {(hasHighlights || hasLineups) && (
+                <div className="result-row__actions">
+                  {hasHighlights && (
+                    <button
+                      type="button"
+                      className="recent-result__highlights"
+                      onClick={() => setWatchId(watchOpen ? null : key)}
+                      aria-expanded={watchOpen}
+                    >
+                      {watchOpen ? 'Hide highlights' : '▶ Watch Highlights'}
+                    </button>
+                  )}
+                  {hasLineups && (
+                    <button
+                      type="button"
+                      className="recent-result__highlights"
+                      onClick={() => setLineupId(lineupOpen ? null : key)}
+                      aria-expanded={lineupOpen}
+                    >
+                      {lineupOpen ? 'Hide lineups' : 'Lineups'}
+                    </button>
+                  )}
+                </div>
               )}
 
               {watchOpen && hasHighlights && (
                 <LiveStreamEmbed videoId={fixture.highlights_video_id} title={`${r.home_team} v ${r.away_team} highlights`} />
               )}
 
-              {detailOpen && (
-                <ul className="recent-result__events">
-                  {fixtureEvents.length === 0 && <li className="auth-note">Match details not available.</li>}
-                  {fixtureEvents.map((ev) => (
-                    <MatchEventRow key={ev.id} event={ev} homeTeam={r.home_team} awayTeam={r.away_team} />
-                  ))}
-                </ul>
+              {lineupOpen && hasLineups && (
+                <div className="recent-result__lineups">
+                  <div className="recent-result__lineup">
+                    <strong>{r.home_team}</strong>
+                    <p>{fixtureLineups?.home?.starting_xi || 'Not available'}</p>
+                    {fixtureLineups?.home?.subs && <p className="auth-note">Subs: {fixtureLineups.home.subs}</p>}
+                  </div>
+                  <div className="recent-result__lineup">
+                    <strong>{r.away_team}</strong>
+                    <p>{fixtureLineups?.away?.starting_xi || 'Not available'}</p>
+                    {fixtureLineups?.away?.subs && <p className="auth-note">Subs: {fixtureLineups.away.subs}</p>}
+                  </div>
+                </div>
               )}
             </li>
           )
@@ -185,9 +231,6 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
               <th>#</th>
               <th>Team</th>
               <th>P</th>
-              <th>W</th>
-              <th>D</th>
-              <th>L</th>
               <th>GD</th>
               <th>Pts</th>
               <th>Form</th>
@@ -200,7 +243,9 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
                   ? 'zone--leader'
                   : row.position > rows.length - 2
                     ? 'zone--relegation'
-                    : ''
+                    : row.position <= 6
+                      ? 'zone--finals'
+                      : ''
               return (
                 <tr key={row.team} className={zone}>
                   <td>{row.position}</td>
@@ -211,9 +256,6 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
                     </span>
                   </td>
                   <td>{row.played}</td>
-                  <td>{row.won}</td>
-                  <td>{row.drawn}</td>
-                  <td>{row.lost}</td>
                   <td>{row.gd}</td>
                   <td><strong>{row.points}</strong></td>
                   <td><FormGuide picks={computeForm(row.team, results, activeCompetition)} /></td>
@@ -228,6 +270,10 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
         <span className="table-legend__item">
           <span className="table-legend__swatch table-legend__swatch--leader" />
           Champion
+        </span>
+        <span className="table-legend__item">
+          <span className="table-legend__swatch table-legend__swatch--finals" />
+          Finals (Top 6)
         </span>
         <span className="table-legend__item">
           <span className="table-legend__swatch table-legend__swatch--relegation" />

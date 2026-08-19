@@ -1065,6 +1065,10 @@ h2 {
   color: var(--accent);
 }
 
+.standings-table tr.zone--finals td:first-child {
+  color: var(--gold);
+}
+
 .standings-table tr.zone--relegation td:first-child {
   color: var(--danger);
 }
@@ -1130,6 +1134,10 @@ h2 {
 
 .table-legend__swatch--leader {
   background: var(--accent);
+}
+
+.table-legend__swatch--finals {
+  background: var(--gold);
 }
 
 .table-legend__swatch--relegation {
@@ -1284,6 +1292,22 @@ h2 {
   flex-direction: column;
 }
 
+/* Recent Results specifically: two compact cards per row on wider
+   screens so a round's worth of results doesn't take a long scroll to
+   get through. Falls back to one column when a card can't comfortably
+   fit two-up (matches the .result-row--interactive min layout needs). */
+.results-list--grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+@media (max-width: 620px) {
+  .results-list--grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* Compact fixture list for narrow columns (News sidebar) — team names
    get their own row instead of squeezing onto one horizontal line,
    which was truncating real team names down to 3-4 characters. */
@@ -1404,39 +1428,42 @@ h2 {
   border-top: none;
   background: var(--surface);
   border: 1px solid var(--border);
-  padding: 0.85rem 1rem;
-  margin-bottom: 0.6rem;
+  padding: 0.65rem 0.75rem;
+  margin-bottom: 0;
 }
 
 .result-row--interactive .result-row__side-team {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 600;
 }
 
 .result-row--interactive .result-row__side-score {
   font-family: var(--font-splash);
   font-weight: 400;
-  font-size: 1.4rem;
-  min-width: 2rem;
+  font-size: 1.2rem;
+  min-width: 1.75rem;
 }
 
-.result-row__toggle {
+.result-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+}
+
+.recent-result__lineups {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  width: 100%;
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border);
+  font-size: 0.85rem;
 }
 
-.result-row__toggle:disabled {
-  cursor: default;
+.recent-result__lineup p {
+  margin: 0.2rem 0 0;
+  color: var(--text-dim);
+  white-space: pre-line;
 }
 
 .result-row__meta {
@@ -2793,8 +2820,8 @@ h2 {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  margin: 0.35rem -0.5rem 0;
-  padding: 0 0.5rem;
+  margin: 0.35rem 0 0;
+  padding: 0 0.5rem 0 0;
   background: none;
   border: none;
   cursor: pointer;
