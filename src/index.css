@@ -3016,3 +3016,19 @@ h2 {
 .match-event-row__assist {
   color: var(--text-dim);
 }
+
+.sign-in-page {
+  max-width: 420px;
+  margin: 2rem auto 0;
+}
+
+.sign-in-page__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.sign-in-page__body .button {
+  min-height: 44px;
+}

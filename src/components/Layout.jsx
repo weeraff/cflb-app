@@ -27,7 +27,7 @@ export default function Layout() {
           {auth?.user ? (
             <button className="link-button" onClick={auth.signOut}>Sign out</button>
           ) : !PREDICTIONS_COMING_SOON ? (
-            <NavLink to="/predictions" className="link-button">Sign in</NavLink>
+            <NavLink to="/sign-in" className="link-button">Sign in</NavLink>
           ) : null}
         </div>
         <nav className="app-nav">
