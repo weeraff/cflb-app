@@ -1,3 +1,6 @@
+-- Verified by manual SQL review against existing profiles table definition
+-- (Supabase CLI not linked to live project in this environment).
+--
 -- Onboarding fields captured at first sign-in: role, league, team (reuses
 -- existing followed_team), age group, and marketing consent. All nullable
 -- except marketing_opt_in — a row with role = null means the user hasn't
