@@ -169,6 +169,12 @@ create table if not exists profiles (
   -- highlights). Free text, not a foreign key — team names aren't a
   -- dedicated table anywhere in this schema.
   followed_team text,
+  -- Onboarding fields, captured once at first sign-in. role = null means
+  -- the user hasn't completed onboarding yet (see OnboardingGate).
+  role text check (role in ('player', 'coach', 'fan')),
+  league text,
+  age_group text check (age_group in ('first_grade', '20s', '18s', '16s')),
+  marketing_opt_in boolean not null default true,
   created_at timestamptz not null default now()
 );
 
