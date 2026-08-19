@@ -29,11 +29,18 @@ export default function OnboardingFlow({ userId, onComplete }) {
   const [league, setLeague] = useState(null)
   const [leagueOther, setLeagueOther] = useState('')
   const [team, setTeam] = useState('')
+  const [teamOther, setTeamOther] = useState('')
   const [ageGroup, setAgeGroup] = useState(null)
   const [marketingOptIn, setMarketingOptIn] = useState(true)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [standingsRows, setStandingsRows] = useState(placeholderStandings)
+  // Supabase not configured at all (preview/dev environment) is a legitimate
+  // case where showing placeholder clubs is fine. A genuine fetch failure
+  // (network error, RLS, empty result) against a *configured* Supabase is
+  // different: standingsFetchFailed drives free-text fallback so we never
+  // write a stale placeholder club into someone's profile.
+  const [standingsRows, setStandingsRows] = useState(isSupabaseConfigured ? [] : placeholderStandings)
+  const [standingsFetchFailed, setStandingsFetchFailed] = useState(false)
 
   useEffect(() => {
     if (!isSupabaseConfigured) return
@@ -44,9 +51,19 @@ export default function OnboardingFlow({ userId, onComplete }) {
       .order('competition', { ascending: true })
       .order('team', { ascending: true })
       .then(({ data, error: fetchError }) => {
-        if (!fetchError && data?.length) setStandingsRows(data)
+        if (!fetchError && data?.length) {
+          setStandingsRows(data)
+        } else {
+          setStandingsFetchFailed(true)
+        }
       })
   }, [])
+
+  // True only for "Supabase is configured but the live fetch actually
+  // failed". Skip the standings-backed dropdowns entirely and fall back to
+  // free-text league/team inputs so a fetch failure can never surface stale
+  // placeholder clubs as if they were real options.
+  const useFreeText = isSupabaseConfigured && standingsFetchFailed
 
   const leagues = [...new Set(standingsRows.map((row) => row.competition))]
   const effectiveLeague = league === 'other' ? null : league
@@ -77,8 +94,10 @@ export default function OnboardingFlow({ userId, onComplete }) {
     setSubmitting(true)
     setError('')
 
-    const resolvedLeague = role === 'fan' ? null : (league === 'other' ? leagueOther.trim() : league)
-    const resolvedTeam = team.trim()
+    const resolvedLeague = role === 'fan' ? null : ((useFreeText || league === 'other') ? leagueOther.trim() : league)
+    const resolvedTeam = (role === 'fan' && (useFreeText || team === '__other'))
+      ? teamOther.trim()
+      : team.trim()
 
     if (!resolvedTeam) {
       setError('Pick or enter a team.')
@@ -143,47 +162,86 @@ export default function OnboardingFlow({ userId, onComplete }) {
       {step === 2 && role !== 'fan' && (
         <div className="onboarding__step">
           <h1 className="onboarding__title">Which league?</h1>
-          <div className="onboarding__options">
-            {leagues.map((name) => (
-              <OptionButton key={name} selected={league === name} onClick={() => { setLeague(name); setTeam('') }}>{name}</OptionButton>
-            ))}
-            <OptionButton selected={league === 'other'} onClick={() => { setLeague('other'); setTeam('') }}>Other</OptionButton>
-          </div>
-          {league === 'other' && (
+          {useFreeText ? (
             <input
               type="text"
               placeholder="Your league"
               value={leagueOther}
               onChange={(e) => setLeagueOther(e.target.value)}
               className="onboarding__text-input"
+              autoFocus
             />
+          ) : (
+            <>
+              <div className="onboarding__options">
+                {leagues.map((name) => (
+                  <OptionButton key={name} selected={league === name} onClick={() => { setLeague(name); setTeam('') }}>{name}</OptionButton>
+                ))}
+                <OptionButton selected={league === 'other'} onClick={() => { setLeague('other'); setTeam('') }}>Other</OptionButton>
+              </div>
+              {league === 'other' && (
+                <input
+                  type="text"
+                  placeholder="Your league"
+                  value={leagueOther}
+                  onChange={(e) => setLeagueOther(e.target.value)}
+                  className="onboarding__text-input"
+                />
+              )}
+            </>
           )}
-          <button type="button" className="button" disabled={!league} onClick={nextStep}>Next</button>
+          <button
+            type="button"
+            className="button"
+            disabled={useFreeText ? !leagueOther.trim() : !league}
+            onClick={nextStep}
+          >
+            Next
+          </button>
         </div>
       )}
 
       {step === 2 && role === 'fan' && (
         <div className="onboarding__step">
           <h1 className="onboarding__title">Which team do you follow?</h1>
-          <select className="onboarding__select" value={team} onChange={(e) => setTeam(e.target.value)}>
-            <option value="">Choose a team</option>
-            {leagues.map((name) => (
-              <optgroup key={name} label={name}>
-                {standingsRows.filter((row) => row.competition === name).map((row) => (
-                  <option key={row.team} value={row.team}>{row.team}</option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+          {(useFreeText || team === '__other') ? (
+            <input
+              type="text"
+              placeholder="Your team"
+              value={teamOther}
+              onChange={(e) => setTeamOther(e.target.value)}
+              className="onboarding__text-input"
+              autoFocus
+            />
+          ) : (
+            <select className="onboarding__select" value={team} onChange={(e) => setTeam(e.target.value)}>
+              <option value="">Choose a team</option>
+              {leagues.map((name) => (
+                <optgroup key={name} label={name}>
+                  {standingsRows.filter((row) => row.competition === name).map((row) => (
+                    <option key={row.team} value={row.team}>{row.team}</option>
+                  ))}
+                </optgroup>
+              ))}
+              <option value="__other">Other</option>
+            </select>
+          )}
           {error && <p className="auth-note auth-note--error">{error}</p>}
-          <button type="button" className="button" disabled={!team} onClick={() => { setError(''); nextStep() }}>Next</button>
+          <button
+            type="button"
+            className="button"
+            disabled={(useFreeText || team === '__other') ? !teamOther.trim() : !team}
+            onClick={() => { setError(''); nextStep() }}
+          >
+            Next
+          </button>
         </div>
       )}
 
       {step === 3 && role !== 'fan' && (
         <div className="onboarding__step">
           <h1 className="onboarding__title">Which team?</h1>
-          {league === 'other' ? (
+          {(useFreeText || league === 'other') ? (
             <input
               type="text"
               placeholder="Your team"
