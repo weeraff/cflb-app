@@ -12,6 +12,7 @@ const NewsPage = lazy(() => import('./pages/NewsPage'))
 const PodcastPage = lazy(() => import('./pages/PodcastPage'))
 const PredictionsPage = lazy(() => import('./pages/PredictionsPage'))
 const ReporterPage = lazy(() => import('./pages/ReporterPage'))
+const SignInPage = lazy(() => import('./pages/SignInPage'))
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
               {/* Not in the visible nav — trusted-allowlist admin route,
                   reporters navigate here directly by URL. */}
               <Route path="reporter" element={<ReporterPage />} />
+              <Route path="sign-in" element={<SignInPage />} />
             </Route>
           </Routes>
         </Suspense>

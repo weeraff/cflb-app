@@ -39,9 +39,7 @@ function PredictionsPageContent() {
   const [picks, setPicks] = useState({})
   const [email, setEmail] = useState('')
   const [magicLinkSent, setMagicLinkSent] = useState(false)
-  const { profile, setProfile, checked: profileChecked } = useMyProfile(auth?.user?.id)
-  const [displayNameInput, setDisplayNameInput] = useState('')
-  const [displayNameError, setDisplayNameError] = useState('')
+  const { profile } = useMyProfile(auth?.user?.id)
   const [submitNotice, setSubmitNotice] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [reviewing, setReviewing] = useState(false)
@@ -104,24 +102,6 @@ function PredictionsPageContent() {
       .then(({ data, error }) => {
         if (!error && data?.length) setLeaderboard(data)
       })
-  }
-
-  async function saveDisplayName(e) {
-    e.preventDefault()
-    if (!displayNameInput.trim() || !auth?.user) return
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .upsert({ id: auth.user.id, display_name: displayNameInput.trim() })
-      .select()
-      .single()
-
-    if (!error) {
-      setProfile(data)
-      setDisplayNameError('')
-    } else {
-      setDisplayNameError('Could not save your name, try again.')
-    }
   }
 
   function updatePick(fixtureId, field, value) {
@@ -229,8 +209,6 @@ function PredictionsPageContent() {
     .sort((a, b) => new Date(b.kickoff_at) - new Date(a.kickoff_at))
     .slice(0, 5)
 
-  const needsDisplayName = auth?.user && profileChecked && !profile
-
   return (
     <section>
       <h1>Predictions</h1>
@@ -261,23 +239,6 @@ function PredictionsPageContent() {
           </form>
           {magicLinkSent && <p className="auth-note">Check your inbox for the sign-in link.</p>}
           {!isSupabaseConfigured && <p className="auth-note">Supabase isn't connected yet, this is a preview of the sign-in flow.</p>}
-        </div>
-      )}
-
-      {needsDisplayName && (
-        <div className="auth-card">
-          <p>Pick a name for the leaderboard.</p>
-          <form onSubmit={saveDisplayName} className="auth-email-form">
-            <input
-              type="text"
-              placeholder="Your name"
-              value={displayNameInput}
-              onChange={(e) => setDisplayNameInput(e.target.value)}
-              maxLength={30}
-            />
-            <button className="button" type="submit">Save</button>
-          </form>
-          {displayNameError && <p className="auth-note auth-note--error">{displayNameError}</p>}
         </div>
       )}
 

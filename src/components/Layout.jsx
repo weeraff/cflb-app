@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import SponsorShowcase from './SponsorShowcase'
+import OnboardingGate from './OnboardingGate'
 import { useAuth } from '../context/AuthContext'
 import { PREDICTIONS_COMING_SOON, SPONSORS_ENABLED } from '../lib/featureFlags'
 
@@ -27,7 +28,7 @@ export default function Layout() {
           {auth?.user ? (
             <button className="link-button" onClick={auth.signOut}>Sign out</button>
           ) : !PREDICTIONS_COMING_SOON ? (
-            <NavLink to="/predictions" className="link-button">Sign in</NavLink>
+            <NavLink to="/sign-in" className="link-button">Sign in</NavLink>
           ) : null}
         </div>
         <nav className="app-nav">
@@ -41,7 +42,9 @@ export default function Layout() {
       </header>
 
       <main className="app-main">
-        <Outlet />
+        <OnboardingGate>
+          <Outlet />
+        </OnboardingGate>
       </main>
 
       {SPONSORS_ENABLED && <SponsorShowcase />}
