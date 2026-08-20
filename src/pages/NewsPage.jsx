@@ -3,10 +3,12 @@ import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { placeholderNews } from '../lib/placeholderData'
 import MatchdayBanner from '../components/MatchdayBanner'
 import NotificationOptIn from '../components/NotificationOptIn'
+import ArticleOverlay from '../components/ArticleOverlay'
 
 export default function NewsPage() {
   const [articles, setArticles] = useState(placeholderNews)
   const [usingPlaceholder, setUsingPlaceholder] = useState(true)
+  const [openArticle, setOpenArticle] = useState(null)
 
   useEffect(() => {
     if (!isSupabaseConfigured) return
@@ -33,12 +35,7 @@ export default function NewsPage() {
 
       <div className="news-cover">
         {articles[0] && (
-          <a
-            href={articles[0].url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="news-hero"
-          >
+          <button type="button" className="news-hero" onClick={() => setOpenArticle(articles[0])}>
             {articles[0].image_url && (
               <img className="news-hero__image" src={articles[0].image_url} alt="" loading="lazy" />
             )}
@@ -48,7 +45,7 @@ export default function NewsPage() {
               <span className="news-item__title">{articles[0].title}</span>
               <p className="news-item__snippet">{articles[0].snippet}</p>
             </div>
-          </a>
+          </button>
         )}
 
         <div className="news-sidebar">
@@ -61,7 +58,7 @@ export default function NewsPage() {
       <ul className="news-list">
         {articles.slice(1, 6).map((article) => (
           <li key={article.id}>
-            <a href={article.url} target="_blank" rel="noopener noreferrer" className="news-item">
+            <button type="button" className="news-item" onClick={() => setOpenArticle(article)}>
               {article.image_url && (
                 <img className="news-item__image" src={article.image_url} alt="" loading="lazy" />
               )}
@@ -70,10 +67,12 @@ export default function NewsPage() {
                 <span className="news-item__title">{article.title}</span>
                 <p className="news-item__snippet">{article.snippet}</p>
               </div>
-            </a>
+            </button>
           </li>
         ))}
       </ul>
+
+      <ArticleOverlay article={openArticle} onClose={() => setOpenArticle(null)} />
     </section>
   )
 }

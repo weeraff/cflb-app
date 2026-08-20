@@ -597,6 +597,13 @@ h2 {
   isolation: isolate;
   background: var(--surface);
   aspect-ratio: 4 / 3.4;
+  width: 100%;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
 }
 
 .news-hero__image {
@@ -664,8 +671,17 @@ h2 {
 .news-item {
   display: flex;
   gap: 1rem;
+  width: 100%;
   padding: 1rem 0;
   border-top: 1px solid var(--border);
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
   transition: opacity 0.15s ease;
 }
 
@@ -3269,4 +3285,73 @@ h2 {
   gap: 0.6rem;
   color: var(--text-dim);
   font-size: 0.9rem;
+}
+
+/* Reads an article inline over the app instead of a full navigation away
+   — still the source's own page (their branding, their ad model), just
+   without losing your place on News to get back to. */
+.article-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.article-overlay__bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  min-height: 44px;
+}
+
+.article-overlay__source {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.article-overlay__actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.article-overlay__open {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+}
+
+.article-overlay__close {
+  min-width: 44px;
+  min-height: 44px;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.article-overlay__frame {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: var(--surface);
 }
