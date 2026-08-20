@@ -86,7 +86,7 @@ function HowOthersArePicking({ fixtureId }) {
   )
 }
 
-export default function TheEightWizard({ fixtures, picks, updatePick, standings, results, onComplete, initialStep = 0, initialCompletedCount = 0 }) {
+export default function TheEightWizard({ fixtures, picks, updatePick, isJoker, onSetJoker, standings, results, onComplete, initialStep = 0, initialCompletedCount = 0 }) {
   const [stepIndex, setStepIndex] = useState(initialStep)
   const [completedCount, setCompletedCount] = useState(initialCompletedCount)
 
@@ -163,6 +163,14 @@ export default function TheEightWizard({ fixtures, picks, updatePick, standings,
         )}
 
         <HowOthersArePicking fixtureId={fixture.id} />
+
+        <button
+          type="button"
+          className={`the-eight__joker${isJoker(fixture.id) ? ' the-eight__joker--active' : ''}`}
+          onClick={() => onSetJoker(fixture.id)}
+        >
+          🃏 {isJoker(fixture.id) ? 'Joker set: double points here' : 'Make this your Joker (2x points)'}
+        </button>
 
         <button type="button" className="button the-eight__next" onClick={next}>
           {stepIndex + 1 >= total ? 'Review picks' : 'Next game'}

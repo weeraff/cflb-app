@@ -113,6 +113,7 @@ export default function TheEightSummary({ fixtures, picks, onEdit, onSubmit, sub
                     <span>{fixture.home_team}</span>
                   </span>
                   <span className="the-eight-summary__score">{home} - {away}</span>
+                  {pick?.joker && <span className="the-eight-summary__joker">🃏 Joker (2x)</span>}
                   <span className="the-eight-summary__team">
                     <TeamCrest src={fixture.away_logo} name={fixture.away_team} />
                     <span>{fixture.away_team}</span>

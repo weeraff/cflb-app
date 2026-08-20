@@ -111,6 +111,23 @@ function PredictionsPageContent() {
     }))
   }
 
+  // Only one Joker per round: setting one clears it everywhere else in
+  // this round's fixtures. Toggling the same fixture again unsets it.
+  function setJoker(fixtureId) {
+    setPicks((prev) => {
+      const currentlyJoker = prev[fixtureId]?.joker ?? myPredictions[fixtureId]?.is_joker ?? false
+      const next = { ...prev }
+      for (const f of theEight) {
+        next[f.id] = { ...next[f.id], joker: f.id === fixtureId ? !currentlyJoker : false }
+      }
+      return next
+    })
+  }
+
+  function isJoker(fixtureId) {
+    return picks[fixtureId]?.joker ?? myPredictions[fixtureId]?.is_joker ?? false
+  }
+
   async function submitAllPicks() {
     if (!isSupabaseConfigured || !auth?.user) {
       setSubmitNotice({ type: 'info', text: 'Sign in above to submit your predictions.' })
@@ -124,6 +141,7 @@ function PredictionsPageContent() {
       fixture_id: fixture.id,
       home_score_pick: picks[fixture.id]?.home ?? myPredictions[fixture.id]?.home_score_pick ?? 0,
       away_score_pick: picks[fixture.id]?.away ?? myPredictions[fixture.id]?.away_score_pick ?? 0,
+      is_joker: isJoker(fixture.id),
     }))
 
     const { data, error } = await supabase
@@ -261,7 +279,7 @@ function PredictionsPageContent() {
           picks={Object.fromEntries(
             theEight.map((f) => [
               f.id,
-              { home: myPredictions[f.id]?.home_score_pick ?? 0, away: myPredictions[f.id]?.away_score_pick ?? 0 },
+              { home: myPredictions[f.id]?.home_score_pick ?? 0, away: myPredictions[f.id]?.away_score_pick ?? 0, joker: myPredictions[f.id]?.is_joker ?? false },
             ]),
           )}
           locked
@@ -277,7 +295,7 @@ function PredictionsPageContent() {
           picks={Object.fromEntries(
             theEight.map((f) => [
               f.id,
-              { home: picks[f.id]?.home ?? myPredictions[f.id]?.home_score_pick ?? 0, away: picks[f.id]?.away ?? myPredictions[f.id]?.away_score_pick ?? 0 },
+              { home: picks[f.id]?.home ?? myPredictions[f.id]?.home_score_pick ?? 0, away: picks[f.id]?.away ?? myPredictions[f.id]?.away_score_pick ?? 0, joker: isJoker(f.id) },
             ]),
           )}
           onEdit={(fixtureId) => {
@@ -297,6 +315,8 @@ function PredictionsPageContent() {
           fixtures={theEight}
           picks={picks}
           updatePick={updatePick}
+          isJoker={isJoker}
+          onSetJoker={setJoker}
           standings={standings}
           results={results}
           initialStep={editStep ?? 0}

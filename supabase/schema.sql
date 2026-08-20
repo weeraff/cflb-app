@@ -185,6 +185,10 @@ create table if not exists predictions (
   home_score_pick int not null,
   away_score_pick int not null,
   points_awarded int,
+  -- One Joker per round, enforced client-side at submit time (round key
+  -- is derived from fixture kickoff dates, not stored on this table).
+  -- Doubles whatever scoreOnePrediction awards for this pick.
+  is_joker boolean not null default false,
   created_at timestamptz not null default now(),
   unique (user_id, fixture_id)
 );

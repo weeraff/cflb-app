@@ -617,7 +617,8 @@ async function notifyPicksClosingSoon(supabase: SupabaseClientAny) {
 }
 
 // 3 points for an exact scoreline, 1 for picking the right outcome
-// (win/draw/loss) with the wrong score, 0 otherwise.
+// (win/draw/loss) with the wrong score, 0 otherwise. Doubled if the user
+// marked that fixture their Joker for the round.
 async function scorePredictions(supabase: SupabaseClientAny) {
   const { data: completedFixtures, error: fixturesError } = await supabase
     .from('fixtures')
@@ -628,7 +629,7 @@ async function scorePredictions(supabase: SupabaseClientAny) {
 
   const { data: unscored, error: predictionsError } = await supabase
     .from('predictions')
-    .select('id, user_id, fixture_id, home_score_pick, away_score_pick')
+    .select('id, user_id, fixture_id, home_score_pick, away_score_pick, is_joker')
     .in('fixture_id', completedFixtures.map((f: { id: string }) => f.id))
     .is('points_awarded', null)
   if (predictionsError) throw predictionsError
@@ -651,7 +652,8 @@ async function scorePredictions(supabase: SupabaseClientAny) {
     const fixture = fixturesById[pick.fixture_id]
     if (!fixture) continue
 
-    const points = scoreOnePrediction(fixture, pick)
+    const basePoints = scoreOnePrediction(fixture, pick)
+    const points = pick.is_joker ? basePoints * 2 : basePoints
     const { error } = await supabase.from('predictions').update({ points_awarded: points }).eq('id', pick.id)
     if (!error) {
       count += 1

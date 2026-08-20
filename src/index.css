@@ -2032,6 +2032,27 @@ h2 {
   margin-top: 0.5rem;
 }
 
+.the-eight__joker {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 0.75rem;
+  margin-top: 0.5rem;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.the-eight__joker--active {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
 .the-eight__step-count {
   margin: 0;
   font-size: 0.8rem;
@@ -2147,6 +2168,15 @@ h2 {
 .the-eight-summary__score {
   font-size: 1.1rem;
   flex: none;
+}
+
+.the-eight-summary__joker {
+  flex: none;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .the-eight-summary__kickoff {
