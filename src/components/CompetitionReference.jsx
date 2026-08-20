@@ -35,6 +35,7 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
   const [lineups, setLineups] = useState({})
   const [watchId, setWatchId] = useState(null)
   const [lineupId, setLineupId] = useState(null)
+  const [scorersId, setScorersId] = useState(null)
 
   const rows = standings
     .filter((row) => row.competition === activeCompetition)
@@ -135,14 +136,18 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
         {recentResults.map((r) => {
           const key = r.id ?? `${r.home_team}-${r.away_team}-${r.played_at}`
           const fixture = streamData[r.dribl_id]
-          const fixtureEvents = fixture ? events.filter((e) => e.fixture_id === fixture.id) : []
-          const homeEvents = fixtureEvents.filter((e) => e.team === 'home')
-          const awayEvents = fixtureEvents.filter((e) => e.team === 'away')
+          // Yellow cards crowd this view without adding much — goals, red
+          // cards and missed penalties are the events worth a tap.
+          const fixtureEvents = fixture
+            ? events.filter((e) => e.fixture_id === fixture.id && !(e.type === 'card' && e.card_type === 'yellow'))
+            : []
           const fixtureLineups = fixture ? lineups[fixture.id] : null
           const watchOpen = watchId === key
           const lineupOpen = lineupId === key
+          const scorersOpen = scorersId === key
           const hasHighlights = Boolean(fixture?.highlights_video_id)
           const hasLineups = Boolean(fixtureLineups?.home || fixtureLineups?.away)
+          const hasScorers = fixtureEvents.length > 0
 
           return (
             <li key={key} className="result-row result-row--interactive">
@@ -155,28 +160,24 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
                   <FixtureTeamRow className="result-row__side-team" logo={r.home_logo} name={r.home_team} crestSize="lg" />
                   <span className={`result-row__side-score${r.home_score > r.away_score ? ' result-row__winner' : ''}`}>{r.home_score}</span>
                 </div>
-                {homeEvents.length > 0 && (
-                  <ul className="recent-result__events">
-                    {homeEvents.map((ev) => (
-                      <MatchEventRow key={ev.id} event={ev} homeTeam={r.home_team} awayTeam={r.away_team} />
-                    ))}
-                  </ul>
-                )}
                 <div className="result-row__side">
                   <FixtureTeamRow className="result-row__side-team" logo={r.away_logo} name={r.away_team} crestSize="lg" />
                   <span className={`result-row__side-score${r.away_score > r.home_score ? ' result-row__winner' : ''}`}>{r.away_score}</span>
                 </div>
-                {awayEvents.length > 0 && (
-                  <ul className="recent-result__events">
-                    {awayEvents.map((ev) => (
-                      <MatchEventRow key={ev.id} event={ev} homeTeam={r.home_team} awayTeam={r.away_team} />
-                    ))}
-                  </ul>
-                )}
               </div>
 
-              {(hasHighlights || hasLineups) && (
+              {(hasScorers || hasHighlights || hasLineups) && (
                 <div className="result-row__actions">
+                  {hasScorers && (
+                    <button
+                      type="button"
+                      className="recent-result__highlights"
+                      onClick={() => setScorersId(scorersOpen ? null : key)}
+                      aria-expanded={scorersOpen}
+                    >
+                      {scorersOpen ? 'Hide scorers' : 'Scorers'}
+                    </button>
+                  )}
                   {hasHighlights && (
                     <button
                       type="button"
@@ -198,6 +199,14 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
                     </button>
                   )}
                 </div>
+              )}
+
+              {scorersOpen && hasScorers && (
+                <ul className="recent-result__events">
+                  {fixtureEvents.map((ev) => (
+                    <MatchEventRow key={ev.id} event={ev} homeTeam={r.home_team} awayTeam={r.away_team} />
+                  ))}
+                </ul>
               )}
 
               {watchOpen && hasHighlights && (
