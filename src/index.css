@@ -569,6 +569,23 @@ h2 {
   text-decoration: underline;
 }
 
+.install-prompt__actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: none;
+}
+
+.install-prompt__dismiss {
+  min-width: 44px;
+  min-height: 44px;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
 /* News — asymmetric cover grid: splash left, sidebar right. */
 .news-cover {
   display: grid;

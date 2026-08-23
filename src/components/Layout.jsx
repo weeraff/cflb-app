@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import SponsorShowcase from './SponsorShowcase'
 import OnboardingGate from './OnboardingGate'
+import InstallPrompt from './InstallPrompt'
 import { useAuth } from '../context/AuthContext'
 import { PREDICTIONS_COMING_SOON, SPONSORS_ENABLED } from '../lib/featureFlags'
 
@@ -42,6 +43,7 @@ export default function Layout() {
       </header>
 
       <main className="app-main">
+        <InstallPrompt />
         <OnboardingGate>
           <Outlet />
         </OnboardingGate>
