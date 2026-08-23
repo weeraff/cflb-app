@@ -1,6 +1,6 @@
 {
   "name": "Champagne Football Lemonade Banter",
-  "short_name": "CFLB",
+  "short_name": "Champagne Football",
   "description": "Predict. Banter. Repeat. NPL NSW predictions, live scores, highlights and match centre.",
   "start_url": "/",
   "display": "standalone",
@@ -8,8 +8,8 @@
   "theme_color": "#0b0d10",
   "icons": [
     {
-      "src": "/favicon.png",
-      "sizes": "256x256",
+      "src": "/logo.png",
+      "sizes": "1080x1080",
       "type": "image/png",
       "purpose": "any"
     }

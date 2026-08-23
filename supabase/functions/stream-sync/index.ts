@@ -107,6 +107,18 @@ async function syncStreams(supabase: SupabaseClientAny) {
   const windowStart = new Date(now - WINDOW_BEFORE_MS).toISOString()
   const windowEnd = new Date(now + WINDOW_AFTER_MS).toISOString()
 
+  // The "well past kickoff -> stream_status: 'ended'" cleanup below only
+  // ever looks at scheduled/locked fixtures. If the official result lands
+  // (status flips to 'completed' elsewhere) before that cleanup runs, the
+  // fixture falls out of this function's query entirely and stream_status
+  // sits at 'live' forever — clean those up unconditionally, regardless
+  // of the matchday window.
+  await supabase
+    .from('fixtures')
+    .update({ stream_status: 'ended' })
+    .eq('status', 'completed')
+    .in('stream_status', ['live', 'scheduled'])
+
   const { data: fixtures, error } = await supabase
     .from('fixtures')
     .select('id, home_team, away_team, kickoff_at, status, stream_status, youtube_video_id_override')

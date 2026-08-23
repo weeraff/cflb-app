@@ -36,7 +36,13 @@ export default function LiveScoreStrip() {
       // flash reporter manually toggling a match, stream_status is the
       // automated YouTube match going live on its own — a fixture can hit
       // either without the other, so both need to surface a card here.
+      // status='completed' always wins over both, though — stream-sync's
+      // "broadcast ended" cleanup only ever looks at scheduled/locked
+      // fixtures, so a match whose official result lands before that
+      // cleanup runs can sit at stream_status='live' indefinitely
+      // otherwise, well after it's actually over.
       .or('reported_status.in.(live,full_time),stream_status.eq.live')
+      .neq('status', 'completed')
       .gte('kickoff_at', since)
       .order('kickoff_at', { ascending: true })
       .then(({ data, error }) => {
