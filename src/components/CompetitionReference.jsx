@@ -232,78 +232,81 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
         })}
       </ul>
 
-      <h3 className="results-heading">Ladder</h3>
-      <div className="table-scroll">
-        <table className="standings-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Team</th>
-              <th>P</th>
-              <th>GD</th>
-              <th>Pts</th>
-              <th>Form</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => {
-              const zone =
-                row.position === 1
-                  ? 'zone--leader'
-                  : row.position > rows.length - 2
-                    ? 'zone--relegation'
-                    : row.position <= 6
-                      ? 'zone--finals'
-                      : ''
-              return (
-                <tr key={row.team} className={zone}>
-                  <td>{row.position}</td>
-                  <td>
-                    <span className="standings-table__team">
-                      <TeamCrest src={row.logo_url} name={row.team} size="sm" />
-                      {row.team}
-                    </span>
-                  </td>
-                  <td>{row.played}</td>
-                  <td>{row.gd}</td>
-                  <td><strong>{row.points}</strong></td>
-                  <td><FormGuide picks={computeForm(row.team, results, activeCompetition)} /></td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+      <details className="reference-panel">
+        <summary className="reference-panel__toggle">Ladder</summary>
+        <div className="table-scroll">
+          <table className="standings-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Team</th>
+                <th>P</th>
+                <th>GD</th>
+                <th>Pts</th>
+                <th>Form</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => {
+                const zone =
+                  row.position === 1
+                    ? 'zone--leader'
+                    : row.position > rows.length - 2
+                      ? 'zone--relegation'
+                      : row.position <= 6
+                        ? 'zone--finals'
+                        : ''
+                return (
+                  <tr key={row.team} className={zone}>
+                    <td>{row.position}</td>
+                    <td>
+                      <span className="standings-table__team">
+                        <TeamCrest src={row.logo_url} name={row.team} size="sm" />
+                        {row.team}
+                      </span>
+                    </td>
+                    <td>{row.played}</td>
+                    <td>{row.gd}</td>
+                    <td><strong>{row.points}</strong></td>
+                    <td><FormGuide picks={computeForm(row.team, results, activeCompetition)} /></td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
 
-      <div className="table-legend">
-        <span className="table-legend__item">
-          <span className="table-legend__swatch table-legend__swatch--leader" />
-          Champion
-        </span>
-        <span className="table-legend__item">
-          <span className="table-legend__swatch table-legend__swatch--finals" />
-          Finals (Top 6)
-        </span>
-        <span className="table-legend__item">
-          <span className="table-legend__swatch table-legend__swatch--relegation" />
-          Relegation
-        </span>
-        <span className="table-legend__item">
-          <span className="form-guide__pip form-guide__pip--w form-guide__pip--legend" />
-          Win
-        </span>
-        <span className="table-legend__item">
-          <span className="form-guide__pip form-guide__pip--d form-guide__pip--legend" />
-          Draw
-        </span>
-        <span className="table-legend__item">
-          <span className="form-guide__pip form-guide__pip--l form-guide__pip--legend" />
-          Loss
-        </span>
-      </div>
+        <div className="table-legend">
+          <span className="table-legend__item">
+            <span className="table-legend__swatch table-legend__swatch--leader" />
+            Champion
+          </span>
+          <span className="table-legend__item">
+            <span className="table-legend__swatch table-legend__swatch--finals" />
+            Finals (Top 6)
+          </span>
+          <span className="table-legend__item">
+            <span className="table-legend__swatch table-legend__swatch--relegation" />
+            Relegation
+          </span>
+          <span className="table-legend__item">
+            <span className="form-guide__pip form-guide__pip--w form-guide__pip--legend" />
+            Win
+          </span>
+          <span className="table-legend__item">
+            <span className="form-guide__pip form-guide__pip--d form-guide__pip--legend" />
+            Draw
+          </span>
+          <span className="table-legend__item">
+            <span className="form-guide__pip form-guide__pip--l form-guide__pip--legend" />
+            Loss
+          </span>
+        </div>
+      </details>
 
-      <h3 className="results-heading">Top Scorers</h3>
-      <ol className="scorers-list">
+      <details className="reference-panel">
+        <summary className="reference-panel__toggle">Top Scorers</summary>
+        <ol className="scorers-list">
         {scorers.map((s) => (
           <li key={s.id ?? s.player_name} className="scorer-row">
             {s.image_url ? (
@@ -316,7 +319,8 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
             <span className="scorer-row__goals">{s.goals}</span>
           </li>
         ))}
-      </ol>
+        </ol>
+      </details>
     </div>
   )
 }

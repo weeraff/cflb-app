@@ -9,6 +9,7 @@ import Leagues from '../components/Leagues'
 import CompactFormGuide from '../components/CompactFormGuide'
 import SponsorModule from '../components/SponsorModule'
 import PredictionsDashboard from '../components/PredictionsDashboard'
+import MyTeamDashboard from '../components/MyTeamDashboard'
 import TheEightWizard from '../components/TheEightWizard'
 import TheEightSummary, { pickResult } from '../components/TheEightSummary'
 import { buildTheEightFixtures, computeRoundKey, computeLockTime } from '../lib/theEight'
@@ -242,6 +243,8 @@ function PredictionsPageContent() {
         onCta={() => document.getElementById('the-eight-picks')?.scrollIntoView({ behavior: 'smooth' })}
         predictions={Object.values(myPredictions)}
       />
+
+      <MyTeamDashboard />
 
       {!auth?.user && (
         <div className="auth-card">

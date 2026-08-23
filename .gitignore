@@ -32,3 +32,4 @@ dist-ssr
 .superpowers/
 .vercel
 .env*
+supabase/.temp/
