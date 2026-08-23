@@ -68,7 +68,9 @@ export default function LiveScoreStrip() {
       <h2 className="podcast-column-heading">Live Now</h2>
       <div className="live-strip__cards">
         {fixtures.map((fixture) => {
-          const fixtureEvents = events.filter((e) => e.fixture_id === fixture.id)
+          const fixtureEvents = events.filter(
+            (e) => e.fixture_id === fixture.id && !(e.type === 'card' && e.card_type === 'yellow'),
+          )
           const homeGoals = fixtureEvents.filter((e) => e.type === 'goal' && e.team === 'home').length
           const awayGoals = fixtureEvents.filter((e) => e.type === 'goal' && e.team === 'away').length
           const isExpanded = expandedId === fixture.id

@@ -439,10 +439,16 @@ const MATCH_EVENTS_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 async function syncMatchEvents(supabase: SupabaseClientAny) {
   const windowStart = new Date(Date.now() - MATCH_EVENTS_WINDOW_MS).toISOString()
 
+  // 'locked' fixtures are the ones actually in progress right now (past
+  // kickoff, not yet completed) — this was 'completed'-only, which meant
+  // a live match's scorers/cards never synced until full time, so
+  // LiveScoreStrip (which derives its score from these event rows, not
+  // fixtures.home_score/away_score — that column stays null until the
+  // official result lands) sat at 0-0 for the entire match.
   const { data: fixtures, error } = await supabase
     .from('fixtures')
     .select('id, dribl_id')
-    .eq('status', 'completed')
+    .in('status', ['locked', 'completed'])
     .not('dribl_id', 'is', null)
     .gte('kickoff_at', windowStart)
   if (error) throw error
