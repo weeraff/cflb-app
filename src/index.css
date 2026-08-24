@@ -98,40 +98,14 @@ h2 {
 .app-title {
   display: flex;
   align-items: center;
-  font-family: var(--font-splash);
-  font-weight: 400;
-  font-size: 1.6rem;
-  letter-spacing: 0.005em;
-  text-transform: uppercase;
   min-width: 0;
-}
-
-.app-title__text {
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .app-logo {
   flex: none;
-  height: 34px;
-  width: 34px;
+  height: 44px;
+  width: 44px;
   object-fit: contain;
-  margin-right: 0.65rem;
-}
-
-.app-title__short {
-  display: none;
-}
-
-@media (max-width: 480px) {
-  .app-title__full {
-    display: none;
-  }
-  .app-title__short {
-    display: inline;
-  }
 }
 
 .link-button {
@@ -2780,10 +2754,6 @@ h2 {
 @media (max-width: 720px) {
   .app-nav {
     overflow-x: auto;
-  }
-
-  .app-title {
-    font-size: 1.2rem;
   }
 
   .auth-email-form {

@@ -21,11 +21,7 @@ export default function Layout() {
       <header className="app-header">
         <div className="app-header__top">
           <span className="app-title">
-            <img className="app-logo" src="/favicon.png" alt="" />
-            <span className="app-title__text">
-              <span className="app-title__full">Champagne Football Lemonade Banter</span>
-              <span className="app-title__short">CFLB</span>
-            </span>
+            <img className="app-logo" src="/icon.png" alt="Champagne Football Lemonade Banter" />
           </span>
           {auth?.user ? (
             <button className="link-button" onClick={auth.signOut}>Sign out</button>
