@@ -151,7 +151,12 @@ async function syncYoutube(
     )
     if (!error) {
       count += 1
-      if (!existingIds.has(videoId)) newTitles.push(title)
+      // Shorts land in this same uploads playlist alongside real episodes
+      // and can carry a generic auto-assigned title (e.g. just a date) —
+      // confirmed a Short triggering "New episode is up" read as a false
+      // alarm ("I didn't post anything"). Only a full episode should ever
+      // fire that notification.
+      if (!existingIds.has(videoId) && type === 'episode') newTitles.push(title)
     }
   }
   return { count, newTitles }
