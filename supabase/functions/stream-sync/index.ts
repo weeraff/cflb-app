@@ -279,6 +279,25 @@ function normalizeTeamName(name: string) {
 // a rematch later in the season with an identical title shape.
 const HIGHLIGHTS_MATCH_WINDOW_MS = 7 * 24 * 60 * 60 * 1000
 
+// Football NSW's own title text doesn't always use the club's full
+// official name — confirmed against real titles: "Marconi Stallions FC"
+// shows up as just "Marconi", "Western Sydney Wanderers FC" as "WSW",
+// "APIA Leichhardt FC" as "APIA", "Central Coast Mariners FC" as "CCM".
+// Each alias only goes in here once actually seen in a real title, not
+// guessed — an alias that's wrong risks matching the wrong fixture's
+// video, which this file's own matching rule below treats as worse than
+// no match at all.
+const TEAM_ALIASES: Record<string, string[]> = {
+  'marconi stallions': ['marconi'],
+  'western sydney wanderers': ['wsw'],
+  'apia leichhardt': ['apia'],
+  'central coast mariners': ['ccm'],
+}
+
+function nameVariants(normalizedName: string) {
+  return [normalizedName, ...(TEAM_ALIASES[normalizedName] ?? [])]
+}
+
 // Requires both team names to appear in the title, and refuses to pick a
 // side if more than one candidate fixture matches the same video — an
 // ambiguous match is treated the same as no match. `referenceKickoffAt`
@@ -293,9 +312,12 @@ function findMatch(
   const away = normalizeTeamName(fixture.away_team)
   if (!home || !away) return null
 
+  const homeVariants = nameVariants(home)
+  const awayVariants = nameVariants(away)
+
   const hits = videos.filter((v) => {
     const title = normalizeTeamName(v.title)
-    if (!title.includes(home) || !title.includes(away)) return false
+    if (!homeVariants.some((n) => title.includes(n)) || !awayVariants.some((n) => title.includes(n))) return false
     if (referenceKickoffAt && v.publishedAt) {
       const published = new Date(v.publishedAt).getTime()
       const kickoff = new Date(referenceKickoffAt).getTime()

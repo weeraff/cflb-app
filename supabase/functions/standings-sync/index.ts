@@ -447,7 +447,7 @@ async function syncMatchEvents(supabase: SupabaseClientAny) {
   // official result lands) sat at 0-0 for the entire match.
   const { data: fixtures, error } = await supabase
     .from('fixtures')
-    .select('id, dribl_id')
+    .select('id, dribl_id, status')
     .in('status', ['locked', 'completed'])
     .not('dribl_id', 'is', null)
     .gte('kickoff_at', windowStart)
@@ -455,7 +455,7 @@ async function syncMatchEvents(supabase: SupabaseClientAny) {
   if (!fixtures?.length) return 0
 
   let synced = 0
-  for (const fixture of fixtures as { id: string; dribl_id: string }[]) {
+  for (const fixture of fixtures as { id: string; dribl_id: string; status: string }[]) {
     try {
       const res = await fetch(
         `https://mc-api.dribl.com/api/matchcentre/${fixture.dribl_id}?tenant=${DRIBL_TENANT}`,
@@ -478,6 +478,22 @@ async function syncMatchEvents(supabase: SupabaseClientAny) {
         if (!insertError) synced += 1
       } else {
         synced += 1
+      }
+
+      // Full time on the live match-centre feed reliably lands within a
+      // couple of hours of kickoff (confirmed against real data); the
+      // separate results-table pipeline that completeFixturesFromResults
+      // depends on can lag well behind that. Completing from this data
+      // directly, the moment it says 'ft', is what actually gets the
+      // "Full time" push and Recent Results out promptly instead of
+      // waiting on that slower path — this runs earlier in the handler
+      // than notifyCompletedFeaturedFixtures, so it's picked up the same
+      // cron tick.
+      if (fixture.status === 'locked' && a.game_progress === 'ft' && a.home_score != null && a.away_score != null) {
+        await supabase
+          .from('fixtures')
+          .update({ status: 'completed', home_score: a.home_score, away_score: a.away_score })
+          .eq('id', fixture.id)
       }
     } catch (err) {
       await logError(supabase, `match-events-${fixture.dribl_id}`, err)
