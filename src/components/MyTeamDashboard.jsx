@@ -6,32 +6,27 @@ import { placeholderEpisodes } from '../lib/placeholderData'
 import FixtureTeamRow from './FixtureTeamRow'
 import LiveStreamEmbed from './LiveStreamEmbed'
 import { formatKickoff } from '../lib/format'
-import useMyRank from '../hooks/useMyRank'
 import useMyProfile from '../hooks/useMyProfile'
 
-function StatsRow({ rank, previousRank, points, lastRoundPoints }) {
-  const movement = previousRank != null && rank != null ? previousRank - rank : null
+// The team's own ladder position and season record — not the user's
+// prediction stats, which live on Predictions instead. Your Team is
+// about the club you follow, not your picks.
+function TeamStatsRow({ standing }) {
+  if (!standing) return null
 
   return (
     <div className="my-team__stats">
       <div className="my-team__stat">
-        <span className="my-team__stat-value">
-          {rank != null ? `#${rank}` : '—'}
-          {movement != null && movement !== 0 && (
-            <span className={`my-team__rank-movement my-team__rank-movement--${movement > 0 ? 'up' : 'down'}`}>
-              {movement > 0 ? '▲' : '▼'} {Math.abs(movement)}
-            </span>
-          )}
-        </span>
-        <span className="my-team__stat-label">Rank</span>
+        <span className="my-team__stat-value">#{standing.position}</span>
+        <span className="my-team__stat-label">{standing.competition}</span>
       </div>
       <div className="my-team__stat">
-        <span className="my-team__stat-value">{lastRoundPoints != null ? lastRoundPoints : '—'}</span>
-        <span className="my-team__stat-label">Last round</span>
+        <span className="my-team__stat-value">{standing.points}</span>
+        <span className="my-team__stat-label">Points</span>
       </div>
       <div className="my-team__stat">
-        <span className="my-team__stat-value">{points}</span>
-        <span className="my-team__stat-label">Total points</span>
+        <span className="my-team__stat-value">{standing.played}</span>
+        <span className="my-team__stat-label">Played</span>
       </div>
     </div>
   )
@@ -48,36 +43,31 @@ export default function MyTeamDashboard() {
   const [latestEpisode, setLatestEpisode] = useState(null)
   const [watchOpen, setWatchOpen] = useState(false)
   const [highlightsOpen, setHighlightsOpen] = useState(false)
-  const [lastRoundPoints, setLastRoundPoints] = useState(null)
-  const { rank, points } = useMyRank(auth?.user?.id)
-  const previousRank = auth?.user ? (profile?.last_rank ?? null) : null
+  const [standing, setStanding] = useState(null)
 
   useEffect(() => {
-    if (!isSupabaseConfigured || !auth?.user) {
-      setLastRoundPoints(null)
+    const team = profile?.followed_team
+    if (!isSupabaseConfigured || !team) {
+      setStanding(null)
       return
     }
 
     supabase
-      .from('predictions')
-      .select('points_awarded, fixtures(round, kickoff_at, status)')
-      .eq('user_id', auth.user.id)
+      .from('standings')
+      .select('*')
+      .eq('team', team)
       .then(({ data, error }) => {
-        if (error || !data) return
-        const completed = data.filter((p) => p.fixtures?.status === 'completed')
-        if (completed.length === 0) {
-          setLastRoundPoints(null)
+        if (error || !data?.length) {
+          setStanding(null)
           return
         }
-        const latestRound = completed.sort(
-          (a, b) => new Date(b.fixtures.kickoff_at) - new Date(a.fixtures.kickoff_at),
-        )[0].fixtures.round
-        const total = completed
-          .filter((p) => p.fixtures.round === latestRound)
-          .reduce((sum, p) => sum + (p.points_awarded ?? 0), 0)
-        setLastRoundPoints(total)
+        // A team name is occasionally shared across tiers in the sample
+        // data; prefer the row matching the league captured at onboarding
+        // when there's more than one candidate.
+        const match = data.find((row) => row.competition === profile?.league) ?? data[0]
+        setStanding(match)
       })
-  }, [auth?.user])
+  }, [profile?.followed_team, profile?.league])
 
   useEffect(() => {
     if (!isSupabaseConfigured || profile?.followed_team) return
@@ -155,7 +145,7 @@ export default function MyTeamDashboard() {
   if (!auth?.user) {
     return (
       <div className="my-team stat-card-theme my-team__signin">
-        <p>Sign in to follow your team, track your rank and see your picks in one place.</p>
+        <p>Sign in to follow your team and see their ladder position, next fixture and highlights in one place.</p>
         <Link className="button" to="/sign-in">Sign in</Link>
       </div>
     )
@@ -166,8 +156,7 @@ export default function MyTeamDashboard() {
   if (!profile?.followed_team) {
     return (
       <div className="my-team stat-card-theme">
-        <StatsRow rank={rank} previousRank={previousRank} points={points} lastRoundPoints={lastRoundPoints} />
-        <p>Pick a team to follow for their next fixture, watch and highlights right here.</p>
+        <p>Pick a team to follow for their ladder position, next fixture, watch and highlights right here.</p>
         <form onSubmit={saveTeam} className="my-team__picker">
           <select value={teamDraft} onChange={(e) => setTeamDraft(e.target.value)}>
             <option value="">Choose your team</option>
@@ -186,10 +175,10 @@ export default function MyTeamDashboard() {
 
   return (
     <div className="my-team stat-card-theme">
-      <StatsRow rank={rank} previousRank={previousRank} points={points} lastRoundPoints={lastRoundPoints} />
+      <TeamStatsRow standing={standing} />
       <div className="my-team__grid">
         <div className="my-team__card">
-          <span className="my-team__label">{profile.followed_team} — Next Fixture</span>
+          <span className="my-team__label">{profile.followed_team}: Next Fixture</span>
           {nextFixture ? (
             <>
               <div className="my-team__fixture">
@@ -197,7 +186,9 @@ export default function MyTeamDashboard() {
                 <span className="my-team__vs">v</span>
                 <FixtureTeamRow className="my-team__team" logo={nextFixture.away_logo} name={nextFixture.away_team} />
               </div>
-              <span className="my-team__kickoff">{formatKickoff(nextFixture.kickoff_at)}</span>
+              <span className="my-team__kickoff">
+                {nextFixture.round && `${nextFixture.round}, `}{formatKickoff(nextFixture.kickoff_at)}
+              </span>
 
               <div className="my-team__actions">
                 {canWatch && (

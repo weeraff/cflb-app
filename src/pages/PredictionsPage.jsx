@@ -294,6 +294,38 @@ function PredictionsPageContent() {
 
       {theEight.length === 0 && <p className="auth-note">No fixtures open for picks right now.</p>}
 
+      {/* Fixtures from this round that have already kicked off or finished
+          stay visible here even while picks for the rest of the round are
+          still open — otherwise they're invisible until every remaining
+          pickable fixture is submitted, which reads as "only 4 of 8". */}
+      {!submittedAll && theEight.length > pickableEight.length && (
+        <ul className="results-list">
+          {theEight.filter((f) => f.status !== 'scheduled').map((fixture) => {
+            const pick = myPredictions[fixture.id]
+            const isDecided = fixture.status === 'completed'
+            return (
+              <li key={fixture.id} className="result-row">
+                <span className="result-row__round">{fixture.competition}</span>
+                <span className="result-row__match">
+                  <span className="result-row__team-name">{fixture.home_team}</span>
+                  <span className="result-row__score">
+                    {isDecided ? `${fixture.home_score} - ${fixture.away_score}` : 'v'}
+                  </span>
+                  <span className="result-row__team-name">{fixture.away_team}</span>
+                </span>
+                <span className="result-row__ground">
+                  {!pick
+                    ? 'No pick made'
+                    : isDecided
+                      ? `You picked ${pick.home_score_pick}-${pick.away_score_pick}${pick.points_awarded != null ? ` (+${pick.points_awarded} pts)` : ' (scoring soon)'}`
+                      : `Your pick: ${pick.home_score_pick}-${pick.away_score_pick}, awaiting result`}
+                </span>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+
       {theEight.length > 0 && submittedAll && (
         <TheEightSummary
           fixtures={theEight}
