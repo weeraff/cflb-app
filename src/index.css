@@ -145,6 +145,19 @@ h2 {
   padding: 0.85rem 0 0;
   border-bottom: 1px solid var(--border);
   margin-bottom: 1.5rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-nav__link {
+  white-space: nowrap;
+  flex: none;
+}
+
+@media (max-width: 480px) {
+  .app-nav {
+    gap: 1rem;
+  }
 }
 
 .app-nav__link {
@@ -2663,6 +2676,44 @@ h2 {
   .pd-pair--trio {
     grid-template-columns: 1fr;
   }
+}
+
+.last-week-table {
+  width: 100%;
+  min-width: 420px;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.last-week-table th,
+.last-week-table td {
+  padding: 0.5rem 0.6rem;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+}
+
+.last-week-table th {
+  font-family: var(--font-display);
+  color: var(--text-dim);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--text);
+}
+
+.last-week-table th:first-child,
+.last-week-table td:first-child,
+.last-week-table__game {
+  text-align: left;
+}
+
+.last-week-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.last-week-table__outcome {
+  font-size: 1.1rem;
 }
 
 .predictions-social {

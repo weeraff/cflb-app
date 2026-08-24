@@ -4,12 +4,10 @@ import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { placeholderFixtures, placeholderLeaderboard } from '../lib/placeholderData'
 import { PREDICTIONS_COMING_SOON, SPONSORS_ENABLED } from '../lib/featureFlags'
-import FixtureTeamRow from '../components/FixtureTeamRow'
 import Leagues from '../components/Leagues'
 import CompactFormGuide from '../components/CompactFormGuide'
 import SponsorModule from '../components/SponsorModule'
 import PredictionsDashboard from '../components/PredictionsDashboard'
-import MyTeamDashboard from '../components/MyTeamDashboard'
 import TheEightWizard from '../components/TheEightWizard'
 import TheEightSummary, { pickResult } from '../components/TheEightSummary'
 import { buildTheEightFixtures, computeRoundKey, computeLockTime } from '../lib/theEight'
@@ -266,8 +264,6 @@ function PredictionsPageContent() {
         totalPoints={totalPoints}
       />
 
-      <MyTeamDashboard />
-
       {!auth?.user && (
         <div className="auth-card">
           <p>Sign in to save your predictions and appear on the leaderboard.</p>
@@ -363,37 +359,35 @@ function PredictionsPageContent() {
       )}
 
       {auth?.user && lastWeek.length > 0 && (
-        <details className="reference-panel">
-          <summary className="reference-panel__toggle">
-            Last week: {lastWeekCorrect}/{lastWeek.length} correct ({lastWeekPoints} pts)
-          </summary>
-          <ul className="results-list">
-            {lastWeek.map((p) => (
-              <li key={p.id} className="result-row">
-                <span className="result-row__round">{p.fixtures.competition}</span>
-                <span className="result-row__match">
-                  <FixtureTeamRow
-                    className="result-row__team"
-                    nameClassName="result-row__team-name"
-                    logo={p.fixtures.home_logo}
-                    name={p.fixtures.home_team}
-                  />
-                  <span className="result-row__score">{p.fixtures.home_score} - {p.fixtures.away_score}</span>
-                  <FixtureTeamRow
-                    className="result-row__team"
-                    nameClassName="result-row__team-name"
-                    logo={p.fixtures.away_logo}
-                    name={p.fixtures.away_team}
-                  />
-                </span>
-                <span className="result-row__ground">
-                  You picked {p.home_score_pick}-{p.away_score_pick} (+{p.points_awarded} pts)
-                  {p.is_joker && ' 🃏'}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </details>
+        <>
+          <h2>Last Week</h2>
+          <div className="table-scroll">
+            <table className="last-week-table">
+              <thead>
+                <tr>
+                  <th>Game</th>
+                  <th>Score</th>
+                  <th>Outcome</th>
+                  <th>Points</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lastWeek.map((p) => (
+                  <tr key={p.id}>
+                    <td className="last-week-table__game">
+                      {p.fixtures.home_team} v {p.fixtures.away_team}
+                      {p.is_joker && ' 🃏'}
+                    </td>
+                    <td>{p.fixtures.home_score}-{p.fixtures.away_score}</td>
+                    <td className="last-week-table__outcome">{p.points_awarded > 0 ? '🍾' : '🍋'}</td>
+                    <td>{p.points_awarded}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="auth-note">{lastWeekCorrect}/{lastWeek.length} correct, {lastWeekPoints} points</p>
+        </>
       )}
 
       <div className="predictions-social">

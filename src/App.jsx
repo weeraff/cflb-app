@@ -11,6 +11,7 @@ const HomePage = lazy(() => import('./pages/HomePage'))
 const NewsPage = lazy(() => import('./pages/NewsPage'))
 const PodcastPage = lazy(() => import('./pages/PodcastPage'))
 const PredictionsPage = lazy(() => import('./pages/PredictionsPage'))
+const YourTeamPage = lazy(() => import('./pages/YourTeamPage'))
 const ReporterPage = lazy(() => import('./pages/ReporterPage'))
 const SignInPage = lazy(() => import('./pages/SignInPage'))
 
@@ -28,6 +29,7 @@ export default function App() {
               {/* Kept as an alias: push notifications already scheduled and
                   sent reference this exact path, don't break those links. */}
               <Route path="predictions" element={<PredictionsPage />} />
+              <Route path="your-team" element={<YourTeamPage />} />
               <Route path="podcast" element={<PodcastPage />} />
               <Route path="news" element={<NewsPage />} />
               {/* Not in the visible nav — trusted-allowlist admin route,

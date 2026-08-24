@@ -8,6 +8,7 @@ import { PREDICTIONS_COMING_SOON, SPONSORS_ENABLED } from '../lib/featureFlags'
 const navItems = [
   { to: '/', label: 'Home', end: true },
   { to: '/predictions', label: 'Predictions', soon: PREDICTIONS_COMING_SOON },
+  { to: '/your-team', label: 'Your Team' },
   { to: '/podcast', label: 'Podcast' },
   { to: '/news', label: 'News' },
 ]

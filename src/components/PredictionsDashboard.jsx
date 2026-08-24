@@ -136,18 +136,6 @@ function BeatHostCard({ hostEntries }) {
   )
 }
 
-function VideoPlaceholderCard() {
-  return (
-    <div className="pd-card pd-card--video">
-      <span className="pd-video__thumb" aria-hidden="true">▶</span>
-      <div className="pd-video__body">
-        <span className="pd-label">Round Wrap</span>
-        <span className="pd-video__runtime">Coming soon · 0:00</span>
-      </div>
-    </div>
-  )
-}
-
 function SponsorPlaceholderCard() {
   return (
     <div className="pd-card pd-card--sponsor-slot">
@@ -212,10 +200,11 @@ export default function PredictionsDashboard({ userId, lockTime, submittedAll, h
           <BeatHostCard hostEntries={hostEntries} />
         </>
       )}
-      <div className="pd-pair pd-pair--placeholders">
-        <VideoPlaceholderCard />
-        {SPONSORS_ENABLED && <SponsorPlaceholderCard />}
-      </div>
+      {SPONSORS_ENABLED && (
+        <div className="pd-pair pd-pair--placeholders">
+          <SponsorPlaceholderCard />
+        </div>
+      )}
     </div>
   )
 }
