@@ -48,6 +48,7 @@ function PredictionsPageContent() {
   const [resultStats, setResultStats] = useState({})
   const [tiebreakerPick, setTiebreakerPick] = useState(null)
   const [savedTiebreakers, setSavedTiebreakers] = useState({})
+  const [lastWeek, setLastWeek] = useState([])
 
   const { standings, results } = useCompetitionData()
 
@@ -92,6 +93,21 @@ function PredictionsPageContent() {
           setSavedTiebreakers(byRound)
         }
       })
+
+    // Last week: the most recently scored picks, fixture and all — these
+    // are typically last round's, but not looked up by round_key (this
+    // table has none) since fixtures.featured only ever tracks the
+    // current round once the previous one's flag is retired.
+    supabase
+      .from('predictions')
+      .select('*, fixtures(*)')
+      .eq('user_id', auth.user.id)
+      .not('points_awarded', 'is', null)
+      .order('kickoff_at', { foreignTable: 'fixtures', ascending: false })
+      .limit(8)
+      .then(({ data, error }) => {
+        if (!error && data) setLastWeek(data)
+      })
   }, [auth?.user])
 
   function refreshLeaderboard() {
@@ -118,7 +134,7 @@ function PredictionsPageContent() {
     setPicks((prev) => {
       const currentlyJoker = prev[fixtureId]?.joker ?? myPredictions[fixtureId]?.is_joker ?? false
       const next = { ...prev }
-      for (const f of theEight) {
+      for (const f of pickableEight) {
         next[f.id] = { ...next[f.id], joker: f.id === fixtureId ? !currentlyJoker : false }
       }
       return next
@@ -134,10 +150,10 @@ function PredictionsPageContent() {
       setSubmitNotice({ type: 'info', text: 'Sign in above to submit your predictions.' })
       return
     }
-    if (theEight.length === 0) return
+    if (pickableEight.length === 0) return
 
     setSubmitting(true)
-    const rows = theEight.map((fixture) => ({
+    const rows = pickableEight.map((fixture) => ({
       user_id: auth.user.id,
       fixture_id: fixture.id,
       home_score_pick: picks[fixture.id]?.home ?? myPredictions[fixture.id]?.home_score_pick ?? 0,
@@ -183,11 +199,17 @@ function PredictionsPageContent() {
     setMagicLinkSent(true)
   }
 
-  const upcoming = fixtures.filter((f) => f.status === 'scheduled')
-  const theEight = useMemo(() => buildTheEightFixtures(upcoming), [upcoming])
+  // theEight is built from every fixture featured for this round regardless
+  // of status, so all 8 stay visible together as the round plays out —
+  // pickableEight (still 'scheduled') is the subset the wizard can
+  // actually take new picks for; you can't predict a game that's already
+  // kicked off.
+  const theEight = useMemo(() => buildTheEightFixtures(fixtures), [fixtures])
+  const pickableEight = useMemo(() => theEight.filter((f) => f.status === 'scheduled'), [theEight])
   const roundKey = useMemo(() => computeRoundKey(theEight), [theEight])
   const lockTime = useMemo(() => computeLockTime(theEight), [theEight])
-  const submittedAll = theEight.length > 0 && theEight.every((f) => myPredictions[f.id])
+  const submittedAllPickable = pickableEight.length > 0 && pickableEight.every((f) => myPredictions[f.id])
+  const submittedAll = submittedAllPickable || (pickableEight.length === 0 && theEight.length > 0)
 
   const sortedLeaderboard = [...leaderboard].sort((a, b) => b.points - a.points)
   const myLeaderboardIndex = auth?.user ? sortedLeaderboard.findIndex((entry) => entry.user_id === auth.user.id) : -1
@@ -222,11 +244,10 @@ function PredictionsPageContent() {
         setResultStats(stats)
       })
   }, [submittedAll, myPredictions])
-  const awaitingResult = fixtures.filter((f) => f.status === 'locked')
-  const recentlyDecided = fixtures
-    .filter((f) => f.status === 'completed')
-    .sort((a, b) => new Date(b.kickoff_at) - new Date(a.kickoff_at))
-    .slice(0, 5)
+
+  const lastWeekCorrect = lastWeek.filter((p) => p.points_awarded > 0).length
+  const lastWeekPoints = lastWeek.reduce((sum, p) => sum + (p.points_awarded ?? 0), 0)
+  const totalPoints = myLeaderboardIndex >= 0 ? sortedLeaderboard[myLeaderboardIndex].points : 0
 
   return (
     <section>
@@ -242,6 +263,7 @@ function PredictionsPageContent() {
         previousRank={profile?.last_rank ?? null}
         onCta={() => document.getElementById('the-eight-picks')?.scrollIntoView({ behavior: 'smooth' })}
         predictions={Object.values(myPredictions)}
+        totalPoints={totalPoints}
       />
 
       <MyTeamDashboard />
@@ -282,7 +304,12 @@ function PredictionsPageContent() {
           picks={Object.fromEntries(
             theEight.map((f) => [
               f.id,
-              { home: myPredictions[f.id]?.home_score_pick ?? 0, away: myPredictions[f.id]?.away_score_pick ?? 0, joker: myPredictions[f.id]?.is_joker ?? false },
+              {
+                home: myPredictions[f.id]?.home_score_pick ?? 0,
+                away: myPredictions[f.id]?.away_score_pick ?? 0,
+                joker: myPredictions[f.id]?.is_joker ?? false,
+                points: myPredictions[f.id]?.points_awarded ?? null,
+              },
             ]),
           )}
           locked
@@ -292,17 +319,17 @@ function PredictionsPageContent() {
         />
       )}
 
-      {theEight.length > 0 && !submittedAll && reviewing && (
+      {pickableEight.length > 0 && !submittedAll && reviewing && (
         <TheEightSummary
-          fixtures={theEight}
+          fixtures={pickableEight}
           picks={Object.fromEntries(
-            theEight.map((f) => [
+            pickableEight.map((f) => [
               f.id,
               { home: picks[f.id]?.home ?? myPredictions[f.id]?.home_score_pick ?? 0, away: picks[f.id]?.away ?? myPredictions[f.id]?.away_score_pick ?? 0, joker: isJoker(f.id) },
             ]),
           )}
           onEdit={(fixtureId) => {
-            setEditStep(theEight.findIndex((f) => f.id === fixtureId))
+            setEditStep(pickableEight.findIndex((f) => f.id === fixtureId))
             setReviewing(false)
           }}
           onSubmit={submitAllPicks}
@@ -312,10 +339,10 @@ function PredictionsPageContent() {
         />
       )}
 
-      {theEight.length > 0 && !submittedAll && !reviewing && (
+      {pickableEight.length > 0 && !submittedAll && !reviewing && (
         <TheEightWizard
           key={editStep ?? 'wizard'}
-          fixtures={theEight}
+          fixtures={pickableEight}
           picks={picks}
           updatePick={updatePick}
           isJoker={isJoker}
@@ -323,7 +350,7 @@ function PredictionsPageContent() {
           standings={standings}
           results={results}
           initialStep={editStep ?? 0}
-          initialCompletedCount={editStep != null ? theEight.length - 1 : 0}
+          initialCompletedCount={editStep != null ? pickableEight.length - 1 : 0}
           onComplete={() => {
             setEditStep(null)
             setReviewing(true)
@@ -335,93 +362,60 @@ function PredictionsPageContent() {
         <p className={`form-notice form-notice--${submitNotice.type}`}>{submitNotice.text}</p>
       )}
 
-      {awaitingResult.length > 0 && (
-        <>
-          <h2>Awaiting Result</h2>
+      {auth?.user && lastWeek.length > 0 && (
+        <details className="reference-panel">
+          <summary className="reference-panel__toggle">
+            Last week: {lastWeekCorrect}/{lastWeek.length} correct ({lastWeekPoints} pts)
+          </summary>
           <ul className="results-list">
-            {awaitingResult.map((fixture) => {
-              const pick = myPredictions[fixture.id]
-              return (
-                <li key={fixture.id} className="result-row">
-                  <span className="result-row__round">{fixture.competition}</span>
-                  <span className="result-row__match">
-                    <FixtureTeamRow
-                      className="result-row__team"
-                      nameClassName="result-row__team-name"
-                      logo={fixture.home_logo}
-                      name={fixture.home_team}
-                    />
-                    <span className="result-row__score">v</span>
-                    <FixtureTeamRow
-                      className="result-row__team"
-                      nameClassName="result-row__team-name"
-                      logo={fixture.away_logo}
-                      name={fixture.away_team}
-                    />
-                  </span>
-                  <span className="result-row__ground">
-                    {pick ? `Your pick: ${pick.home_score_pick}-${pick.away_score_pick}` : 'No pick made'}
-                  </span>
-                </li>
-              )
-            })}
+            {lastWeek.map((p) => (
+              <li key={p.id} className="result-row">
+                <span className="result-row__round">{p.fixtures.competition}</span>
+                <span className="result-row__match">
+                  <FixtureTeamRow
+                    className="result-row__team"
+                    nameClassName="result-row__team-name"
+                    logo={p.fixtures.home_logo}
+                    name={p.fixtures.home_team}
+                  />
+                  <span className="result-row__score">{p.fixtures.home_score} - {p.fixtures.away_score}</span>
+                  <FixtureTeamRow
+                    className="result-row__team"
+                    nameClassName="result-row__team-name"
+                    logo={p.fixtures.away_logo}
+                    name={p.fixtures.away_team}
+                  />
+                </span>
+                <span className="result-row__ground">
+                  You picked {p.home_score_pick}-{p.away_score_pick} (+{p.points_awarded} pts)
+                  {p.is_joker && ' 🃏'}
+                </span>
+              </li>
+            ))}
           </ul>
-        </>
+        </details>
       )}
 
-      {recentlyDecided.length > 0 && (
-        <>
-          <h2>Recently Decided</h2>
-          <ul className="results-list">
-            {recentlyDecided.map((fixture) => {
-              const pick = myPredictions[fixture.id]
-              return (
-                <li key={fixture.id} className="result-row">
-                  <span className="result-row__round">{fixture.competition}</span>
-                  <span className="result-row__match">
-                    <FixtureTeamRow
-                      className="result-row__team"
-                      nameClassName="result-row__team-name"
-                      logo={fixture.home_logo}
-                      name={fixture.home_team}
-                    />
-                    <span className="result-row__score">{fixture.home_score} - {fixture.away_score}</span>
-                    <FixtureTeamRow
-                      className="result-row__team"
-                      nameClassName="result-row__team-name"
-                      logo={fixture.away_logo}
-                      name={fixture.away_team}
-                    />
-                  </span>
-                  {pick && (
-                    <span className="result-row__ground">
-                      You picked {pick.home_score_pick}-{pick.away_score_pick}
-                      {pick.points_awarded != null ? ` (+${pick.points_awarded})` : ' (scoring soon)'}
-                    </span>
-                  )}
+      <div className="predictions-social">
+        <div>
+          <h2>Leaderboard</h2>
+          {leaderboard.some((entry) => entry.points > 0) ? (
+            <ol className="leaderboard">
+              {leaderboard.map((entry, i) => (
+                <li key={entry.user_id ?? entry.display_name}>
+                  <span className="leaderboard__rank">{i + 1}</span>
+                  <span className="leaderboard__name">{entry.display_name}</span>
+                  <span className="leaderboard__points">{entry.points} pts</span>
                 </li>
-              )
-            })}
-          </ul>
-        </>
-      )}
+              ))}
+            </ol>
+          ) : (
+            <p className="auth-note">Be the first on the board. Make your picks before kickoff.</p>
+          )}
+        </div>
 
-      <Leagues />
-
-      <h2>Leaderboard</h2>
-      {leaderboard.some((entry) => entry.points > 0) ? (
-        <ol className="leaderboard">
-          {leaderboard.map((entry, i) => (
-            <li key={entry.user_id ?? entry.display_name}>
-              <span className="leaderboard__rank">{i + 1}</span>
-              <span className="leaderboard__name">{entry.display_name}</span>
-              <span className="leaderboard__points">{entry.points} pts</span>
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <p className="auth-note">Be the first on the board. Make your picks before kickoff.</p>
-      )}
+        <Leagues />
+      </div>
     </section>
   )
 }

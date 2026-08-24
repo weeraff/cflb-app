@@ -2217,6 +2217,11 @@ h2 {
   color: var(--text-dim);
 }
 
+.the-eight-summary__result-note {
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+
 .the-eight-summary__edit {
   flex: none;
   background: transparent;
@@ -2640,9 +2645,38 @@ h2 {
   align-items: stretch;
 }
 
+.pd-pair--trio {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
 @media (max-width: 640px) {
   .pd-pair {
     grid-template-columns: 1fr;
+  }
+
+  .pd-pair--trio {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .pd-pair--trio {
+    grid-template-columns: 1fr;
+  }
+}
+
+.predictions-social {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+  margin-top: 2rem;
+}
+
+@media (max-width: 640px) {
+  .predictions-social {
+    grid-template-columns: 1fr;
+    gap: 0;
   }
 }
 

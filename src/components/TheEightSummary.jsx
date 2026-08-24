@@ -99,9 +99,11 @@ export default function TheEightSummary({ fixtures, picks, onEdit, onSubmit, sub
       <ul className="the-eight-summary__list">
         {fixtures.map((fixture) => {
           const pick = picks[fixture.id]
-          const home = pick?.home ?? 0
-          const away = pick?.away ?? 0
-          const stat = locked ? resultStats?.[fixture.id] : null
+          const isDecided = fixture.status === 'completed'
+          const isAwaiting = fixture.status === 'locked'
+          const home = isDecided ? fixture.home_score : (pick?.home ?? 0)
+          const away = isDecided ? fixture.away_score : (pick?.away ?? 0)
+          const stat = locked && !isDecided && !isAwaiting ? resultStats?.[fixture.id] : null
 
           return (
             <li key={fixture.id} className="the-eight-summary__row">
@@ -119,20 +121,32 @@ export default function TheEightSummary({ fixtures, picks, onEdit, onSubmit, sub
                     <span>{fixture.away_team}</span>
                   </span>
                 </div>
-                {locked && <span className="the-eight-summary__kickoff">{formatKickoff(fixture.kickoff_at)}</span>}
+                {(locked || isAwaiting || isDecided) && <span className="the-eight-summary__kickoff">{formatKickoff(fixture.kickoff_at)}</span>}
                 {punditsFor(fixture).map((p) => (
                   <span key={p.pundit_name} className="the-eight-summary__pundit">🎙 {p.pundit_name}: {p.home_pick}-{p.away_pick}</span>
                 ))}
+                {isDecided && (
+                  <span className="the-eight-summary__result-note">
+                    {pick
+                      ? `You picked ${pick.home}-${pick.away}${pick.points != null ? ` (+${pick.points} pts)` : ' (scoring soon)'}`
+                      : 'No pick made'}
+                  </span>
+                )}
+                {isAwaiting && (
+                  <span className="the-eight-summary__result-note">{pick ? 'Awaiting result' : 'No pick made'}</span>
+                )}
               </div>
 
-              {locked ? (
-                stat != null && (
-                  <span className="the-eight-summary__stat">{stat}% picked the same result</span>
+              {!isDecided && !isAwaiting && (
+                locked ? (
+                  stat != null && (
+                    <span className="the-eight-summary__stat">{stat}% picked the same result</span>
+                  )
+                ) : (
+                  <button type="button" className="the-eight-summary__edit" onClick={() => onEdit(fixture.id)}>
+                    Edit
+                  </button>
                 )
-              ) : (
-                <button type="button" className="the-eight-summary__edit" onClick={() => onEdit(fixture.id)}>
-                  Edit
-                </button>
               )}
             </li>
           )

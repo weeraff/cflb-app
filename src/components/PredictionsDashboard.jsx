@@ -36,11 +36,11 @@ function CountdownLockCard({ lockTime, submittedAll, hasFixtures, onCta }) {
   )
 }
 
-function RankStreakPair({ rank, previousRank, streak, longestStreak }) {
+function RankStreakPair({ rank, previousRank, streak, longestStreak, totalPoints }) {
   const movement = previousRank != null && rank != null ? previousRank - rank : null
 
   return (
-    <div className="pd-pair">
+    <div className="pd-pair pd-pair--trio">
       <div className="pd-card pd-card--stat">
         <span className="pd-label">Leaderboard rank</span>
         <span className="pd-stat">
@@ -51,6 +51,10 @@ function RankStreakPair({ rank, previousRank, streak, longestStreak }) {
             </span>
           )}
         </span>
+      </div>
+      <div className="pd-card pd-card--stat">
+        <span className="pd-label">Total points</span>
+        <span className="pd-stat">{totalPoints ?? 0}</span>
       </div>
       <div className="pd-card pd-card--stat">
         <span className="pd-label">Correct-pick streak</span>
@@ -153,7 +157,7 @@ function SponsorPlaceholderCard() {
   )
 }
 
-export default function PredictionsDashboard({ userId, lockTime, submittedAll, hasFixtures, rank, previousRank, onCta, predictions }) {
+export default function PredictionsDashboard({ userId, lockTime, submittedAll, hasFixtures, rank, previousRank, onCta, predictions, totalPoints }) {
   const [streak, setStreak] = useState(null)
   const [longestStreak, setLongestStreak] = useState(null)
   const [hostEntries, setHostEntries] = useState(null)
@@ -203,7 +207,7 @@ export default function PredictionsDashboard({ userId, lockTime, submittedAll, h
       <CountdownLockCard lockTime={lockTime} submittedAll={submittedAll} hasFixtures={hasFixtures} onCta={onCta} />
       {userId && (
         <>
-          <RankStreakPair rank={rank} previousRank={previousRank} streak={streak} longestStreak={longestStreak} />
+          <RankStreakPair rank={rank} previousRank={previousRank} streak={streak} longestStreak={longestStreak} totalPoints={totalPoints} />
           <ConsistencyCard stats={stats} />
           <BeatHostCard hostEntries={hostEntries} />
         </>
