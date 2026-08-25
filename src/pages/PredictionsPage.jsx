@@ -270,6 +270,7 @@ function PredictionsPageContent() {
         onCta={() => document.getElementById('the-eight-picks')?.scrollIntoView({ behavior: 'smooth' })}
         predictions={Object.values(myPredictions)}
         totalPoints={totalPoints}
+        lastWeekPoints={lastWeekPoints}
       />
 
       {!auth?.user && (

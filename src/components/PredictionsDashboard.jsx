@@ -36,13 +36,13 @@ function CountdownLockCard({ lockTime, submittedAll, hasFixtures, onCta }) {
   )
 }
 
-function RankStreakPair({ rank, previousRank, streak, longestStreak, totalPoints }) {
+function RankStreakPair({ rank, previousRank, lastWeekPoints, totalPoints }) {
   const movement = previousRank != null && rank != null ? previousRank - rank : null
 
   return (
     <div className="pd-pair pd-pair--trio">
       <div className="pd-card pd-card--stat">
-        <span className="pd-label">Leaderboard rank</span>
+        <span className="pd-label">Current rank</span>
         <span className="pd-stat">
           {rank != null ? `#${rank}` : '—'}
           {movement != null && movement !== 0 && (
@@ -53,17 +53,12 @@ function RankStreakPair({ rank, previousRank, streak, longestStreak, totalPoints
         </span>
       </div>
       <div className="pd-card pd-card--stat">
-        <span className="pd-label">Total points</span>
-        <span className="pd-stat">{totalPoints ?? 0}</span>
+        <span className="pd-label">Points last week</span>
+        <span className="pd-stat">{lastWeekPoints ?? 0}</span>
       </div>
       <div className="pd-card pd-card--stat">
-        <span className="pd-label">Correct-pick streak</span>
-        <span className="pd-stat">
-          {streak != null ? streak : '—'}
-          {longestStreak != null && longestStreak > 0 && (
-            <span className="pd-movement">best {longestStreak}</span>
-          )}
-        </span>
+        <span className="pd-label">Total points</span>
+        <span className="pd-stat">{totalPoints ?? 0}</span>
       </div>
     </div>
   )
@@ -145,29 +140,15 @@ function SponsorPlaceholderCard() {
   )
 }
 
-export default function PredictionsDashboard({ userId, lockTime, submittedAll, hasFixtures, rank, previousRank, onCta, predictions, totalPoints }) {
-  const [streak, setStreak] = useState(null)
-  const [longestStreak, setLongestStreak] = useState(null)
+export default function PredictionsDashboard({ userId, lockTime, submittedAll, hasFixtures, rank, previousRank, onCta, predictions, totalPoints, lastWeekPoints }) {
   const [hostEntries, setHostEntries] = useState(null)
   const stats = predictions ? computePredictionStats(predictions) : null
 
   useEffect(() => {
     if (!isSupabaseConfigured || !userId) {
-      setStreak(null)
-      setLongestStreak(null)
       setHostEntries(null)
       return
     }
-
-    supabase
-      .from('streaks')
-      .select('current_streak, longest_streak')
-      .eq('user_id', userId)
-      .maybeSingle()
-      .then(({ data }) => {
-        setStreak(data?.current_streak ?? 0)
-        setLongestStreak(data?.longest_streak ?? 0)
-      })
 
     const seasonId = new Date().getFullYear().toString()
     supabase
@@ -195,9 +176,7 @@ export default function PredictionsDashboard({ userId, lockTime, submittedAll, h
       <CountdownLockCard lockTime={lockTime} submittedAll={submittedAll} hasFixtures={hasFixtures} onCta={onCta} />
       {userId && (
         <>
-          <RankStreakPair rank={rank} previousRank={previousRank} streak={streak} longestStreak={longestStreak} totalPoints={totalPoints} />
-          <ConsistencyCard stats={stats} />
-          <BeatHostCard hostEntries={hostEntries} />
+          <RankStreakPair rank={rank} previousRank={previousRank} lastWeekPoints={lastWeekPoints} totalPoints={totalPoints} />
         </>
       )}
       {SPONSORS_ENABLED && (
