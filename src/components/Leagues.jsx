@@ -213,7 +213,12 @@ export default function Leagues() {
               {leagueLeaderboard.map((entry, i) => (
                 <li key={entry.user_id}>
                   <span className="leaderboard__rank">{i + 1}</span>
-                  <span className="leaderboard__name">{entry.display_name}</span>
+                  <span className="leaderboard__name">
+                    {entry.display_name}
+                    {entry.rounds_picked != null && (
+                      <span className="leaderboard__rounds">{entry.rounds_picked} round{entry.rounds_picked === 1 ? '' : 's'} picked</span>
+                    )}
+                  </span>
                   <span className="leaderboard__points">{entry.points} pts</span>
                 </li>
               ))}

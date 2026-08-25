@@ -279,9 +279,9 @@ export const placeholderFixtures = [
 ]
 
 export const placeholderLeaderboard = [
-  { display_name: 'gazaff', points: 24 },
-  { display_name: 'banter_king', points: 21 },
-  { display_name: 'championship_tragic', points: 19 },
+  { display_name: 'gazaff', points: 24, rounds_picked: 9 },
+  { display_name: 'banter_king', points: 21, rounds_picked: 9 },
+  { display_name: 'championship_tragic', points: 19, rounds_picked: 7 },
 ]
 
 // Real sponsors confirmed by Gaz, 2026-08-07, shown together in one

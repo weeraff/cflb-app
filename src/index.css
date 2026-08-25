@@ -2795,8 +2795,17 @@ h2 {
 }
 
 .leaderboard__name {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   font-weight: 700;
+}
+
+.leaderboard__rounds {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: var(--text-dim);
 }
 
 .leaderboard__points {
