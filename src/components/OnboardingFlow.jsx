@@ -3,11 +3,12 @@ import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { placeholderStandings } from '../lib/placeholderData'
 
+const LEAGUES = ['NPL NSW', 'League One', 'League Two']
+
 const AGE_GROUPS = [
   { value: 'first_grade', label: 'First Grade' },
-  { value: '20s', label: '20s' },
-  { value: '18s', label: '18s' },
-  { value: '16s', label: '16s' },
+  { value: '20s', label: "20's" },
+  { value: 'youth', label: 'Youth' },
 ]
 
 function OptionButton({ selected, onClick, children }) {
@@ -133,7 +134,7 @@ export default function OnboardingFlow({ userId, onComplete }) {
     <section className="onboarding">
       {step === 0 && (
         <div className="onboarding__step">
-          <h1 className="onboarding__title">Who's picking?</h1>
+          <h1 className="onboarding__title">What's your name?</h1>
           <form onSubmit={handleNameSubmit} className="onboarding__form">
             <input
               type="text"
@@ -162,38 +163,15 @@ export default function OnboardingFlow({ userId, onComplete }) {
       {step === 2 && role !== 'fan' && (
         <div className="onboarding__step">
           <h1 className="onboarding__title">Which league?</h1>
-          {useFreeText ? (
-            <input
-              type="text"
-              placeholder="Your league"
-              value={leagueOther}
-              onChange={(e) => setLeagueOther(e.target.value)}
-              className="onboarding__text-input"
-              autoFocus
-            />
-          ) : (
-            <>
-              <div className="onboarding__options">
-                {leagues.map((name) => (
-                  <OptionButton key={name} selected={league === name} onClick={() => { setLeague(name); setTeam('') }}>{name}</OptionButton>
-                ))}
-                <OptionButton selected={league === 'other'} onClick={() => { setLeague('other'); setTeam('') }}>Other</OptionButton>
-              </div>
-              {league === 'other' && (
-                <input
-                  type="text"
-                  placeholder="Your league"
-                  value={leagueOther}
-                  onChange={(e) => setLeagueOther(e.target.value)}
-                  className="onboarding__text-input"
-                />
-              )}
-            </>
-          )}
+          <div className="onboarding__options">
+            {LEAGUES.map((name) => (
+              <OptionButton key={name} selected={league === name} onClick={() => { setLeague(name); setTeam('') }}>{name}</OptionButton>
+            ))}
+          </div>
           <button
             type="button"
             className="button"
-            disabled={useFreeText ? !leagueOther.trim() : !league}
+            disabled={!league}
             onClick={nextStep}
           >
             Next
@@ -266,7 +244,7 @@ export default function OnboardingFlow({ userId, onComplete }) {
           <h1 className="onboarding__title">Keep you posted?</h1>
           <label className="onboarding__checkbox">
             <input type="checkbox" checked={marketingOptIn} onChange={(e) => setMarketingOptIn(e.target.checked)} />
-            Keep me posted about new episodes and features
+            Email me when a new episode drops
           </label>
           {error && <p className="auth-note auth-note--error">{error}</p>}
           <button type="button" className="button" disabled={submitting} onClick={handleSubmit}>
@@ -292,7 +270,7 @@ export default function OnboardingFlow({ userId, onComplete }) {
           <h1 className="onboarding__title">Keep you posted?</h1>
           <label className="onboarding__checkbox">
             <input type="checkbox" checked={marketingOptIn} onChange={(e) => setMarketingOptIn(e.target.checked)} />
-            Keep me posted about new episodes and features
+            Email me when a new episode drops
           </label>
           {error && <p className="auth-note auth-note--error">{error}</p>}
           <button type="button" className="button" disabled={submitting} onClick={handleSubmit}>

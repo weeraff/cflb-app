@@ -105,7 +105,7 @@ export default function Leagues() {
     }
 
     setLeagueName('')
-    setNotice({ type: 'success', text: `"${league.name}" created. Invite code ${league.code}` })
+    setNotice({ type: 'success', text: `"${league.name}" created — share the invite code below.` })
     refreshMyLeagues(league.id)
   }
 

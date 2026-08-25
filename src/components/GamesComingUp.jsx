@@ -1,13 +1,20 @@
 import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
-import { placeholderFixtures } from '../lib/placeholderData'
+import { placeholderFixtures, COMPETITIONS } from '../lib/placeholderData'
 import FixtureTeamRow from './FixtureTeamRow'
 import { formatKickoff } from '../lib/format'
 
+const COMPETITION_LABELS = {
+  'NPL NSW': 'NPL NSW',
+  'League One': 'Football NSW League One',
+  'League Two': 'Football NSW League Two',
+}
+
 export default function GamesComingUp() {
-  const [fixtures, setFixtures] = useState(
-    placeholderFixtures.filter((f) => f.status === 'scheduled').slice(0, 5),
+  const [allFixtures, setAllFixtures] = useState(
+    placeholderFixtures.filter((f) => f.status === 'scheduled'),
   )
+  const [activeCompetition, setActiveCompetition] = useState(COMPETITIONS[0])
 
   useEffect(() => {
     if (!isSupabaseConfigured) return
@@ -17,17 +24,35 @@ export default function GamesComingUp() {
       .select('*')
       .eq('status', 'scheduled')
       .order('kickoff_at', { ascending: true })
-      .limit(5)
       .then(({ data, error }) => {
-        if (!error && data) setFixtures(data)
+        if (!error && data) setAllFixtures(data)
       })
   }, [])
 
-  if (fixtures.length === 0) return null
+  const fixtures = allFixtures.filter((f) => f.competition === activeCompetition).slice(0, 5)
 
   return (
     <section>
       <h2 className="results-heading">Games Coming Up</h2>
+
+      <label className="competition-select-label" htmlFor="games-coming-up-competition">
+        Competition
+      </label>
+      <select
+        id="games-coming-up-competition"
+        className="competition-select"
+        value={activeCompetition}
+        onChange={(e) => setActiveCompetition(e.target.value)}
+      >
+        {COMPETITIONS.map((name) => (
+          <option key={name} value={name}>
+            {COMPETITION_LABELS[name] ?? name}
+          </option>
+        ))}
+      </select>
+
+      {fixtures.length === 0 && <p className="auth-note">No fixtures scheduled this week.</p>}
+
       <ul className="mini-fixture-list">
         {fixtures.map((fixture) => (
           <li key={fixture.id} className="mini-fixture">

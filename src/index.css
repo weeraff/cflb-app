@@ -1744,15 +1744,24 @@ h2 {
 }
 
 .league-invite {
-  color: var(--text-dim);
-  font-size: 0.85rem;
-  margin: 0 0 1rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  color: var(--text);
+  font-size: 0.95rem;
+  margin: 0 0 1.5rem;
+  padding: 0.85rem 1rem;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }
 
 .league-invite strong {
   color: var(--gold);
   font-family: var(--font-display);
-  letter-spacing: 0.06em;
+  font-size: 1.6rem;
+  letter-spacing: 0.12em;
 }
 
 @media (max-width: 480px) {
@@ -1882,20 +1891,30 @@ h2 {
 }
 
 .form-notice {
-  margin: 0;
-  font-size: 0.85rem;
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid transparent;
 }
 
 .form-notice--info {
-  color: var(--text-dim);
+  color: var(--text);
+  background: var(--surface-alt);
+  border-color: var(--border);
 }
 
 .form-notice--success {
   color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 .form-notice--error {
   color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
 }
 
 /* Shared "score" typography — lighter splash/gold family (score
