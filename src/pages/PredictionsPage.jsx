@@ -393,6 +393,7 @@ function PredictionsPageContent() {
       {auth?.user && lastWeek.length > 0 && (
         <>
           <h2>Last Week</h2>
+          <p className="auth-note">🍾 = correct, 🍋 = wrong. Exact score is worth 3 points, correct outcome alone is worth 1.</p>
           <div className="table-scroll">
             <table className="last-week-table">
               <thead>
@@ -410,7 +411,7 @@ function PredictionsPageContent() {
                       {p.fixtures.home_team} v {p.fixtures.away_team}
                       {p.is_joker && ' 🃏'}
                     </td>
-                    <td>{p.fixtures.home_score}-{p.fixtures.away_score}</td>
+                    <td className="last-week-table__outcome">{p.points_awarded === 3 ? '🍾' : '🍋'}</td>
                     <td className="last-week-table__outcome">{p.points_awarded > 0 ? '🍾' : '🍋'}</td>
                     <td>{p.points_awarded}</td>
                   </tr>
