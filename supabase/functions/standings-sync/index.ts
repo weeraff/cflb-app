@@ -386,6 +386,10 @@ async function autoFeatureNextRound(supabase: SupabaseClientAny) {
   // Current round still has an unfinished featured fixture — not done yet.
   if (openFeatured && openFeatured.length > 0) return 0
 
+  // Read candidates for the next round before touching anything — if
+  // there's nothing to replace this round with yet, leave the finished
+  // round's featured flag exactly as it is rather than retiring it into
+  // an empty gap.
   const { data: candidates, error: candidatesError } = await supabase
     .from('fixtures')
     .select('id, competition, kickoff_at')
@@ -406,18 +410,29 @@ async function autoFeatureNextRound(supabase: SupabaseClientAny) {
   }
   if (selected.length === 0) return 0
 
+  // Retire the just-finished round's featured flag BEFORE featuring the
+  // next one's, not after — this used to run last, so a failure here
+  // (thrown, caught by the outer per-step try/catch, logged and skipped)
+  // left the next round's fixtures already marked featured while the
+  // previous round's completed ones stayed featured too, mixing two
+  // different rounds together in `featured = true` (confirmed live:
+  // Round 29's 4 completed fixtures still featured alongside Round 30's
+  // 4 freshly-featured ones). Retiring first, now that a real
+  // replacement is confirmed to exist, means a failure here throws
+  // before any new fixture is ever touched — worst case next run retries
+  // both steps against the same candidates, never a mixed state.
+  const { error: retireError } = await supabase
+    .from('fixtures')
+    .update({ featured: false })
+    .eq('featured', true)
+    .eq('status', 'completed')
+  if (retireError) throw retireError
+
   const { error: updateError } = await supabase
     .from('fixtures')
     .update({ featured: true })
     .in('id', selected.map((f) => f.id))
   if (updateError) throw updateError
-
-  // Retire the just-finished round's featured flag so `featured = true`
-  // in the table editor always means "this week's round", not an ever-
-  // growing pile of every round that's ever been featured. Safe here
-  // unconditionally — reaching this point already confirmed every
-  // currently-featured fixture is completed.
-  await supabase.from('fixtures').update({ featured: false }).eq('featured', true).eq('status', 'completed')
 
   return selected.length
 }
