@@ -92,19 +92,27 @@ function PredictionsPageContent() {
         }
       })
 
-    // Last week: the most recently scored picks, fixture and all — these
-    // are typically last round's, but not looked up by round_key (this
-    // table has none) since fixtures.featured only ever tracks the
-    // current round once the previous one's flag is retired.
+    // Last week: every scored pick belonging to the most recent round the
+    // user actually has decided predictions for — not just "the last 8 by
+    // kickoff date", which silently spills into an older round (and mixes
+    // its fixtures in) whenever a round wasn't fully picked. fixtures.round
+    // is shared across all three tiers for a given curated round (NPL NSW/
+    // League One/League Two all say "Round 30" together), so matching the
+    // most recent prediction's round string groups the whole round
+    // correctly without needing a round_key column on this table.
     supabase
       .from('predictions')
       .select('*, fixtures(*)')
       .eq('user_id', auth.user.id)
       .not('points_awarded', 'is', null)
       .order('kickoff_at', { foreignTable: 'fixtures', ascending: false })
-      .limit(8)
       .then(({ data, error }) => {
-        if (!error && data) setLastWeek(data)
+        if (error || !data?.length) {
+          setLastWeek([])
+          return
+        }
+        const latestRound = data[0].fixtures?.round
+        setLastWeek(data.filter((p) => p.fixtures?.round === latestRound))
       })
   }, [auth?.user])
 
