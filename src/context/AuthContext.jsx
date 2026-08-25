@@ -27,9 +27,16 @@ export function AuthProvider({ children }) {
     await supabase.auth.signInWithOAuth({ provider: 'google' })
   }
 
-  async function signInWithEmail(email) {
-    if (!isSupabaseConfigured) return
-    await supabase.auth.signInWithOtp({ email })
+  async function signUpWithPassword(email, password) {
+    if (!isSupabaseConfigured) return { error: null }
+    const { error } = await supabase.auth.signUp({ email, password })
+    return { error }
+  }
+
+  async function signInWithPassword(email, password) {
+    if (!isSupabaseConfigured) return { error: null }
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    return { error }
   }
 
   async function signOut() {
@@ -38,7 +45,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithEmail, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signUpWithPassword, signInWithPassword, signOut }}>
       {children}
     </AuthContext.Provider>
   )

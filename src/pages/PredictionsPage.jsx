@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { placeholderFixtures, placeholderLeaderboard } from '../lib/placeholderData'
 import { PREDICTIONS_COMING_SOON, SPONSORS_ENABLED } from '../lib/featureFlags'
 import Leagues from '../components/Leagues'
+import EmailPasswordAuth from '../components/EmailPasswordAuth'
 import CompactFormGuide from '../components/CompactFormGuide'
 import SponsorModule from '../components/SponsorModule'
 import PredictionsDashboard from '../components/PredictionsDashboard'
@@ -36,8 +37,6 @@ function PredictionsPageContent() {
   const [myPredictions, setMyPredictions] = useState({})
   const [leaderboard, setLeaderboard] = useState(placeholderLeaderboard)
   const [picks, setPicks] = useState({})
-  const [email, setEmail] = useState('')
-  const [magicLinkSent, setMagicLinkSent] = useState(false)
   const { profile } = useMyProfile(auth?.user?.id)
   const [submitNotice, setSubmitNotice] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -198,13 +197,6 @@ function PredictionsPageContent() {
     }
   }
 
-  async function handleEmailSignIn(e) {
-    e.preventDefault()
-    if (!email) return
-    await auth?.signInWithEmail(email)
-    setMagicLinkSent(true)
-  }
-
   // theEight is built from every fixture featured for this round regardless
   // of status, so all 8 stay visible together as the round plays out —
   // pickableEight (still 'scheduled') is the subset the wizard can
@@ -277,16 +269,7 @@ function PredictionsPageContent() {
         <div className="auth-card">
           <p>Sign in to save your predictions and appear on the leaderboard.</p>
           <button className="button" onClick={auth?.signInWithGoogle}>Continue with Google</button>
-          <form onSubmit={handleEmailSignIn} className="auth-email-form">
-            <input
-              type="email"
-              placeholder="you@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <button className="button button--secondary" type="submit">Email me a sign-in link</button>
-          </form>
-          {magicLinkSent && <p className="auth-note">Check your inbox for the sign-in link.</p>}
+          <EmailPasswordAuth />
           {!isSupabaseConfigured && <p className="auth-note">Supabase isn't connected yet, this is a preview of the sign-in flow.</p>}
         </div>
       )}

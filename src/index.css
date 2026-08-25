@@ -1691,8 +1691,36 @@ h2 {
   align-items: flex-start;
 }
 
+.auth-email-block {
+  width: 100%;
+}
+
+.auth-mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.auth-mode-toggle__option {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: none;
+  border: none;
+  padding: 0.25rem 0;
+  cursor: pointer;
+}
+
+.auth-mode-toggle__option--active {
+  color: var(--gold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .auth-email-form {
   display: flex;
+  flex-direction: column;
   gap: 0.5rem;
 }
 
@@ -1703,6 +1731,14 @@ h2 {
   border: 1px solid var(--border);
   color: var(--text);
   padding: 0 0.75rem;
+}
+
+.auth-keep-signed-in {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-dim);
 }
 
 .auth-note {
@@ -2775,14 +2811,6 @@ h2 {
     overflow-x: auto;
   }
 
-  .auth-email-form {
-    flex-wrap: wrap;
-  }
-
-  .auth-email-form input,
-  .auth-email-form .button {
-    flex: 1 1 100%;
-  }
 }
 
 /* Reporter panel */
