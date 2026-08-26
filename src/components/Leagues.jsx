@@ -39,7 +39,7 @@ export default function Leagues() {
   async function refreshMyLeagues(preferLeagueId) {
     const { data, error } = await supabase
       .from('league_members')
-      .select('league_id, leagues (id, name, code)')
+      .select('league_id, leagues (id, name, code, created_by)')
       .eq('user_id', auth.user.id)
 
     if (error) {
@@ -158,6 +158,48 @@ export default function Leagues() {
     refreshMyLeagues(league.id)
   }
 
+  async function leaveLeague(league) {
+    if (!window.confirm(`Leave "${league.name}"?`)) return
+
+    setBusy(true)
+    setNotice(null)
+
+    const { error } = await supabase
+      .from('league_members')
+      .delete()
+      .eq('league_id', league.id)
+      .eq('user_id', auth.user.id)
+
+    setBusy(false)
+    if (error) {
+      setNotice({ type: 'error', text: 'Could not leave that league, try again.' })
+      return
+    }
+
+    setSelectedLeagueId('')
+    setNotice({ type: 'info', text: `Left "${league.name}".` })
+    refreshMyLeagues()
+  }
+
+  async function deleteLeague(league) {
+    if (!window.confirm(`Delete "${league.name}" for everyone? This can't be undone.`)) return
+
+    setBusy(true)
+    setNotice(null)
+
+    const { error } = await supabase.from('leagues').delete().eq('id', league.id)
+
+    setBusy(false)
+    if (error) {
+      setNotice({ type: 'error', text: 'Could not delete that league, try again.' })
+      return
+    }
+
+    setSelectedLeagueId('')
+    setNotice({ type: 'info', text: `"${league.name}" deleted.` })
+    refreshMyLeagues()
+  }
+
   if (!isSupabaseConfigured || !auth?.user) {
     return (
       <>
@@ -212,9 +254,22 @@ export default function Leagues() {
           </select>
 
           {selectedLeague && (
-            <p className="league-invite">
-              Invite code: <strong>{selectedLeague.code}</strong>. Share it so mates can join.
-            </p>
+            <>
+              <p className="league-invite">
+                Invite code: <strong>{selectedLeague.code}</strong>. Share it so mates can join.
+              </p>
+              <div className="league-manage">
+                {selectedLeague.created_by === auth.user.id ? (
+                  <button type="button" className="league-manage__action league-manage__action--danger" disabled={busy} onClick={() => deleteLeague(selectedLeague)}>
+                    Delete league
+                  </button>
+                ) : (
+                  <button type="button" className="league-manage__action" disabled={busy} onClick={() => leaveLeague(selectedLeague)}>
+                    Leave league
+                  </button>
+                )}
+              </div>
+            </>
           )}
 
           {leagueLeaderboard.some((entry) => entry.points > 0) ? (
