@@ -29,7 +29,7 @@ export default function GamesComingUp() {
       })
   }, [])
 
-  const fixtures = allFixtures.filter((f) => f.competition === activeCompetition).slice(0, 5)
+  const fixtures = allFixtures.filter((f) => f.competition === activeCompetition)
 
   return (
     <section>
