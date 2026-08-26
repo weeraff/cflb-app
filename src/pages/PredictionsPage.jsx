@@ -12,6 +12,8 @@ import PredictionsDashboard from '../components/PredictionsDashboard'
 import TheEightWizard from '../components/TheEightWizard'
 import TheEightSummary, { pickResult } from '../components/TheEightSummary'
 import { buildTheEightFixtures, computeRoundKey, computeLockTime } from '../lib/theEight'
+import { sortLeaderboard } from '../lib/leaderboard'
+import LeaderboardTable from '../components/LeaderboardTable'
 import useCompetitionData from '../hooks/useCompetitionData'
 import useMyProfile from '../hooks/useMyProfile'
 
@@ -181,7 +183,7 @@ function PredictionsPageContent() {
   const submittedAllPickable = pickableEight.length > 0 && pickableEight.every((f) => myPredictions[f.id])
   const submittedAll = submittedAllPickable || (pickableEight.length === 0 && theEight.length > 0)
 
-  const sortedLeaderboard = [...leaderboard].sort((a, b) => b.points - a.points)
+  const sortedLeaderboard = sortLeaderboard(leaderboard)
   const myLeaderboardIndex = auth?.user ? sortedLeaderboard.findIndex((entry) => entry.user_id === auth.user.id) : -1
   const myRank = myLeaderboardIndex >= 0 ? myLeaderboardIndex + 1 : null
 
@@ -388,20 +390,7 @@ function PredictionsPageContent() {
         <div>
           <h2>Leaderboard</h2>
           {leaderboard.some((entry) => entry.points > 0) ? (
-            <ol className="leaderboard">
-              {leaderboard.map((entry, i) => (
-                <li key={entry.user_id ?? entry.display_name}>
-                  <span className="leaderboard__rank">{i + 1}</span>
-                  <span className="leaderboard__name">
-                    {entry.display_name}
-                    {entry.rounds_picked != null && (
-                      <span className="leaderboard__rounds">{entry.rounds_picked} round{entry.rounds_picked === 1 ? '' : 's'} picked</span>
-                    )}
-                  </span>
-                  <span className="leaderboard__points">{entry.points} pts</span>
-                </li>
-              ))}
-            </ol>
+            <LeaderboardTable entries={leaderboard} />
           ) : (
             <p className="auth-note">Be the first on the board. Make your picks before kickoff.</p>
           )}
