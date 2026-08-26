@@ -149,11 +149,11 @@ Deno.serve(async () => {
     }
   }
 
-  let closingNotified = 0
+  let picksReminderNotified = 0
   try {
-    closingNotified = await notifyPicksClosingSoon(supabase)
+    picksReminderNotified = await notifyDailyPicksReminder(supabase)
   } catch (err) {
-    await logError(supabase, 'notify-picks-closing', err)
+    await logError(supabase, 'notify-picks-reminder', err)
   }
 
   let roundSummaryNotified = 0
@@ -175,7 +175,7 @@ Deno.serve(async () => {
       nextRoundFeatured,
       matchEventsSynced,
       resultsNotified,
-      closingNotified,
+      picksReminderNotified,
       rankChangesNotified,
       beatHostUpdated,
       roundSummaryNotified,
@@ -594,22 +594,31 @@ async function notifyCompletedFeaturedFixtures(supabase: SupabaseClientAny) {
   return sent
 }
 
-// A single reminder per fixture once it's within 24h of kickoff, not a
-// re-send every 15 minutes while it sits inside that window. Only reaches
-// users who haven't submitted a pick for every one of that round's
-// featured fixtures — no point nagging someone who's already in.
-async function notifyPicksClosingSoon(supabase: SupabaseClientAny) {
-  const within24h = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+// Fixed weekly schedule instead of a kickoff-relative one: Monday through
+// Saturday at 12pm Sydney time, to whoever hasn't completed every fixture
+// in the current featured round yet — stops reaching a user the moment
+// they submit, simply by no longer matching the "incomplete" filter.
+// Runs off the existing 15-min cron, so it's gated in-function on the
+// current Sydney weekday/hour rather than needing its own cron entry, and
+// claims a `daily_notifications` row first so re-checking every 15 minutes
+// through the 12 o'clock hour only ever sends once.
+async function notifyDailyPicksReminder(supabase: SupabaseClientAny) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Australia/Sydney',
+    weekday: 'short',
+    hour: 'numeric',
+    hour12: false,
+  }).formatToParts(new Date())
+  const weekday = parts.find((p) => p.type === 'weekday')?.value
+  const hour = Number(parts.find((p) => p.type === 'hour')?.value)
 
-  const { data, error } = await supabase
-    .from('fixtures')
-    .select('id')
-    .eq('status', 'scheduled')
-    .eq('featured', true)
-    .eq('notified_picks_closing', false)
-    .lte('kickoff_at', within24h)
-  if (error) throw error
-  if (!data?.length) return 0
+  if (weekday === 'Sun' || hour !== 12) return 0
+
+  const sydneyDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Australia/Sydney' }).format(new Date())
+  const { error: claimError } = await supabase
+    .from('daily_notifications')
+    .insert({ type: 'picks_reminder', sent_on: sydneyDate })
+  if (claimError) return 0 // already sent today, or a real error either way there's nothing more to do here
 
   const { data: allFeatured, error: featuredError } = await supabase
     .from('fixtures')
@@ -618,6 +627,7 @@ async function notifyPicksClosingSoon(supabase: SupabaseClientAny) {
     .eq('status', 'scheduled')
   if (featuredError) throw featuredError
   const roundFixtureIds: string[] = (allFeatured ?? []).map((f: { id: string }) => f.id)
+  if (roundFixtureIds.length === 0) return 0
 
   const { data: profiles, error: profilesError } = await supabase.from('profiles').select('id')
   if (profilesError) throw profilesError
@@ -638,19 +648,11 @@ async function notifyPicksClosingSoon(supabase: SupabaseClientAny) {
     .map((p: { id: string }) => p.id)
     .filter((userId: string) => (pickedFixturesByUser[userId]?.size ?? 0) < roundFixtureIds.length)
 
-  const body =
-    data.length === 1
-      ? 'A featured fixture kicks off within 24 hours, get your pick in.'
-      : `${data.length} featured fixtures kick off within 24 hours, get your picks in.`
-
-  const sent = await sendPushToUsers(supabase, incompleteUserIds, { title: 'Picks close soon', body, url: '/predictions' })
-
-  await supabase
-    .from('fixtures')
-    .update({ notified_picks_closing: true })
-    .in('id', data.map((f: { id: string }) => f.id))
-
-  return sent
+  return await sendPushToUsers(supabase, incompleteUserIds, {
+    title: 'Pick your predictions',
+    body: "This week's fixtures are up, get your picks in before kickoff.",
+    url: '/predictions',
+  })
 }
 
 // 3 points for an exact scoreline, 1 for picking the right outcome
