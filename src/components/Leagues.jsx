@@ -165,15 +165,20 @@ export default function Leagues() {
     setBusy(true)
     setNotice(null)
 
-    const { error } = await supabase
+    // A delete blocked by RLS isn't reported as an error — it just deletes
+    // zero rows and returns success, which without .select() here would
+    // look identical to actually leaving. Checking the returned rows is
+    // the only way to tell the two apart.
+    const { data, error } = await supabase
       .from('league_members')
       .delete()
       .eq('league_id', league.id)
       .eq('user_id', auth.user.id)
+      .select()
 
     setBusy(false)
-    if (error) {
-      setNotice({ type: 'error', text: 'Could not leave that league, try again.' })
+    if (error || !data?.length) {
+      setNotice({ type: 'error', text: error ? `Could not leave that league: ${error.message}` : "Could not leave that league — the server didn't confirm it was removed." })
       return
     }
 
@@ -189,11 +194,11 @@ export default function Leagues() {
     setBusy(true)
     setNotice(null)
 
-    const { error } = await supabase.from('leagues').delete().eq('id', league.id)
+    const { data, error } = await supabase.from('leagues').delete().eq('id', league.id).select()
 
     setBusy(false)
-    if (error) {
-      setNotice({ type: 'error', text: 'Could not delete that league, try again.' })
+    if (error || !data?.length) {
+      setNotice({ type: 'error', text: error ? `Could not delete that league: ${error.message}` : "Could not delete that league — the server didn't confirm it was removed." })
       return
     }
 
