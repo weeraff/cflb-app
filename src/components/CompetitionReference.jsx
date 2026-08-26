@@ -51,12 +51,15 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
   const lastRound = competitionResults[0]?.round
   const recentResults = lastRound ? competitionResults.filter((r) => r.round === lastRound) : []
 
-  // Watch/highlights/match-detail only ever apply to NPL NSW (the only
-  // tier Football NSW streams), sourced from `fixtures` — `results` is a
-  // separate all-three-competitions mirror with no stream/highlights
-  // columns of its own, joined here by the dribl_id the two tables share.
+  // Scorers/lineups get logged for all three competitions, but only NPL
+  // NSW is actually streamed/highlighted by Football NSW — that's handled
+  // per-fixture below via hasHighlights (true only when highlights_video_id
+  // is set), not by excluding other competitions from this fetch entirely.
+  // Sourced from `fixtures` — `results` is a separate all-three-competitions
+  // mirror with no stream/highlights columns of its own, joined here by the
+  // dribl_id the two tables share.
   useEffect(() => {
-    if (!isSupabaseConfigured || activeCompetition !== 'NPL NSW' || recentResults.length === 0) {
+    if (!isSupabaseConfigured || recentResults.length === 0) {
       setStreamData({})
       setEvents([])
       setLineups({})
