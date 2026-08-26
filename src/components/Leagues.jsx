@@ -210,17 +210,17 @@ export default function Leagues() {
 
   if (!isSupabaseConfigured || !auth?.user) {
     return (
-      <>
+      <div>
         <h2>Leagues</h2>
         <p className="auth-note">Sign in to create or join a mini-league with your mates.</p>
-      </>
+      </div>
     )
   }
 
   const selectedLeague = myLeagues.find((l) => l.id === selectedLeagueId)
 
   return (
-    <>
+    <div>
       <h2>Leagues</h2>
 
       {notice && <p className={`form-notice form-notice--${notice.type}`}>{notice.text}</p>}
@@ -288,6 +288,6 @@ export default function Leagues() {
           <button className="button button--small button--secondary" type="submit" disabled={busy}>Join League</button>
         </form>
       </div>
-    </>
+    </div>
   )
 }
