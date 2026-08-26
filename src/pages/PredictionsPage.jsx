@@ -43,8 +43,6 @@ function PredictionsPageContent() {
   const [reviewing, setReviewing] = useState(false)
   const [editStep, setEditStep] = useState(null)
   const [resultStats, setResultStats] = useState({})
-  const [tiebreakerPick, setTiebreakerPick] = useState(null)
-  const [savedTiebreakers, setSavedTiebreakers] = useState({})
   const [lastWeek, setLastWeek] = useState([])
 
   const { standings, results } = useCompetitionData()
@@ -76,18 +74,6 @@ function PredictionsPageContent() {
           const byFixture = {}
           for (const p of data) byFixture[p.fixture_id] = p
           setMyPredictions(byFixture)
-        }
-      })
-
-    supabase
-      .from('tiebreaker_predictions')
-      .select('*')
-      .eq('user_id', auth.user.id)
-      .then(({ data, error }) => {
-        if (!error && data) {
-          const byRound = {}
-          for (const t of data) byRound[t.round_key] = t.minute_pick
-          setSavedTiebreakers(byRound)
         }
       })
 
@@ -171,25 +157,11 @@ function PredictionsPageContent() {
       .upsert(rows, { onConflict: 'user_id,fixture_id' })
       .select()
 
-    if (!error && roundKey) {
-      await supabase.from('tiebreaker_predictions').upsert(
-        {
-          user_id: auth.user.id,
-          round_key: roundKey,
-          minute_pick: tiebreakerPick ?? savedTiebreakers[roundKey] ?? 0,
-        },
-        { onConflict: 'user_id,round_key' },
-      )
-    }
-
     setSubmitting(false)
     if (!error) {
       const byFixture = { ...myPredictions }
       for (const row of data) byFixture[row.fixture_id] = row
       setMyPredictions(byFixture)
-      if (roundKey) {
-        setSavedTiebreakers((prev) => ({ ...prev, [roundKey]: tiebreakerPick ?? prev[roundKey] ?? 0 }))
-      }
       setSubmitNotice({ type: 'success', text: 'The Eight submitted.' })
       setReviewing(false)
     } else {
@@ -334,7 +306,6 @@ function PredictionsPageContent() {
           )}
           locked
           resultStats={resultStats}
-          tiebreaker={savedTiebreakers[roundKey]}
           roundKey={roundKey ?? ''}
         />
       )}
@@ -354,8 +325,6 @@ function PredictionsPageContent() {
           }}
           onSubmit={submitAllPicks}
           submitting={submitting}
-          tiebreaker={tiebreakerPick ?? savedTiebreakers[roundKey] ?? 0}
-          onTiebreakerChange={setTiebreakerPick}
         />
       )}
 

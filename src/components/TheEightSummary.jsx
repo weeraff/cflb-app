@@ -12,24 +12,7 @@ function pickResult(home, away) {
   return 'draw'
 }
 
-function TiebreakerRow({ value, onChange, locked }) {
-  return (
-    <div className="the-eight-summary__tiebreaker">
-      <span className="the-eight-summary__tiebreaker-label">Tiebreaker: minute of the first goal across the round</span>
-      {locked ? (
-        <span className="the-eight-summary__tiebreaker-value">{value ?? '—'}′</span>
-      ) : (
-        <div className="score-stepper">
-          <button type="button" className="score-stepper__btn" onClick={() => onChange(Math.max(0, (value ?? 0) - 1))} aria-label="Decrease minute">−</button>
-          <span className="score-stepper__value">{value ?? 0}′</span>
-          <button type="button" className="score-stepper__btn" onClick={() => onChange(Math.min(120, (value ?? 0) + 1))} aria-label="Increase minute">+</button>
-        </div>
-      )}
-    </div>
-  )
-}
-
-export default function TheEightSummary({ fixtures, picks, onEdit, onSubmit, submitting, locked, resultStats, tiebreaker, onTiebreakerChange, roundKey }) {
+export default function TheEightSummary({ fixtures, picks, onEdit, onSubmit, submitting, locked, resultStats, roundKey }) {
   const [sharing, setSharing] = useState(false)
   const [punditsByFixture, setPunditsByFixture] = useState({})
 
@@ -152,8 +135,6 @@ export default function TheEightSummary({ fixtures, picks, onEdit, onSubmit, sub
           )
         })}
       </ul>
-
-      <TiebreakerRow value={tiebreaker} onChange={onTiebreakerChange} locked={locked} />
 
       {punditFixtures.length > 0 && (
         <p className="the-eight-summary__beat-host">
