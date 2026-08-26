@@ -177,6 +177,7 @@ export default function Leagues() {
       return
     }
 
+    setMyLeagues((prev) => prev.filter((l) => l.id !== league.id))
     setSelectedLeagueId('')
     setNotice({ type: 'info', text: `Left "${league.name}".` })
     refreshMyLeagues()
@@ -196,6 +197,7 @@ export default function Leagues() {
       return
     }
 
+    setMyLeagues((prev) => prev.filter((l) => l.id !== league.id))
     setSelectedLeagueId('')
     setNotice({ type: 'info', text: `"${league.name}" deleted.` })
     refreshMyLeagues()
@@ -215,30 +217,6 @@ export default function Leagues() {
   return (
     <>
       <h2>Leagues</h2>
-      <p className="section-subtitle">Create a private league with your mates, or join one with an invite code.</p>
-
-      <div className="league-forms">
-        <form onSubmit={createLeague} className="league-form">
-          <input
-            type="text"
-            placeholder="League name"
-            value={leagueName}
-            onChange={(e) => setLeagueName(e.target.value)}
-            maxLength={40}
-          />
-          <button className="button button--small" type="submit" disabled={busy}>Create League</button>
-        </form>
-        <form onSubmit={joinLeague} className="league-form">
-          <input
-            type="text"
-            placeholder="Invite code"
-            value={joinCode}
-            onChange={(e) => setJoinCode(e.target.value)}
-            maxLength={6}
-          />
-          <button className="button button--small button--secondary" type="submit" disabled={busy}>Join League</button>
-        </form>
-      </div>
 
       {notice && <p className={`form-notice form-notice--${notice.type}`}>{notice.text}</p>}
 
@@ -280,6 +258,31 @@ export default function Leagues() {
           )}
         </div>
       )}
+
+      <p className="section-subtitle">Create a private league with your mates, or join one with an invite code.</p>
+
+      <div className="league-forms">
+        <form onSubmit={createLeague} className="league-form">
+          <input
+            type="text"
+            placeholder="League name"
+            value={leagueName}
+            onChange={(e) => setLeagueName(e.target.value)}
+            maxLength={40}
+          />
+          <button className="button button--small" type="submit" disabled={busy}>Create League</button>
+        </form>
+        <form onSubmit={joinLeague} className="league-form">
+          <input
+            type="text"
+            placeholder="Invite code"
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value)}
+            maxLength={6}
+          />
+          <button className="button button--small button--secondary" type="submit" disabled={busy}>Join League</button>
+        </form>
+      </div>
     </>
   )
 }
