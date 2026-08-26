@@ -42,9 +42,18 @@ export default function Leagues() {
       .select('league_id, leagues (id, name, code)')
       .eq('user_id', auth.user.id)
 
-    if (error || !data) return
+    if (error) {
+      setNotice({ type: 'error', text: `Could not load your leagues: ${error.message}` })
+      return
+    }
+    if (!data) return
 
-    const leagues = data.map((row) => row.leagues).filter(Boolean)
+    // PostgREST can return the embedded belongs-to resource as an array
+    // instead of a single object depending on how it resolves the
+    // league_members -> leagues relationship; normalize either shape.
+    const leagues = data
+      .map((row) => (Array.isArray(row.leagues) ? row.leagues[0] : row.leagues))
+      .filter(Boolean)
     setMyLeagues(leagues)
 
     if (preferLeagueId) {
