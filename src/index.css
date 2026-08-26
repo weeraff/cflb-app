@@ -2752,11 +2752,24 @@ h2 {
   }
 }
 
+.leaderboard-scroll {
+  max-height: 22rem;
+  overflow-y: auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .leaderboard-table {
   width: 100%;
   min-width: 340px;
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
+}
+
+.leaderboard-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
 }
 
 .leaderboard-table th,

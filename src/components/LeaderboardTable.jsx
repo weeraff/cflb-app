@@ -4,7 +4,7 @@ export default function LeaderboardTable({ entries }) {
   const sorted = sortLeaderboard(entries)
 
   return (
-    <div className="table-scroll">
+    <div className="leaderboard-scroll">
       <table className="leaderboard-table">
         <thead>
           <tr>
