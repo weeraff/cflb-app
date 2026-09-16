@@ -1,18 +1,16 @@
 import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
-import { placeholderFixtures, COMPETITIONS } from '../lib/placeholderData'
+import { COMPETITIONS } from '../lib/placeholderData'
 import FixtureTeamRow from './FixtureTeamRow'
 import { formatKickoff } from '../lib/format'
 
 const COMPETITION_LABELS = {
-  'NPL NSW': 'NPL NSW',
-  'League One': 'Football NSW League One',
-  'League Two': 'Football NSW League Two',
+  'Australian Championship': 'Australian Championship',
 }
 
 export default function GamesComingUp() {
   const [allFixtures, setAllFixtures] = useState(
-    placeholderFixtures.filter((f) => f.status === 'scheduled'),
+    [],
   )
   const [activeCompetition, setActiveCompetition] = useState(COMPETITIONS[0])
 
@@ -62,7 +60,7 @@ export default function GamesComingUp() {
             </div>
             <FixtureTeamRow tag="div" className="mini-fixture__team" logo={fixture.home_logo} name={fixture.home_team} />
             <FixtureTeamRow tag="div" className="mini-fixture__team" logo={fixture.away_logo} name={fixture.away_team} />
-            {fixture.competition === 'NPL NSW' && (
+            {fixture.stream_status !== 'none' && (
               <span className="mini-fixture__stream-note">
                 {fixture.stream_status === 'scheduled' ? 'Live stream starting soon' : 'Stream starts at kickoff'}
               </span>

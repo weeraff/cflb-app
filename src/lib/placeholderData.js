@@ -173,13 +173,10 @@ export const placeholderEpisodes = [
   },
 ]
 
-// The Australian Championship doesn't start until 17 Oct 2026, so as a
-// beta test the app runs on NPL NSW, League One Men's, and League Two
-// Men's instead, all live right now. Standings pulled directly from
-// api.dribl.com (Football NSW's competition platform) on 2026-08-10, real
-// current data, not invented. standings-sync keeps this current once
-// deployed; competitions.footballnsw.com.au/ladders shows the same numbers.
-export const COMPETITIONS = ['NPL NSW', 'League One', 'League Two']
+// The public product now follows the Australian Championship. Historical
+// NPL NSW data remains below only as development seed data; it must never be
+// presented as a fallback for the live Championship surface.
+export const COMPETITIONS = ['Australian Championship']
 
 export const placeholderStandings = [
   { position: 1, team: 'APIA Leichhardt FC', competition: 'NPL NSW', played: 27, won: 19, drawn: 4, lost: 4, gf: 59, ga: 32, gd: 27, points: 61 },

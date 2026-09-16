@@ -6,7 +6,6 @@ export default function HomePage() {
   return (
     <section>
       <h1>Home</h1>
-      <p className="section-subtitle">Live streams, results and highlights across NPL NSW, League One and League Two. Ladder and top scorers below.</p>
 
       <LiveScoreStrip />
 

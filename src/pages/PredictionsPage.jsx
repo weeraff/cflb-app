@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { placeholderFixtures, placeholderLeaderboard } from '../lib/placeholderData'
+import { placeholderLeaderboard } from '../lib/placeholderData'
 import { PREDICTIONS_COMING_SOON, SPONSORS_ENABLED } from '../lib/featureFlags'
 import Leagues from '../components/Leagues'
 import EmailPasswordAuth from '../components/EmailPasswordAuth'
@@ -35,7 +35,7 @@ export default function PredictionsPage() {
 
 function PredictionsPageContent() {
   const auth = useAuth()
-  const [fixtures, setFixtures] = useState(placeholderFixtures)
+  const [fixtures, setFixtures] = useState([])
   const [myPredictions, setMyPredictions] = useState({})
   const [leaderboard, setLeaderboard] = useState(placeholderLeaderboard)
   const [picks, setPicks] = useState({})
@@ -83,9 +83,8 @@ function PredictionsPageContent() {
     // user actually has decided predictions for — not just "the last 8 by
     // kickoff date", which silently spills into an older round (and mixes
     // its fixtures in) whenever a round wasn't fully picked. fixtures.round
-    // is shared across all three tiers for a given curated round (NPL NSW/
-    // League One/League Two all say "Round 30" together), so matching the
-    // most recent prediction's round string groups the whole round
+    // is shared across a curated Championship round, so matching the most
+    // recent prediction's round string groups the whole round
     // correctly without needing a round_key column on this table.
     supabase
       .from('predictions')
@@ -224,7 +223,7 @@ function PredictionsPageContent() {
   return (
     <section>
       <h1>Predictions</h1>
-      <p className="section-subtitle">The Eight: 8 fixtures each week, 4 NPL NSW, 3 League One, 1 League Two. Pick the scoreline before kickoff, 3 points for an exact score, 1 for the right result.</p>
+      <p className="section-subtitle">The Eight: 8 Australian Championship fixtures each week. Pick the scoreline before kickoff, 3 points for an exact score, 1 for the right result.</p>
 
       <PredictionsDashboard
         userId={auth?.user?.id ?? null}

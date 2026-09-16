@@ -9,9 +9,7 @@ import MatchEventRow from './MatchEventRow'
 import useCompetitionData from '../hooks/useCompetitionData'
 
 const COMPETITION_LABELS = {
-  'NPL NSW': 'NPL NSW',
-  'League One': 'Football NSW League One',
-  'League Two': 'Football NSW League Two',
+  'Australian Championship': 'Australian Championship',
 }
 
 export function FormGuide({ picks }) {
@@ -51,10 +49,9 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
   const lastRound = competitionResults[0]?.round
   const recentResults = lastRound ? competitionResults.filter((r) => r.round === lastRound) : []
 
-  // Scorers/lineups get logged for all three competitions, but only NPL
-  // NSW is actually streamed/highlighted by Football NSW — that's handled
-  // per-fixture below via hasHighlights (true only when highlights_video_id
-  // is set), not by excluding other competitions from this fetch entirely.
+  // Stream, highlight, scorer and lineup availability are assessed per
+  // fixture, so this remains correct whichever official provider supplies
+  // the Championship match data.
   // Sourced from `fixtures` — `results` is a separate all-three-competitions
   // mirror with no stream/highlights columns of its own, joined here by the
   // dribl_id the two tables share.
@@ -114,7 +111,7 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
     <div className="competition-reference">
       {heading && <h2>{heading}</h2>}
       <p className="section-subtitle">
-        Live tables, results and scorers from Football NSW, standing in as a beta test before the Australian Championship kicks off on 17 October.
+        Australian Championship coverage. The live table updates as official standings are published; results and scorers follow as match data arrives.
         {usingPlaceholder && ' (showing sample standings until the source is connected)'}
       </p>
 
@@ -136,6 +133,7 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
 
       <h3 className="results-heading">Recent Results{lastRound ? `: ${lastRound}` : ''}</h3>
       <ul className="results-list results-list--grid">
+        {recentResults.length === 0 && <li className="auth-note">Results will appear here when the first Championship round is complete.</li>}
         {recentResults.map((r) => {
           const key = r.id ?? `${r.home_team}-${r.away_team}-${r.played_at}`
           const fixture = streamData[r.dribl_id]
@@ -250,6 +248,11 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
               </tr>
             </thead>
             <tbody>
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan="6">The live Championship table will appear when official standings are published.</td>
+                </tr>
+              )}
               {rows.map((row) => {
                 const zone =
                   row.position === 1
@@ -310,6 +313,7 @@ export default function CompetitionReference({ heading = 'Form Guide' }) {
       <details className="reference-panel">
         <summary className="reference-panel__toggle">Top Scorers</summary>
         <ol className="scorers-list">
+        {scorers.length === 0 && <li className="auth-note">Top scorers will appear once official match data is available.</li>}
         {scorers.map((s) => (
           <li key={s.id ?? s.player_name} className="scorer-row">
             {s.image_url ? (

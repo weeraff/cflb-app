@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
-import { COMPETITIONS, placeholderStandings, placeholderResults, placeholderTopScorers } from '../lib/placeholderData'
+import { COMPETITIONS } from '../lib/placeholderData'
 
 // Shared by HomePage and the Predictions reference panel — both need the
 // same standings/results/scorers data, fetched once per mount rather than
 // duplicated per page.
 export default function useCompetitionData() {
-  const [standings, setStandings] = useState(placeholderStandings)
-  const [results, setResults] = useState(placeholderResults)
-  const [topScorers, setTopScorers] = useState(placeholderTopScorers)
-  const [usingPlaceholder, setUsingPlaceholder] = useState(true)
+  // Don't substitute the retired NPL beta snapshot when live Championship
+  // data is unavailable. An honest empty state is safer than stale results.
+  const [standings, setStandings] = useState([])
+  const [results, setResults] = useState([])
+  const [topScorers, setTopScorers] = useState([])
+  const [usingPlaceholder, setUsingPlaceholder] = useState(false)
 
   useEffect(() => {
     if (!isSupabaseConfigured) return

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { placeholderStandings } from '../lib/placeholderData'
 
-const LEAGUES = ['NPL NSW', 'League One', 'League Two']
+const LEAGUES = ['Australian Championship']
 
 const AGE_GROUPS = [
   { value: 'first_grade', label: 'First Grade' },
