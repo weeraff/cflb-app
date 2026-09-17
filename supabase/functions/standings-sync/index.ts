@@ -1,42 +1,34 @@
-// Supabase Edge Function: pulls league tables, recent results, top goal
-// scorers, and upcoming fixtures, then locks kicked-off fixtures, marks
-// finished ones complete, and scores predictions against them. Deploy and
-// schedule with `supabase functions deploy standings-sync` + cron
-// (already scheduled every 6 hours, see supabase/migrations, worth
-// tightening once predictions are live so locking/scoring isn't hours
-// behind kickoff).
+// Supabase Edge Function: pulls the ladder and every match (upcoming and
+// finished) for the Australian Championship, then locks kicked-off
+// fixtures, marks finished ones complete, and scores predictions against
+// them. Deploy and schedule with `supabase functions deploy standings-sync`
+// + cron (every 15 minutes, see supabase/migrations).
 //
-// Two data sources:
-//   - api.ffa.football (Football Australia) for the Australian Championship,
-//     which doesn't start until 17 Oct 2026. Expected to keep returning
-//     nothing useful until then.
-//   - api.dribl.com (Football NSW's competition platform, the same backend
-//     that powers competitions.footballnsw.com.au) for NPL NSW, League One
-//     Men's, and League Two Men's, standing in as a beta test while the
-//     Championship is still months away. Confirmed live and unauthenticated
-//     via Deno's fetch on 2026-08-10 (Cloudflare blocks plain curl here,
-//     works fine from an edge function since that also runs on Deno).
+// Source: api.ffa.football (Football Australia), competition id c1143.
+// Groups and fixtures went live 2026-09-17, six-plus weeks ahead of the
+// 17 Oct 2026 kickoff. The `ribbon` endpoint alone carries both the ladder's
+// active_season and every match's schedule/score in one call — see
+// fetchFfaRibbon/syncFfaLadder/syncFfaMatches below.
 //
-// Dribl quirk found during setup: competition ids aren't stable across
-// seasons for NPL specifically (League One/Two keep the same id year to
-// year, NPL doesn't). If NPL data suddenly stops updating, the id below
-// probably needs refreshing. To find the current one:
-//   1. https://mc-api.dribl.com/api/seasons -> find the entry with is_current: true
-//   2. view-source the relevant page on footballnsw.com.au/competitions/
-//      and pull the competition + league ids out of its dribl links
+// There is currently no top-scorers source for the Championship (FFA's
+// API hasn't surfaced one the way Dribl's "moments" endpoint did for
+// Football NSW) — topScorersUpdated stays at 0 until one is found.
 //
-// Top scorers come from Dribl's "moments" endpoint (the same system that
-// powers the "Golden Boot" style leaderboards on the public site), which
-// requires a tenant id, resolved once via /api/tenants?mc_link=<domain>.
-// Only Goals, Red Cards, and Yellow Cards are tracked there, no assists
-// exist for any of the three competitions (checked 2026-08-11), so this
-// only pulls goals.
+// The app ran on Football NSW's NPL NSW / League One / League Two via
+// api.dribl.com as a beta stand-in before the Championship existed. That
+// season has since finished and the sync is retired (see the note above
+// the sync loop below) — the Dribl-specific consts/functions are kept
+// dormant for reference/rollback rather than deleted.
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { sendPushToAll, sendPushToUsers } from '../_shared/sendPush.ts'
 
 const DRIBL_SEASON = 'wOmelzGd02' // 2026, confirmed current 2026-08-10
 const DRIBL_TENANT = '1RwNlWemjr' // Football NSW, resolved via /api/tenants?mc_link=competitions.footballnsw.com.au
 
+// Kept for reference/rollback (see the retirement note above the sync
+// loop) rather than deleted — real hard-won detail (ids, quirks) that'd be
+// costly to rediscover if Football NSW coverage is ever needed again.
+// deno-lint-ignore no-unused-vars
 const DRIBL_COMPETITIONS = [
   { name: 'NPL NSW', competition: 'A4KLxx87Kq', league: 'bgdMjoBxmE' },
   { name: 'League One', competition: '1pN6ppAnd0', league: '3pmvlA15Kv' },
@@ -56,39 +48,32 @@ Deno.serve(async () => {
 
   let standingsUpdated = 0
   let resultsUpdated = 0
-  let topScorersUpdated = 0
+  const topScorersUpdated = 0
   let fixturesUpdated = 0
 
-  for (const comp of DRIBL_COMPETITIONS) {
-    try {
-      standingsUpdated += await syncDriblLadder(supabase, comp)
-    } catch (err) {
-      await logError(supabase, `dribl-ladder-${comp.name}`, err)
-    }
-
-    try {
-      resultsUpdated += await syncDriblResults(supabase, comp)
-    } catch (err) {
-      await logError(supabase, `dribl-results-${comp.name}`, err)
-    }
-
-    try {
-      topScorersUpdated += await syncDriblTopScorers(supabase, comp)
-    } catch (err) {
-      await logError(supabase, `dribl-top-scorers-${comp.name}`, err)
-    }
-
-    try {
-      fixturesUpdated += await syncDriblFixtures(supabase, comp)
-    } catch (err) {
-      await logError(supabase, `dribl-fixtures-${comp.name}`, err)
-    }
-  }
+  // Dribl (Football NSW) sync retired now that the app runs on the
+  // Australian Championship instead of the NPL NSW / League One / League
+  // Two beta — DRIBL_COMPETITIONS and the sync* functions below are kept
+  // for reference/rollback, just no longer called each run.
 
   try {
-    standingsUpdated += await syncFfaLadder(supabase)
+    const ribbon = await fetchFfaRibbon()
+
+    try {
+      standingsUpdated += await syncFfaLadder(supabase, ribbon)
+    } catch (err) {
+      await logError(supabase, 'ffa-ladder', err)
+    }
+
+    try {
+      const { fixturesCount, resultsCount } = await syncFfaMatches(supabase, ribbon)
+      fixturesUpdated += fixturesCount
+      resultsUpdated += resultsCount
+    } catch (err) {
+      await logError(supabase, 'ffa-matches', err)
+    }
   } catch (err) {
-    await logError(supabase, 'ffa-ladder', err)
+    await logError(supabase, 'ffa-ribbon', err)
   }
 
   let locked = 0
@@ -184,6 +169,7 @@ Deno.serve(async () => {
   )
 })
 
+// deno-lint-ignore no-unused-vars
 async function syncDriblLadder(supabase: SupabaseClientAny, comp: DriblCompetition) {
   const url = `https://mc-api.dribl.com/api/ladders?season=${DRIBL_SEASON}&ladder_type=regular&competition=${comp.competition}&league=${comp.league}&date_range=default&timezone=Australia%2FSydney`
   const res = await fetch(url, { headers: { Accept: 'application/json' } })
@@ -216,6 +202,7 @@ async function syncDriblLadder(supabase: SupabaseClientAny, comp: DriblCompetiti
   return count
 }
 
+// deno-lint-ignore no-unused-vars
 async function syncDriblResults(supabase: SupabaseClientAny, comp: DriblCompetition) {
   const url = `https://mc-api.dribl.com/api/results?season=${DRIBL_SEASON}&competition=${comp.competition}&league=${comp.league}&date_range=default&timezone=Australia%2FSydney`
   const res = await fetch(url, { headers: { Accept: 'application/json' } })
@@ -251,6 +238,7 @@ async function syncDriblResults(supabase: SupabaseClientAny, comp: DriblCompetit
   return count
 }
 
+// deno-lint-ignore no-unused-vars
 async function syncDriblTopScorers(supabase: SupabaseClientAny, comp: DriblCompetition) {
   const url = `https://mc-api.dribl.com/api/moments?tenant=${DRIBL_TENANT}&season=${DRIBL_SEASON}&competition=${comp.competition}&league=${comp.league}`
   const res = await fetch(url, { headers: { Accept: 'application/json' } })
@@ -280,6 +268,7 @@ async function syncDriblTopScorers(supabase: SupabaseClientAny, comp: DriblCompe
   return count
 }
 
+// deno-lint-ignore no-unused-vars
 async function syncDriblFixtures(supabase: SupabaseClientAny, comp: DriblCompetition) {
   const url = `https://mc-api.dribl.com/api/fixtures?season=${DRIBL_SEASON}&competition=${comp.competition}&league=${comp.league}&date_range=default&timezone=Australia%2FSydney`
   const res = await fetch(url, { headers: { Accept: 'application/json' } })
@@ -358,24 +347,14 @@ async function completeFixturesFromResults(supabase: SupabaseClientAny) {
   return count
 }
 
-// The Eight's fixture selection ("featured") was a manual, hand-curated
-// step — a real person picking the most interesting 4 NPL NSW / 3 League
-// One / 1 League Two games each week via the Supabase table editor. That
-// worked until nobody did it in time and the round just sat empty. This
-// auto-opens the next round the moment the current one fully finishes, by
-// chronologically-soonest fixture per tier (mirrors the same cascading
-// quota logic buildTheEightFixtures uses client-side in src/lib/theEight.js,
-// just server-side since there's no shared package between the Vite app and
-// this Deno function). Trade-off: it can no longer prioritise derbies/
-// marquee matchups the way a human curator did — this guarantees a round
-// is never blank, it doesn't replace picking more interesting fixtures by
-// hand afterward if that still matters for a given week.
-const NEXT_ROUND_TIERS = [
-  { competition: 'NPL NSW', quota: 4 },
-  { competition: 'League One', quota: 3 },
-  { competition: 'League Two', quota: 1 },
-]
-
+// The Eight's fixture selection ("featured") was originally a manual,
+// hand-curated step for the old three-tier NPL beta. That worked until
+// nobody did it in time and the round just sat empty. This auto-opens the
+// next round the moment the current one fully finishes, featuring every
+// Australian Championship fixture in whichever round is chronologically
+// next (mirrors buildTheEightFixtures' client-side selection in
+// src/lib/theEight.js, just server-side since there's no shared package
+// between the Vite app and this Deno function).
 async function autoFeatureNextRound(supabase: SupabaseClientAny) {
   const { data: openFeatured, error: openError } = await supabase
     .from('fixtures')
@@ -389,25 +368,23 @@ async function autoFeatureNextRound(supabase: SupabaseClientAny) {
   // Read candidates for the next round before touching anything — if
   // there's nothing to replace this round with yet, leave the finished
   // round's featured flag exactly as it is rather than retiring it into
-  // an empty gap.
+  // an empty gap. One competition now, so "the next round" is just
+  // whichever round its earliest unfeatured scheduled fixture belongs to
+  // — featuring every fixture in that round, not a fixed quota, is what
+  // correctly handles 8 group-stage games shrinking to 4/2/1 in the
+  // knockout rounds without a separate code path for each stage.
   const { data: candidates, error: candidatesError } = await supabase
     .from('fixtures')
-    .select('id, competition, kickoff_at')
+    .select('id, round, kickoff_at')
     .eq('status', 'scheduled')
     .eq('featured', false)
-    .in('competition', NEXT_ROUND_TIERS.map((t) => t.competition))
+    .eq('competition', 'Australian Championship')
     .order('kickoff_at', { ascending: true })
   if (candidatesError) throw candidatesError
   if (!candidates?.length) return 0
 
-  const selected: { id: string }[] = []
-  let carry = 0
-  for (const tier of NEXT_ROUND_TIERS) {
-    const quota = tier.quota + carry
-    const inTier = candidates.filter((f: { competition: string }) => f.competition === tier.competition).slice(0, quota)
-    selected.push(...inTier)
-    carry = Math.max(0, quota - inTier.length)
-  }
+  const nextRound = candidates[0].round
+  const selected = candidates.filter((f: { round: string }) => f.round === nextRound)
   if (selected.length === 0) return 0
 
   // Retire the just-finished round's featured flag BEFORE featuring the
@@ -891,10 +868,16 @@ function scoreOnePrediction(
   return actualOutcome === pickedOutcome ? 1 : 0
 }
 
-async function syncFfaLadder(supabase: SupabaseClientAny) {
+// deno-lint-ignore no-explicit-any
+type FfaRibbon = any
+
+async function fetchFfaRibbon(): Promise<FfaRibbon> {
   const ribbonRes = await fetch(`https://api.ffa.football/${FFA_COMPETITION_ID}/ribbon`)
   if (!ribbonRes.ok) throw new Error(`ribbon HTTP ${ribbonRes.status}`)
-  const ribbon = await ribbonRes.json()
+  return ribbonRes.json()
+}
+
+async function syncFfaLadder(supabase: SupabaseClientAny, ribbon: FfaRibbon) {
   const activeSeason = ribbon.competition?.active_season
   if (!activeSeason) throw new Error('no active_season in ribbon response')
 
@@ -927,6 +910,67 @@ async function syncFfaLadder(supabase: SupabaseClientAny) {
     }
   }
   return count
+}
+
+// The ribbon endpoint conveniently returns every match — upcoming and
+// finished — in one call, unlike Dribl's separate fixtures/results
+// endpoints, so both tables are populated from the one response here.
+// `dribl_id` doubles as "external match id" for any source, not just
+// Dribl — reusing it avoids a schema change, and it's already what joins
+// a completed result back to its fixture (completeFixturesFromResults)
+// and what the frontend uses to attach scorers/highlights to a result.
+async function syncFfaMatches(supabase: SupabaseClientAny, ribbon: FfaRibbon) {
+  let fixturesCount = 0
+  let resultsCount = 0
+
+  for (const m of ribbon.matches ?? []) {
+    const homeTeam = m.home_team?.name
+    const awayTeam = m.away_team?.name
+    if (!homeTeam || !awayTeam || !m.start_date) continue
+
+    const matchId = String(m.id)
+    const round = m.round?.name ?? `Round ${m.round_number}`
+    const ground = m.venue?.name ?? null
+
+    if (m.status === 'FullTime') {
+      const { error } = await supabase.from('results').upsert(
+        {
+          competition: 'Australian Championship',
+          dribl_id: matchId,
+          round,
+          home_team: homeTeam,
+          away_team: awayTeam,
+          home_score: m.match_info?.home_team?.score ?? null,
+          away_score: m.match_info?.away_team?.score ?? null,
+          played_at: new Date(m.start_date).toISOString(),
+          ground,
+        },
+        { onConflict: 'dribl_id' },
+      )
+      if (!error) resultsCount += 1
+      continue
+    }
+
+    // Anything not yet full time (including in-progress states) stays a
+    // scheduled fixture — lockKickedOffFixtures already flips it to
+    // 'locked' once kickoff passes, purely on time, regardless of this.
+    const { error } = await supabase.from('fixtures').upsert(
+      {
+        competition: 'Australian Championship',
+        dribl_id: matchId,
+        round,
+        home_team: homeTeam,
+        away_team: awayTeam,
+        ground,
+        kickoff_at: new Date(m.start_date).toISOString(),
+        status: 'scheduled',
+      },
+      { onConflict: 'dribl_id' },
+    )
+    if (!error) fixturesCount += 1
+  }
+
+  return { fixturesCount, resultsCount }
 }
 
 async function logError(supabase: SupabaseClientAny, source: string, err: unknown) {
