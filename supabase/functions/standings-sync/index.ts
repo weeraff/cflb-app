@@ -885,6 +885,16 @@ async function syncFfaLadder(supabase: SupabaseClientAny, ribbon: FfaRibbon) {
   if (!ladderRes.ok) throw new Error(`ladder HTTP ${ladderRes.status}`)
   const ladder = await ladderRes.json()
 
+  // Upserting alone never removes anything, so the previous season's table
+  // (and teams who've since dropped out) would linger forever. FFA's ladder
+  // is the full truth for the active season, so wipe and rewrite it — an
+  // empty pre-season ladder correctly leaves the "coming soon" state.
+  const { error: clearError } = await supabase
+    .from('standings')
+    .delete()
+    .eq('competition', 'Australian Championship')
+  if (clearError) throw clearError
+
   let count = 0
   for (const group of ladder.standings ?? []) {
     for (const row of group.team_standings) {
