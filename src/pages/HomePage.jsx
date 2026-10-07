@@ -5,7 +5,7 @@ import GamesComingUp from '../components/GamesComingUp'
 export default function HomePage() {
   return (
     <section>
-      <h1>Home</h1>
+      <h1>Table</h1>
 
       <LiveScoreStrip />
 

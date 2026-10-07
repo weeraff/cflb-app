@@ -22,9 +22,10 @@ export default function App() {
         <Suspense fallback={null}>
           <Routes>
             <Route element={<Layout />}>
-              <Route index element={<HomePage />} />
-              {/* Kept as an alias: the old Table nav item lived here before
-                  Home absorbed it, don't break anything that bookmarked it. */}
+              {/* Predictions is the front door: it's what the app is for
+                  now, so it's the first thing anyone lands on. The old
+                  Home (live scores, table, upcoming games) lives at /table. */}
+              <Route index element={<PredictionsPage />} />
               <Route path="table" element={<HomePage />} />
               {/* Kept as an alias: push notifications already scheduled and
                   sent reference this exact path, don't break those links. */}

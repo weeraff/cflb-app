@@ -250,7 +250,7 @@ function PredictionsPageContent() {
       <details className="reference-panel">
         <summary className="reference-panel__toggle">Check form before you pick</summary>
         <CompactFormGuide fixtures={theEight} standings={standings} results={results} />
-        <Link className="reference-panel__full-link" to="/">See the full table, results &amp; top scorers →</Link>
+        <Link className="reference-panel__full-link" to="/table">See the full table, results &amp; top scorers →</Link>
       </details>
 
       <h2 id="the-eight-picks">The Eight</h2>
