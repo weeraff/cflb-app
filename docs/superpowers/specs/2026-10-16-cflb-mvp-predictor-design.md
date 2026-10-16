@@ -6,7 +6,7 @@
 
 ## Why
 
-The app grew into a full fan hub (news, podcast, table, live scores, your-team, reporter tools, jokers, form guides). Gaz wants it stripped back to one job: a simple Australian Championship match predictor whose real purpose is **collecting consented emails**. People sign in to save picks, climb a leaderboard and pull mates in through private leagues. The resulting list and engagement numbers are the pitch to betting-app sponsors.
+The app grew into a full fan hub (news, podcast, table, live scores, your-team, reporter tools, form guides). Gaz wants it stripped back to one job: a simple Australian Championship match predictor whose real purpose is **collecting consented emails**. People sign in to save picks, climb a leaderboard and pull mates in through private leagues. The resulting list and engagement numbers are the pitch to betting-app sponsors.
 
 **Success:** a growing list of contactable, consented emails, plus signup and per-round participation numbers Gaz can show a sponsor.
 
@@ -15,35 +15,33 @@ The app grew into a full fan hub (news, podcast, table, live scores, your-team, 
 | Topic | Decision |
 |---|---|
 | Launch round | Round 2. Round 1 runs on the current app untouched. |
-| Consent | Two separate opt-ins at signup: CFLB emails, and partner/sponsor offers. Both unticked by default. |
+| Consent | One opt-in checkbox at signup covering CFLB and partner offers, unticked by default. Pre-ticked was considered and rejected: it isn't valid express consent under the Spam Act or the wagering consumer protection framework, so a betting sponsor couldn't use the list. |
 | Signup timing | Pick first, sign up to save. |
 | Leaderboards | Overall board plus private leagues joined by share link. |
 | Build approach | New lean frontend in this repo, reusing the existing Supabase backend. Old pages switched off, not deleted. |
 | Look | Option C, "Bet slip": light, rounded, white match cards on soft green, CFLB logo in a bottle-green header. |
 | Sign-in methods | Unchanged: Google, or email and password. |
-| Scoring | Unchanged: 3 points exact score, 1 point correct result. Joker removed from the UI. |
-| Existing users (24) | Shown the two opt-ins once, next time they open the app. |
+| Scoring | Unchanged: 3 points exact score, 1 point correct result. One Joker per round doubles that fixture's points (existing `is_joker` scoring). |
+| Existing users (24) | Shown the opt-in once, next time they open the app. |
 
 ## Out of scope
 
-News, podcast, table/standings, live scores, Your Team, form guide, the step-by-step wizard, Joker, Last Week table, beat-the-host, sponsor slots, reporter tools, YouTube/SBS watch links. Routes and components stay in the codebase behind a flag; the backend sync jobs for them keep running.
+News, podcast, table/standings, live scores, Your Team, form guide, the step-by-step wizard, Last Week table, beat-the-host, sponsor slots, reporter tools, YouTube/SBS watch links. Routes and components stay in the codebase behind a flag; the backend sync jobs for them keep running.
 
 ## Screens
 
 ### 1. Picks (`/`)
-- Bottle-green header: CFLB logo, countdown pill ("6d 4h to lock"), "Round N picks", one-line scoring rule.
-- The round's 8 featured Championship fixtures as white cards, in kickoff order. Each card: kickoff day and time, both crests, team names, a − / + stepper per team (44px minimum touch targets). Scores start blank, not 0, so "picked" is unambiguous.
+- Bottle-green header: CFLB logo, countdown pill ("6d 4h to lock"), "Round N picks", one-line scoring rule including the Joker ("Joker doubles one game").
+- The round's 8 featured Championship fixtures as white cards, in kickoff order. Each card: kickoff day and time, both crests, team names, a − / + stepper per team (44px minimum touch targets). Scores start blank, not 0, so "picked" is unambiguous. A 🃏 Joker toggle on each card; setting it on one card clears it from the others (one per round, optional).
 - Fixed bottom bar: "N of 8 picked" and **Lock in picks**, enabled once all 8 have both scores.
 - After lock-in, before lock: cards show the saved picks read-only, with an **Edit picks** button.
-- After lock: cards show the pick, the real score once known, and points earned (+3 / +1 / 0).
+- After lock: cards show the pick, the real score once known, and points earned (+3 / +1 / 0, doubled on the Joker card).
 - No round available: "Round N fixtures coming soon".
 
 ### 2. Sign-up sheet
 - Slides up when a signed-out user taps Lock in. Copy: "Save your picks and get on the leaderboard."
 - Continue with Google, or email + password + display name.
-- Two unticked checkboxes with fixed, versioned wording:
-  - "Send me CFLB emails: round reminders, results and banter."
-  - "Send me offers from CFLB's partners and sponsors."
+- One unticked checkbox, placed directly above the submit button, with fixed, versioned wording: "Yes, send me round reminders, results and offers from CFLB and our partners."
 - Picks are held in `localStorage` while signing up (survives the Google redirect) and saved the moment auth completes, then cleared locally.
 
 ### 3. Leaderboard (`/leaderboard`)
@@ -57,8 +55,8 @@ News, podcast, table/standings, live scores, Your Team, form guide, the step-by-
 - Leave league stays available from the league tab.
 
 ### 5. Sponsor stats (`/stats`, admin only, not in nav)
-- Total signups, CFLB opt-in count, partner opt-in count, signups per day (last 30 days), players with picks per round.
-- **Download CSV** buttons: CFLB opt-ins, partner opt-ins. Only opted-in users, with name, email, consent timestamp and wording version.
+- Total signups, opt-in count and rate, signups per day (last 30 days), players with picks per round.
+- **Download CSV** of opted-in users only: name, email, consent timestamp and wording version.
 
 ### Navigation
 Bottom tab bar: **Picks**, **Leaderboard**. Small header menu: sign out. Push notification links to `/predictions` keep working via an alias route.
@@ -68,11 +66,10 @@ Bottom tab bar: **Picks**, **Leaderboard**. Small header menu: sign out. Push no
 ### Consent (migration)
 Add to `profiles`:
 - `marketing_opt_in boolean` (null = not yet asked)
-- `partner_opt_in boolean` (null = not yet asked)
 - `consent_at timestamptz`
 - `consent_version text` (identifies the exact checkbox wording shown)
 
-Users update only their own consent fields (existing profile RLS). Null in either field triggers the one-time consent prompt for existing users.
+Users update only their own consent fields (existing profile RLS). Null triggers the one-time consent prompt for existing users.
 
 ### Round lock enforced in the database (migration)
 Replace the predictions insert/update policies so a pick is accepted only if the fixture is featured, is a Championship fixture, and `now()` is before the **earliest kickoff among the currently featured fixtures**. This closes the gap where per-fixture `status` lags behind kickoff until the next sync, and matches the round-level lock the UI shows.
@@ -87,7 +84,7 @@ A `security definer` function `join_league_by_code(code text)` that looks up the
 
 ### Admin stats (migration)
 - `profiles.is_admin boolean default false`, set true for Gaz's account (and anyone else named).
-- `security definer` functions `admin_stats()` and `admin_optin_export(kind text)` that raise unless the caller is an admin. Export reads emails from `auth.users`, joined to profiles, filtered to the requested opt-in being true.
+- `security definer` functions `admin_stats()` and `admin_optin_export()` that raise unless the caller is an admin. Export reads emails from `auth.users`, joined to profiles, filtered to `marketing_opt_in = true`.
 
 ### Unchanged
 Football Australia sync (`standings-sync`), scoring, round featuring, push notifications, auth.
@@ -113,8 +110,8 @@ A new `src/mvp/` area so the lean app doesn't tangle with the old pages:
 ## Testing
 - Unit tests with Vitest (added as a dev dependency; the project has no test runner yet) for: pick completeness, round lock time, pending-picks save/restore, points display.
 - Database checks run against the live project with a test account: a pick after the round lock is rejected; `join_league_by_code` works for a non-member; `admin_stats` refuses a non-admin.
-- Manual run-through at phone width: pick 8 signed out, sign up with both boxes ticked, picks persist; sign up via Google round-trip, picks persist; create a league, join from a second account via the link; stats page counts both and the CSVs contain only opted-in users.
+- Manual run-through at phone width: pick 8 signed out, sign up with the box ticked, and again with it unticked, picks persist; sign up via Google round-trip, picks persist; create a league, join from a second account via the link; stats page counts both and the CSV contains only the opted-in user.
 
 ## Open risks
 - Crest images are hotlinked from australianchampionship.com.au. If they move, cards fall back to monograms. Copying them into `public/` is a follow-up if that happens.
-- Partner-offer consent covers CFLB passing offers on. If a sponsor wants to receive the list directly, the wording needs to name that and should be checked before launch, along with wagering advertising rules.
+- The opt-in covers CFLB sending its own and partners' offers. If a sponsor wants to receive the list directly, the wording needs to name that and should be checked before launch, along with wagering advertising rules.
