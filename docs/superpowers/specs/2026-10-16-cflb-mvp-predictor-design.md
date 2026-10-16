@@ -61,6 +61,17 @@ News, podcast, table/standings, live scores, Your Team, form guide, the step-by-
 ### Navigation
 Bottom tab bar: **Picks**, **Leaderboard**. Small header menu: sign out. Push notification links to `/predictions` keep working via an alias route.
 
+## Feel (from the apple-design skill)
+
+The bet-slip look stays; these make it feel native on a phone. Where they conflict with the older `DESIGN.md` (which bans blur and translucency for the previous dark direction), this spec wins for the MVP.
+
+- **Instant press feedback.** Steppers, Joker toggle and Lock in respond on pointer-down (`:active` scale 0.97, ~100ms), not on release. No tap delays. Vibration API pulse on Lock in success and Joker set (Android; silently skipped where unsupported).
+- **Sign-up as a bottom sheet** using Vaul (React drawer): rises from the bottom, follows the finger 1:1, can be swiped down to dismiss, spring settle (damping ~0.8, response ~0.3), dimming scrim behind since it's a modal task.
+- **Translucent Lock in bar.** Fixed bottom bar uses `backdrop-filter: blur(20px) saturate(180%)` over a semi-transparent white with cards scrolling underneath, and a soft fade where content meets it instead of a hard divider.
+- **Size-specific type.** Display text (round title, countdown, scores) gets tight leading and about `-0.02em` tracking; body text stays near `0`. Spacing in `rem` so a larger phone text size doesn't break cards.
+- **Accessibility settings.** `prefers-reduced-motion`: sheet and transitions become short cross-fades, no spring overshoot. `prefers-reduced-transparency`: the bar goes solid white with no blur. `prefers-contrast: more`: solid surfaces with defined borders.
+- **Specific labels.** Tabs are "Picks" and "Leaderboard", not "Home".
+
 ## Backend changes
 
 ### Consent (migration)
