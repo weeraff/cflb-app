@@ -961,9 +961,10 @@ async function syncFfaMatches(supabase: SupabaseClientAny, ribbon: FfaRibbon) {
       continue
     }
 
-    // Anything not yet full time (including in-progress states) stays a
-    // scheduled fixture — lockKickedOffFixtures already flips it to
-    // 'locked' once kickoff passes, purely on time, regardless of this.
+    // Anything not yet full time is scheduled until kickoff, locked after.
+    // This used to always write 'scheduled', which undid
+    // lockKickedOffFixtures on every run and reopened in-progress games.
+    const kickedOff = new Date(m.start_date).getTime() <= Date.now()
     const { error } = await supabase.from('fixtures').upsert(
       {
         competition: 'Australian Championship',
@@ -973,7 +974,7 @@ async function syncFfaMatches(supabase: SupabaseClientAny, ribbon: FfaRibbon) {
         away_team: awayTeam,
         ground,
         kickoff_at: new Date(m.start_date).toISOString(),
-        status: 'scheduled',
+        status: kickedOff ? 'locked' : 'scheduled',
       },
       { onConflict: 'dribl_id' },
     )
