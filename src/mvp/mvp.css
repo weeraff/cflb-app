@@ -637,9 +637,12 @@ body.m-body {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 0;
+  /* Sit on top of the on-screen keyboard and fit the space above it
+     (see useKeyboardInset). Both vars are 0 / full height with no keyboard. */
+  bottom: var(--m-kb, 0px);
   z-index: 41;
-  max-height: 92dvh;
+  max-height: calc(var(--m-vvh, 100dvh) - 0.75rem);
+  transition: bottom 150ms ease-out;
   display: flex;
   flex-direction: column;
   background: var(--m-card);
@@ -660,6 +663,7 @@ body.m-body {
 
 .m-sheet__body {
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0.75rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom));
 }
 

@@ -34,7 +34,7 @@ export function NameSheet({ open, onOpenChange, userId, current, onSaved, title 
   }
 
   return (
-    <Drawer.Root open={open} onOpenChange={onOpenChange}>
+    <Drawer.Root open={open} onOpenChange={onOpenChange} repositionInputs={false}>
       <Drawer.Portal>
         <Drawer.Overlay className="m-sheet-overlay" />
         <Drawer.Content className="m-sheet" aria-describedby="m-name-desc">

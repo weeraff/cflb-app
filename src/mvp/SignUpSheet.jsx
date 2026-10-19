@@ -92,7 +92,7 @@ export default function SignUpSheet({ open, mode, onOpenChange, onModeChange }) 
   )
 
   return (
-    <Drawer.Root open={open} onOpenChange={onOpenChange}>
+    <Drawer.Root open={open} onOpenChange={onOpenChange} repositionInputs={false}>
       <Drawer.Portal>
         <Drawer.Overlay className="m-sheet-overlay" />
         <Drawer.Content className="m-sheet" aria-describedby="m-sheet-desc">

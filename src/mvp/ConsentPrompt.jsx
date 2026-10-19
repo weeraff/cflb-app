@@ -24,7 +24,7 @@ export default function ConsentPrompt({ userId, onSaved }) {
   }
 
   return (
-    <Drawer.Root open dismissible={false}>
+    <Drawer.Root open dismissible={false} repositionInputs={false}>
       <Drawer.Portal>
         <Drawer.Overlay className="m-sheet-overlay" />
         <Drawer.Content className="m-sheet" aria-describedby="m-consent-desc">

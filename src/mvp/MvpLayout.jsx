@@ -3,6 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import useMyProfile from '../hooks/useMyProfile'
 import useCompleteSignup from './useCompleteSignup'
+import useKeyboardInset from './useKeyboardInset'
 import SignUpSheet from './SignUpSheet'
 import ConsentPrompt from './ConsentPrompt'
 import ErrorBoundary from './ErrorBoundary'
@@ -40,6 +41,7 @@ export default function MvpLayout() {
   const { profile, setProfile, checked } = useMyProfile(user?.id)
   const completion = useCompleteSignup(user, checked, setProfile)
   const [sheet, setSheet] = useState({ open: false, mode: 'signup' })
+  useKeyboardInset()
 
   // Light theme for the MVP without touching the old app's global CSS.
   useEffect(() => {
