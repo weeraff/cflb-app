@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Drawer } from 'vaul'
 import { supabase } from '../lib/supabaseClient'
 import { useMvp } from './MvpLayout'
+import { cleanName, isNameTakenError, NAME_TAKEN_MESSAGE } from './lib/names'
 
 export function NameSheet({ open, onOpenChange, userId, current, onSaved, title = 'Your leaderboard name', description = 'This is what everyone sees on the leaderboard and in your leagues.' }) {
   const [name, setName] = useState(current ?? '')
@@ -10,7 +11,7 @@ export function NameSheet({ open, onOpenChange, userId, current, onSaved, title 
 
   async function save(e) {
     e.preventDefault()
-    const trimmed = name.trim()
+    const trimmed = cleanName(name)
     if (trimmed.length < 2) {
       setError('Use at least 2 characters.')
       return
@@ -19,13 +20,13 @@ export function NameSheet({ open, onOpenChange, userId, current, onSaved, title 
     setError(null)
     const { data, error: saveError } = await supabase
       .from('profiles')
-      .update({ display_name: trimmed.slice(0, 40) })
+      .update({ display_name: trimmed })
       .eq('id', userId)
       .select()
       .single()
     setBusy(false)
     if (saveError) {
-      setError("Couldn't save that. Try again.")
+      setError(isNameTakenError(saveError) ? NAME_TAKEN_MESSAGE : "Couldn't save that. Try again.")
       return
     }
     onSaved(data)

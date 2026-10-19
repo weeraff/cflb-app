@@ -5,6 +5,7 @@ import { supabase, setKeepSignedIn } from '../lib/supabaseClient'
 import { savePending } from './lib/pendingSignup'
 import { CONSENT_TEXT } from './lib/consent'
 import { isInAppBrowser } from './lib/inAppBrowser'
+import { cleanName, NAME_TAKEN_MESSAGE } from './lib/names'
 
 function friendlyAuthError(error) {
   const msg = error?.message ?? ''
@@ -44,11 +45,23 @@ export default function SignUpSheet({ open, mode, onOpenChange, onModeChange }) 
     setKeepSignedIn(true)
 
     if (isSignup) {
-      savePending({ displayName: displayName.trim(), optIn })
+      const name = cleanName(displayName)
+      if (name.length < 2) {
+        setBusy(false)
+        setMessage({ type: 'error', text: 'Your leaderboard name needs at least 2 characters.' })
+        return
+      }
+      const { data: available, error: checkError } = await supabase.rpc('display_name_available', { p_name: name })
+      if (!checkError && available === false) {
+        setBusy(false)
+        setMessage({ type: 'error', text: NAME_TAKEN_MESSAGE })
+        return
+      }
+      savePending({ displayName: name, optIn })
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        options: { data: { full_name: displayName.trim() } },
+        options: { data: { full_name: name } },
       })
       setBusy(false)
       if (error) {

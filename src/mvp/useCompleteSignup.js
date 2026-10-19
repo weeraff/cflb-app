@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { loadPending, clearPending } from './lib/pendingSignup'
 import { consentFields } from './lib/consent'
+import { cleanName, isNameTakenError, nameWithSuffix } from './lib/names'
 import { COMPETITION, roundFixtures, filterPicksToRound, allPicked, toPredictionRows, isLockError } from './lib/round'
 
 // Until a player chooses a name, show only their first name. Google hands
@@ -39,14 +40,18 @@ export default function useCompleteSignup(user, profileChecked, setProfile) {
       let needsName = false
       if (!profile) {
         needsName = !pending.displayName
-        const row = {
-          id: user.id,
-          display_name: (pending.displayName || fallbackName(user)).trim().slice(0, 40),
-          ...(typeof pending.optIn === 'boolean' ? consentFields(pending.optIn) : {}),
+        const wanted = cleanName(pending.displayName || fallbackName(user))
+        const consent = typeof pending.optIn === 'boolean' ? consentFields(pending.optIn) : {}
+        let created = null
+        for (let attempt = 0; attempt < 4 && !created; attempt++) {
+          const display_name = attempt === 0 ? wanted : nameWithSuffix(wanted)
+          const { data, error } = await supabase.from('profiles').insert({ id: user.id, display_name, ...consent }).select().single()
+          if (!error) created = data
+          else if (isNameTakenError(error)) needsName = true
+          else throw error
         }
-        const { data, error } = await supabase.from('profiles').insert(row).select().single()
-        if (error) throw error
-        setProfile(data)
+        if (!created) throw new Error('Could not find a free leaderboard name')
+        setProfile(created)
       } else if (profile.marketing_opt_in == null && typeof pending.optIn === 'boolean') {
         const { data, error } = await supabase
           .from('profiles')
