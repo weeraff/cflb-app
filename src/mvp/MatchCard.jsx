@@ -59,6 +59,8 @@ export default function MatchCard({ fixture, pick, isJoker, mode, points, onStep
         {fixture.ground ? ` · ${fixture.ground}` : ''}
       </div>
 
+      {!editing && <div className="m-card__label">Your pick</div>}
+
       <div className="m-card__match">
         <Team name={fixture.home_team} value={pick?.home} editing={editing} onStep={(d) => onStep('home', d)} />
         <div className="m-card__vs">vs</div>
@@ -78,7 +80,7 @@ export default function MatchCard({ fixture, pick, isJoker, mode, points, onStep
           <span className="m-card__result">
             {finished ? (
               <>
-                Full time <strong>{fixture.home_score}–{fixture.away_score}</strong>{' '}
+                Result <strong>{fixture.home_score}–{fixture.away_score}</strong>{' '}
                 <span className={`m-points${points > 0 ? ' m-points--won' : ''}`}>{pointsLabel(points)}</span>
               </>
             ) : pick ? (
