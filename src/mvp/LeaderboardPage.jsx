@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import { sortLeaderboard } from '../lib/leaderboard'
 import { useMvp } from './MvpLayout'
+import AccountLine from './AccountLine'
 import { generateLeagueCode, joinUrl } from './lib/leagueCode'
 
 const TOP = 50
@@ -181,6 +182,7 @@ export default function LeaderboardPage() {
           )}
         </div>
         <h1 className="m-head__title">Leaderboard</h1>
+        <AccountLine />
         <div className="m-tabs-inline" role="tablist" style={{ marginTop: '0.75rem' }}>
           <button type="button" role="tab" aria-selected={tab === 'overall'} className="m-press" onClick={() => selectTab('overall')}>
             Overall

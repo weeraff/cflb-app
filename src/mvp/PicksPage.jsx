@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import useCountdown from '../hooks/useCountdown'
 import { useMvp } from './MvpLayout'
+import AccountLine from './AccountLine'
 import MatchCard from './MatchCard'
 import { loadPending, savePending } from './lib/pendingSignup'
 import {
@@ -152,6 +153,7 @@ export default function PicksPage() {
             ? 'Picks are in. Points land after each full time.'
             : 'Pick every score. 3 pts exact, 1 pt right result. Joker doubles one game.'}
         </p>
+        <AccountLine />
       </header>
 
       <main className="m-list">

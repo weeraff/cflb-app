@@ -122,6 +122,22 @@ body.m-body {
   text-underline-offset: 3px;
 }
 
+.m-account {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  opacity: 0.9;
+}
+
+.m-account__out {
+  background: none;
+  border: 0;
+  padding: 0.5rem 0.25rem;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* ------------------------------------------------------------------ */
 /* Content                                                             */
 /* ------------------------------------------------------------------ */

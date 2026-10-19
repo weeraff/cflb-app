@@ -5,6 +5,7 @@ import useMyProfile from '../hooks/useMyProfile'
 import useCompleteSignup from './useCompleteSignup'
 import SignUpSheet from './SignUpSheet'
 import ConsentPrompt from './ConsentPrompt'
+import ErrorBoundary from './ErrorBoundary'
 import { loadPending } from './lib/pendingSignup'
 import './mvp.css'
 
@@ -68,7 +69,9 @@ export default function MvpLayout() {
 
   return (
     <MvpContext.Provider value={value}>
-      <Outlet />
+      <ErrorBoundary>
+        <Outlet />
+      </ErrorBoundary>
 
       <nav className="m-tabs m-glass" aria-label="Main">
         <NavLink to="/" end className="m-press">
