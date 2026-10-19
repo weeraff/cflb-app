@@ -58,7 +58,7 @@ async function shareLeague(league) {
 }
 
 export default function LeaderboardPage() {
-  const { user, openSignUp } = useMvp()
+  const { user, profile, openSignUp } = useMvp()
   const [params, setParams] = useSearchParams()
   const [board, setBoard] = useState(null)
   const [leagues, setLeagues] = useState([])
@@ -90,9 +90,10 @@ export default function LeaderboardPage() {
     setLeagues(list)
   }, [user])
 
+  // Reload after a rename so the table shows the new name straight away.
   useEffect(() => {
     loadBoard()
-  }, [loadBoard])
+  }, [loadBoard, profile?.display_name])
 
   useEffect(() => {
     loadLeagues()
