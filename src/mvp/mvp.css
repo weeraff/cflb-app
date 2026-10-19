@@ -198,6 +198,39 @@ body.m-body {
   opacity: 0.9;
 }
 
+.m-prize__terms,
+.m-rules__foot a,
+.m-form-msg a {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.m-terms h2 {
+  margin: 1rem 0 0.25rem;
+  font-family: var(--m-font);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.m-terms h2:first-child {
+  margin-top: 0;
+}
+
+.m-terms p,
+.m-terms ul {
+  margin: 0 0 0.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.m-terms ul {
+  padding-left: 1.25rem;
+}
+
 .m-rules {
   background: var(--m-card);
   border-radius: var(--m-radius);

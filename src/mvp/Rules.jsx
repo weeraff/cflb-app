@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 // Competition rules and prize, in Gaz's wording. Kept in one place so the
 // Picks and Leaderboard screens can't drift apart.
 
@@ -5,7 +6,12 @@ export function PrizeLine() {
   return (
     <p className="m-prize">
       <span className="m-prize__amount">🏆 1st place wins $1,000</span>
-      <span className="m-prize__when">Runs until the Australian Championship Final</span>
+      <span className="m-prize__when">
+        Runs until the Australian Championship Final.{' '}
+        <Link to="/terms" className="m-prize__terms">
+          Terms
+        </Link>
+      </span>
     </p>
   )
 }
@@ -28,7 +34,9 @@ export function RulesCard() {
           <strong>Double points</strong>
         </li>
       </ul>
-      <p className="m-rules__foot">Pick every game before the first kickoff of the round. Most points after the Final wins $1,000.</p>
+      <p className="m-rules__foot">Pick every game before the first kickoff of the round. Most points after the Final wins $1,000.{' '}
+        <Link to="/terms">Full terms</Link>
+      </p>
     </section>
   )
 }

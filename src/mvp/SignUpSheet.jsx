@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Drawer } from 'vaul'
 import { supabase, setKeepSignedIn } from '../lib/supabaseClient'
 import { savePending } from './lib/pendingSignup'
@@ -128,6 +129,16 @@ export default function SignUpSheet({ open, mode, onOpenChange, onModeChange }) 
               )}
 
               {message && <p className={`m-form-msg m-form-msg--${message.type}`} role={message.type === 'error' ? 'alert' : 'status'}>{message.text}</p>}
+
+              {isSignup && (
+                <p className="m-form-msg m-form-msg--info">
+                  By creating an account you agree to the{' '}
+                  <Link to="/terms" onClick={() => onOpenChange(false)}>
+                    competition terms
+                  </Link>
+                  . You must be 18 or over.
+                </p>
+              )}
 
               <button type="submit" className="m-btn m-btn--block m-press" disabled={busy}>
                 {busy ? 'One sec...' : isSignup ? 'Create account and lock in' : 'Sign in and lock in'}

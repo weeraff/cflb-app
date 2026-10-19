@@ -20,6 +20,7 @@ const PicksPage = lazy(() => import('./mvp/PicksPage'))
 const LeaderboardPage = lazy(() => import('./mvp/LeaderboardPage'))
 const JoinLeaguePage = lazy(() => import('./mvp/JoinLeaguePage'))
 const StatsPage = lazy(() => import('./mvp/StatsPage'))
+const TermsPage = lazy(() => import('./mvp/TermsPage'))
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
                 <Route path="leaderboard" element={<LeaderboardPage />} />
                 <Route path="join/:code" element={<JoinLeaguePage />} />
                 <Route path="stats" element={<StatsPage />} />
+                <Route path="terms" element={<TermsPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
             ) : (
