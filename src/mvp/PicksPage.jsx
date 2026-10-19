@@ -3,6 +3,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import useCountdown from '../hooks/useCountdown'
 import { useMvp } from './MvpLayout'
 import AccountLine from './AccountLine'
+import { PrizeLine, RulesCard } from './Rules'
 import MatchCard from './MatchCard'
 import { loadPending, savePending } from './lib/pendingSignup'
 import {
@@ -148,15 +149,13 @@ export default function PicksPage() {
           ) : null}
         </div>
         <h1 className="m-head__title">{fixtures?.length ? `${roundName} picks` : 'Picks'}</h1>
-        <p className="m-head__sub">
-          {mode === 'locked'
-            ? 'Picks are in. Points land after each full time.'
-            : 'Pick every score. 3 pts exact, 1 pt right result. Joker doubles one game.'}
-        </p>
+        <PrizeLine />
         <AccountLine />
       </header>
 
       <main className="m-list">
+        <RulesCard />
+
         {pending?.joinName && (
           <div className="m-notice">
             <strong>Join {pending.joinName}</strong>
