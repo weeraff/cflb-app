@@ -4,9 +4,12 @@ import { loadPending, clearPending } from './lib/pendingSignup'
 import { consentFields } from './lib/consent'
 import { COMPETITION, roundFixtures, filterPicksToRound, allPicked, toPredictionRows, isLockError } from './lib/round'
 
+// Until a player chooses a name, show only their first name. Google hands
+// over the full name, which shouldn't go public without them choosing it.
 function fallbackName(user) {
   const meta = user.user_metadata ?? {}
-  return (meta.full_name || meta.name || user.email?.split('@')[0] || 'Player').trim().slice(0, 40)
+  const first = (meta.given_name || meta.full_name || meta.name || '').trim().split(/\s+/)[0]
+  return (first || user.email?.split('@')[0] || 'Player').slice(0, 40)
 }
 
 // Runs once a player who started signed out has an account: creates their
@@ -16,7 +19,7 @@ function fallbackName(user) {
 // status: idle | saving | done | locked | error. `version` bumps on every
 // successful run so pages can reload their data.
 export default function useCompleteSignup(user, profileChecked, setProfile) {
-  const [state, setState] = useState({ status: 'idle', error: null, joinedLeague: null, version: 0 })
+  const [state, setState] = useState({ status: 'idle', error: null, joinedLeague: null, version: 0, needsName: false })
   const running = useRef(false)
 
   const run = useCallback(async () => {
@@ -32,7 +35,10 @@ export default function useCompleteSignup(user, profileChecked, setProfile) {
       if (lookupError) throw lookupError
       const profile = existing
 
+      // Google sign-ups never typed a name, so ask them to pick one.
+      let needsName = false
       if (!profile) {
+        needsName = !pending.displayName
         const row = {
           id: user.id,
           display_name: (pending.displayName || fallbackName(user)).trim().slice(0, 40),
@@ -76,7 +82,7 @@ export default function useCompleteSignup(user, profileChecked, setProfile) {
       }
 
       clearPending()
-      setState((s) => ({ status: 'done', error: null, joinedLeague, version: s.version + 1 }))
+      setState((s) => ({ status: 'done', error: null, joinedLeague, version: s.version + 1, needsName }))
     } catch (error) {
       if (isLockError(error)) {
         clearPending()
@@ -96,5 +102,7 @@ export default function useCompleteSignup(user, profileChecked, setProfile) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, profileChecked])
 
-  return { ...state, retry: run }
+  const nameChosen = useCallback(() => setState((s) => ({ ...s, needsName: false })), [])
+
+  return { ...state, retry: run, nameChosen }
 }

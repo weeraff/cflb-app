@@ -3,7 +3,7 @@ import { Drawer } from 'vaul'
 import { supabase } from '../lib/supabaseClient'
 import { useMvp } from './MvpLayout'
 
-function NameSheet({ open, onOpenChange, userId, current, onSaved }) {
+export function NameSheet({ open, onOpenChange, userId, current, onSaved, title = 'Your leaderboard name', description = 'This is what everyone sees on the leaderboard and in your leagues.' }) {
   const [name, setName] = useState(current ?? '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
@@ -39,9 +39,9 @@ function NameSheet({ open, onOpenChange, userId, current, onSaved }) {
         <Drawer.Content className="m-sheet" aria-describedby="m-name-desc">
           <div className="m-sheet__handle" />
           <div className="m-sheet__body">
-            <Drawer.Title className="m-sheet__title">Your leaderboard name</Drawer.Title>
+            <Drawer.Title className="m-sheet__title">{title}</Drawer.Title>
             <Drawer.Description id="m-name-desc" className="m-sheet__desc">
-              This is what everyone sees on the leaderboard and in your leagues.
+              {description}
             </Drawer.Description>
             <form className="m-form" onSubmit={save}>
               <input

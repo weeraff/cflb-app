@@ -6,6 +6,7 @@ import useCompleteSignup from './useCompleteSignup'
 import SignUpSheet from './SignUpSheet'
 import ConsentPrompt from './ConsentPrompt'
 import ErrorBoundary from './ErrorBoundary'
+import { NameSheet } from './AccountLine'
 import { loadPending } from './lib/pendingSignup'
 import './mvp.css'
 
@@ -92,6 +93,21 @@ export default function MvpLayout() {
       />
 
       {needsConsent && <ConsentPrompt userId={user.id} onSaved={setProfile} />}
+
+      {user && profile && completion.needsName && (
+        <NameSheet
+          open
+          onOpenChange={(open) => !open && completion.nameChosen()}
+          userId={user.id}
+          current={profile.display_name}
+          onSaved={(row) => {
+            setProfile(row)
+            completion.nameChosen()
+          }}
+          title="Choose your leaderboard name"
+          description="This shows publicly on the leaderboard. Use your name or a nickname, your call."
+        />
+      )}
     </MvpContext.Provider>
   )
 }
