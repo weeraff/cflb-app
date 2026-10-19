@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useMvp } from './MvpLayout'
+import AccountLine from './AccountLine'
 import { savePending } from './lib/pendingSignup'
 
 export default function JoinLeaguePage() {
@@ -45,9 +46,10 @@ export default function JoinLeaguePage() {
         <h1 className="m-head__title">{league ? `Join ${league.league_name}` : 'Join a league'}</h1>
         {league && (
           <p className="m-head__sub">
-            {league.member_count} {league.member_count === 1 ? 'player' : 'players'} so far. Predict the Australian Championship and see who knows their football.
+            {league.member_count} {league.member_count === 1 ? 'player' : 'players'} so far. Free to play. Predict the Australian Championship and see who knows their football.
           </p>
         )}
+        <AccountLine />
       </header>
 
       <main className="m-list">

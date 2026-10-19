@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useMvp } from './MvpLayout'
+import AccountLine from './AccountLine'
 import { toCsv } from './lib/csv'
 
 function downloadCsv(filename, csv) {
@@ -46,6 +47,7 @@ export default function StatsPage() {
       <header className="m-head">
         <h1 className="m-head__title">Sponsor stats</h1>
         <p className="m-head__sub">Live numbers for the pitch.</p>
+        <AccountLine />
       </header>
 
       <main className="m-list">

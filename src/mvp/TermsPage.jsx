@@ -1,17 +1,7 @@
 import { Link } from 'react-router-dom'
+import { TERMS } from './lib/terms'
+import AccountLine from './AccountLine'
 
-// Competition terms for the $1,000 Championship predictor. Facts Gaz must
-// confirm live in TERMS; the wording below reads from them so a change is
-// a one-line edit.
-export const TERMS = {
-  promoter: 'Champagne Football Show',
-  contactEmail: 'info@champagnefootball.com.au',
-  minimumAge: 18,
-  startRound: 'Round 2',
-  startDate: '22 October 2026',
-  prize: '$1,000',
-  updated: '20 October 2026',
-}
 
 export default function TermsPage() {
   const t = TERMS
@@ -23,6 +13,7 @@ export default function TermsPage() {
         </div>
         <h1 className="m-head__title">Competition terms</h1>
         <p className="m-head__sub">Last updated {t.updated}</p>
+        <AccountLine />
       </header>
 
       <main className="m-list">

@@ -87,7 +87,7 @@ export default function SignUpSheet({ open, mode, onOpenChange, onModeChange }) 
           <div className="m-sheet__body">
             <Drawer.Title className="m-sheet__title">{isSignup ? 'Save your picks' : 'Welcome back'}</Drawer.Title>
             <Drawer.Description id="m-sheet-desc" className="m-sheet__desc">
-              {isSignup ? 'Create your account to lock them in and get on the leaderboard.' : 'Sign in to lock in your picks.'}
+              {isSignup ? "It's free. Create your account to lock them in and get on the leaderboard." : 'Sign in to see and lock in your picks.'}
             </Drawer.Description>
 
             {!inApp && (

@@ -64,12 +64,22 @@ function NameSheet({ open, onOpenChange, userId, current, onSaved }) {
   )
 }
 
-// "Playing as Gaz · Change name · Sign out". Lets players who never saw the
-// sign-up sheet (old accounts, Google sign-ups) set their leaderboard name.
+// Signed in: "Playing as Gaz · Change name · Sign out", which lets players
+// who never saw the sign-up sheet (old accounts, Google sign-ups) set their
+// leaderboard name. Signed out: a Sign in button, on every screen.
 export default function AccountLine() {
-  const { user, profile, setProfile, signOut } = useMvp()
+  const { user, profile, setProfile, signOut, openSignUp } = useMvp()
   const [editing, setEditing] = useState(false)
-  if (!user) return null
+  if (!user) {
+    return (
+      <p className="m-account">
+        Already playing?{' '}
+        <button type="button" className="m-account__signin m-press" onClick={() => openSignUp('signin')}>
+          Sign in
+        </button>
+      </p>
+    )
+  }
   const name = profile?.display_name || user.email
 
   return (

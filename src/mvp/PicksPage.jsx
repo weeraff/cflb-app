@@ -3,7 +3,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabaseClient'
 import useCountdown from '../hooks/useCountdown'
 import { useMvp } from './MvpLayout'
 import AccountLine from './AccountLine'
-import { PrizeLine, RulesCard } from './Rules'
+import { PrizeLine, RulesCard, StartNotice } from './Rules'
 import MatchCard from './MatchCard'
 import { loadPending, savePending } from './lib/pendingSignup'
 import {
@@ -154,6 +154,8 @@ export default function PicksPage() {
       </header>
 
       <main className="m-list">
+        {fixtures?.length > 0 && <StartNotice roundName={roundName} locked={locked} />}
+
         <RulesCard />
 
         {pending?.joinName && (

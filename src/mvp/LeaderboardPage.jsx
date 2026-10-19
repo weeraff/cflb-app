@@ -5,6 +5,7 @@ import { sortLeaderboard } from '../lib/leaderboard'
 import { useMvp } from './MvpLayout'
 import AccountLine from './AccountLine'
 import { PrizeLine } from './Rules'
+import { TERMS } from './lib/terms'
 import { generateLeagueCode, joinUrl } from './lib/leagueCode'
 
 const TOP = 50
@@ -58,7 +59,7 @@ async function shareLeague(league) {
 }
 
 export default function LeaderboardPage() {
-  const { user, profile, openSignUp } = useMvp()
+  const { user, profile } = useMvp()
   const [params, setParams] = useSearchParams()
   const [board, setBoard] = useState(null)
   const [leagues, setLeagues] = useState([])
@@ -177,11 +178,6 @@ export default function LeaderboardPage() {
       <header className="m-head">
         <div className="m-head__top">
           <img className="m-head__logo" src="/logo-header.png" alt="Champagne Football Lemonade Banter" />
-          {!user && (
-            <button type="button" className="m-link-button" onClick={() => openSignUp('signin')}>
-              Sign in
-            </button>
-          )}
         </div>
         <h1 className="m-head__title">Leaderboard</h1>
         <PrizeLine />
@@ -206,7 +202,7 @@ export default function LeaderboardPage() {
           <Table
             rows={rows}
             myId={user?.id}
-            emptyText={activeLeague ? 'Loading your league...' : 'No points yet. The board fills up after the first full time.'}
+            emptyText={activeLeague ? 'Loading your league...' : `No points yet. The competition starts in ${TERMS.startRound} (${TERMS.startDate}) and everyone starts on 0. The board fills up after the first full time.`}
           />
         )}
 
