@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom'
 // confirm live in TERMS; the wording below reads from them so a change is
 // a one-line edit.
 export const TERMS = {
-  promoter: 'Champagne Football Lemonade Banter',
-  contactEmail: 'hello@cflb.com.au',
+  promoter: 'Champagne Football Show',
+  contactEmail: 'info@champagnefootball.com.au',
   minimumAge: 18,
   startRound: 'Round 2',
   startDate: '22 October 2026',
