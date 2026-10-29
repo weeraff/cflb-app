@@ -63,7 +63,7 @@ export default function MvpLayout() {
   const openSignUp = useCallback((mode = 'signup') => setSheet({ open: true, mode }), [])
 
   const needsConsent =
-    Boolean(user) && checked && profile != null && profile.marketing_opt_in == null && !loadPending() && completion.status !== 'saving'
+    Boolean(user) && checked && profile != null && profile.marketing_opt_in == null && !loadPending() && completion.status !== 'saving' && !completion.needsName
 
   const value = useMemo(
     () => ({ user, profile, profileChecked: checked, setProfile, openSignUp, completion, signOut: auth?.signOut }),

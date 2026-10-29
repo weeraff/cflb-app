@@ -24,17 +24,22 @@ export default function useCompleteSignup(user, profileChecked, setProfile) {
   const running = useRef(false)
 
   const run = useCallback(async () => {
-    const pending = loadPending()
-    if (!user || !profileChecked || !pending || running.current) return
+    const pending = loadPending() ?? {}
+    const hasPending = Object.keys(pending).length > 0
+    if (!user || !profileChecked || running.current) return
     running.current = true
-    setState((s) => ({ ...s, status: 'saving', error: null }))
 
     try {
       // Look it up fresh: right after sign-in the cached profile can still
-      // be the signed-out "none" from a moment ago.
+      // be the signed-out "none" from a moment ago. Runs for every sign-in,
+      // not just ones with held picks: a Google sign-up via the Sign in
+      // button has nothing pending but still needs a profile, or they play
+      // as "Anonymous" with no name or consent on record.
       const { data: existing, error: lookupError } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
       if (lookupError) throw lookupError
       const profile = existing
+      if (profile && !hasPending) return
+      setState((s) => ({ ...s, status: 'saving', error: null }))
 
       // Google sign-ups never typed a name, so ask them to pick one.
       let needsName = false
