@@ -93,7 +93,8 @@ export function buildReminderEmail(input: ReminderInput): { subject: string; tex
 
   const name = escapeHtml(input.displayName)
   const html = `<!doctype html>
-<html><body style="margin:0;padding:0;background:#eef2ef;font-family:Helvetica,Arial,sans-serif;color:#10241b;">
+<html><head><link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;800&display=swap" rel="stylesheet"></head>
+<body style="margin:0;padding:0;background:#eef2ef;font-family:'Barlow',Helvetica,Arial,sans-serif;color:#10241b;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef2ef;padding:24px 12px;"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:16px;overflow:hidden;">
 <tr><td style="background:#1d5a43;padding:20px 24px;color:#ffffff;">
