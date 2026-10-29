@@ -1,2 +1,9 @@
 [functions.standings-sync]
 verify_jwt = true
+
+[functions.email-reminders]
+verify_jwt = true
+
+# Public: the signed token in the link is the authorisation.
+[functions.unsubscribe]
+verify_jwt = false
