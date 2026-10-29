@@ -32,7 +32,13 @@ export default function SignUpSheet({ open, mode, onOpenChange, onModeChange }) 
     setKeepSignedIn(true)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + window.location.pathname },
+      options: {
+        redirectTo: window.location.origin + window.location.pathname,
+        // Always show Google's account chooser. Otherwise a phone with one
+        // Google account signed in skips straight to it, and there's no way
+        // to use a different one.
+        queryParams: { prompt: 'select_account' },
+      },
     })
     if (error) setMessage({ type: 'error', text: friendlyAuthError(error) })
   }
