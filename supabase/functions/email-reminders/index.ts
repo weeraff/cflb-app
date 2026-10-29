@@ -7,7 +7,9 @@
 //   ?test=<address>    send one sample email, only to the sending account
 //   ?kind=day-before|lock-day   force a reminder type for dry/test runs
 //
-// Secrets: GMAIL_USER, GMAIL_APP_PASSWORD, UNSUBSCRIBE_SECRET.
+// Secrets: GMAIL_USER, GMAIL_APP_PASSWORD, UNSUBSCRIBE_SECRET, and
+// REMINDERS_LIVE=true to actually email players (dry and test runs work
+// without it, so a real email can be checked before anyone is sent one).
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 import nodemailer from 'npm:nodemailer@6'
 import { buildReminderEmail, reminderKind, type ReminderKind } from '../_shared/reminders.ts'
@@ -78,6 +80,9 @@ Deno.serve(async (req) => {
     return reply({ dry: true, round, kind, hoursLeft, count: recipients.length, names: recipients.map((r: { display_name: string }) => r.display_name) })
   }
   if (!gmailUser || !gmailPass) return reply({ error: 'GMAIL_USER / GMAIL_APP_PASSWORD not set' }, 500)
+  if (!testTo && Deno.env.get('REMINDERS_LIVE') !== 'true') {
+    return reply({ skipped: 'REMINDERS_LIVE is not true yet', round, kind, wouldEmail: recipients.length })
+  }
 
   const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
