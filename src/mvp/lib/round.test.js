@@ -12,6 +12,10 @@ import {
   picksFromPredictions,
   pointsLabel,
   isLockError,
+  hasKickedOff,
+  openFixtures,
+  nextKickoff,
+  isJokerLocked,
 } from './round'
 
 const f = (id, kickoff, extra = {}) => ({
@@ -35,17 +39,32 @@ describe('roundFixtures', () => {
   })
 })
 
-describe('roundLockTime / isRoundLocked', () => {
-  it('locks at the earliest kickoff', () => {
-    expect(roundLockTime(round).toISOString()).toBe('2026-10-22T08:30:00.000Z')
+describe('per-game locking', () => {
+  const afterFirst = new Date('2026-10-22T09:00:00Z') // game a has kicked off, b and c haven't
+  it('locks each game at its own kickoff', () => {
+    expect(hasKickedOff(round[1], new Date('2026-10-22T08:29:59Z'))).toBe(false)
+    expect(hasKickedOff(round[1], new Date('2026-10-22T08:30:00Z'))).toBe(true)
   })
-  it('is open one second before and locked exactly at kickoff', () => {
-    expect(isRoundLocked(round, new Date('2026-10-22T08:29:59Z'))).toBe(false)
-    expect(isRoundLocked(round, new Date('2026-10-22T08:30:00Z'))).toBe(true)
+  it('lists the games still open, in kickoff order', () => {
+    expect(openFixtures(roundFixtures(round), afterFirst).map((f) => f.id)).toEqual(['b', 'c'])
   })
-  it('treats an empty round as locked', () => {
-    expect(roundLockTime([])).toBeNull()
+  it('counts down to the next game still open', () => {
+    expect(nextKickoff(round, afterFirst).toISOString()).toBe('2026-10-23T08:30:00.000Z')
+    expect(nextKickoff(round, new Date('2026-12-01T00:00:00Z'))).toBeNull()
+  })
+  it('only locks the whole round once every game has started', () => {
+    expect(isRoundLocked(round, afterFirst)).toBe(false)
+    expect(isRoundLocked(round, new Date('2026-10-24T04:00:00Z'))).toBe(true)
     expect(isRoundLocked([])).toBe(true)
+  })
+  it('keeps the round start for reminders and the start-of-comp notice', () => {
+    expect(roundLockTime(round).toISOString()).toBe('2026-10-22T08:30:00.000Z')
+    expect(roundLockTime([])).toBeNull()
+  })
+  it('freezes the Joker once the game it is on has kicked off', () => {
+    expect(isJokerLocked(round, 'a', afterFirst)).toBe(true)
+    expect(isJokerLocked(round, 'b', afterFirst)).toBe(false)
+    expect(isJokerLocked(round, null, afterFirst)).toBe(false)
   })
 })
 

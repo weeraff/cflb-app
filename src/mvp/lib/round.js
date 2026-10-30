@@ -10,16 +10,39 @@ export function roundFixtures(fixtures) {
     .sort((a, b) => new Date(a.kickoff_at) - new Date(b.kickoff_at))
 }
 
-// The whole round locks at its first kickoff. The database enforces the
-// same rule (current_round_lock()), this just mirrors it for the UI.
+// Each game locks at its own kickoff. The database enforces the same rule
+// in the predictions policies; these mirror it for the UI. Time alone
+// decides, not fixtures.status, which only changes when the sync runs.
+export function hasKickedOff(fixture, now = new Date()) {
+  return now >= new Date(fixture.kickoff_at)
+}
+
+export function openFixtures(fixtures, now = new Date()) {
+  return fixtures.filter((fx) => !hasKickedOff(fx, now))
+}
+
+export function nextKickoff(fixtures, now = new Date()) {
+  const open = openFixtures(fixtures, now)
+  if (open.length === 0) return null
+  return new Date(Math.min(...open.map((fx) => new Date(fx.kickoff_at).getTime())))
+}
+
+// The round's first kickoff: when the round starts, used by reminders and
+// the start-of-comp notice. No longer when picks lock.
 export function roundLockTime(fixtures) {
   if (fixtures.length === 0) return null
   return new Date(Math.min(...fixtures.map((fx) => new Date(fx.kickoff_at).getTime())))
 }
 
+// Nothing left to pick: every game has started.
 export function isRoundLocked(fixtures, now = new Date()) {
-  const lock = roundLockTime(fixtures)
-  return lock ? now >= lock : true
+  return openFixtures(fixtures, now).length === 0
+}
+
+// One Joker per round: once the game it's on has started it can't move.
+export function isJokerLocked(fixtures, jokerId, now = new Date()) {
+  const fixture = fixtures.find((fx) => fx.id === jokerId)
+  return fixture ? hasKickedOff(fixture, now) : false
 }
 
 function isPickComplete(pick) {

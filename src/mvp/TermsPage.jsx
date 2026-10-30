@@ -39,8 +39,9 @@ export default function TermsPage() {
 
           <h2>4. Making picks</h2>
           <p>
-            Each round, pick the score of every featured game. All picks for a round lock at the first kickoff of that
-            round, and you can change them until then. Picks not saved before the lock score nothing for that round.
+            Each round, pick the score of every featured game. Each game locks when it kicks off, and you can change a
+            pick until then. A game with no pick saved before kickoff scores nothing. Your Joker can't be moved once the
+            game it's on has kicked off.
           </p>
 
           <h2>5. Scoring</h2>

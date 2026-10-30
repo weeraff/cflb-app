@@ -48,7 +48,7 @@ function Team({ name, value, editing, onStep }) {
 
 // mode: "edit" (steppers), "saved" (read-only picks before lock) or
 // "locked" (picks plus real score and points once known).
-export default function MatchCard({ fixture, pick, isJoker, mode, points, onStep, onJoker }) {
+export default function MatchCard({ fixture, pick, isJoker, mode, points, jokerUsed, onStep, onJoker }) {
   const editing = mode === 'edit'
   const finished = fixture.status === 'completed' && fixture.home_score != null
 
@@ -68,7 +68,9 @@ export default function MatchCard({ fixture, pick, isJoker, mode, points, onStep
       </div>
 
       <div className="m-card__foot">
-        {editing ? (
+        {editing && jokerUsed ? (
+          <span className="m-joker-tag m-joker-tag--muted">🃏 Joker already played this round</span>
+        ) : editing ? (
           <button type="button" className="m-joker m-press" aria-pressed={isJoker} onClick={onJoker}>
             🃏 {isJoker ? 'Joker: double points' : 'Play Joker'}
           </button>
@@ -80,7 +82,7 @@ export default function MatchCard({ fixture, pick, isJoker, mode, points, onStep
           <span className="m-card__result">
             {finished ? (
               <>
-                Result <strong>{fixture.home_score}–{fixture.away_score}</strong>{' '}
+                {!pick && 'No pick · '}Result <strong>{fixture.home_score}–{fixture.away_score}</strong>{' '}
                 <span className={`m-points${points > 0 ? ' m-points--won' : ''}`}>{pointsLabel(points)}</span>
               </>
             ) : pick ? (

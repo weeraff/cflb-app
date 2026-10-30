@@ -62,7 +62,7 @@ export function buildReminderEmail(input: ReminderInput): { subject: string; tex
   const time = lockTimeLabel(input.lock)
   const evening = sydneyHour(input.lock) >= 17
   const when = input.kind === 'day-before' ? 'tomorrow' : evening ? 'tonight' : 'today'
-  const subject = `${input.roundName} locks ${when} at ${time}`
+  const subject = `${input.roundName} kicks off ${when} at ${time}`
 
   const standing =
     input.rank && input.points > 0
@@ -70,8 +70,8 @@ export function buildReminderEmail(input: ReminderInput): { subject: string; tex
       : "You're on 0 points so far, plenty of time to climb."
   const opener =
     input.kind === 'day-before'
-      ? `${input.roundName} locks ${when} at ${time} and your picks aren't in yet.`
-      : `Last call. ${input.roundName} locks ${when} at ${time} and you haven't put your picks in.`
+      ? `${input.roundName} kicks off ${when} at ${time} and your picks aren't in yet.`
+      : `Last call. ${input.roundName} kicks off ${when} at ${time} and you haven't put your picks in.`
 
   const lines = [
     `Hey ${input.displayName},`,
@@ -80,7 +80,7 @@ export function buildReminderEmail(input: ReminderInput): { subject: string; tex
     '',
     standing,
     '',
-    "8 games, couple of minutes. Don't forget your Joker, it doubles your points on one game.",
+    "Each game locks when it kicks off. Couple of minutes, and don't forget your Joker, it doubles your points on one game.",
     '',
     `Make your picks: ${input.picksUrl}`,
     '',
@@ -104,7 +104,7 @@ export function buildReminderEmail(input: ReminderInput): { subject: string; tex
 <p style="margin:0 0 14px;">Hey ${name},</p>
 <p style="margin:0 0 14px;">${escapeHtml(opener)}</p>
 <p style="margin:0 0 14px;"><strong>${escapeHtml(standing)}</strong></p>
-<p style="margin:0 0 22px;">8 games, couple of minutes. Don't forget your Joker, it doubles your points on one game.</p>
+<p style="margin:0 0 22px;">Each game locks when it kicks off. Couple of minutes, and don't forget your Joker, it doubles your points on one game.</p>
 <p style="margin:0 0 24px;"><a href="${escapeHtml(input.picksUrl)}" style="display:inline-block;background:#1d5a43;color:#ffffff;text-decoration:none;font-weight:800;padding:14px 26px;border-radius:999px;">Make my picks</a></p>
 <p style="margin:0;">Cheers,<br>Gaz<br>Champagne Football</p>
 </td></tr>

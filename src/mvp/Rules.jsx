@@ -38,7 +38,7 @@ export function RulesCard() {
           <strong>Double points</strong>
         </li>
       </ul>
-      <p className="m-rules__foot">Free to enter, nothing to buy. Pick every game before the first kickoff of the round. Most points after the Final wins $1,000.{' '}
+      <p className="m-rules__foot">Free to enter, nothing to buy. Each game locks when it kicks off, so get your picks in early. Most points after the Final wins $1,000.{' '}
         <Link to="/terms">Full terms</Link>
       </p>
     </section>
@@ -52,8 +52,8 @@ export function StartNotice({ roundName, locked }) {
   return (
     <div className="m-start" role="note">
       <strong>The competition starts this round</strong>
-      {TERMS.startRound} is week one of the CFLB comp. Everyone starts on 0 points, so you're not behind. Get your picks in
-      before the first kickoff.
+      {TERMS.startRound} is week one of the CFLB comp. Everyone starts on 0 points, so you're not behind. Each game locks
+      when it kicks off.
     </div>
   )
 }

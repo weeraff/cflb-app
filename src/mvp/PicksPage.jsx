@@ -9,7 +9,11 @@ import { loadPending, savePending } from './lib/pendingSignup'
 import {
   COMPETITION,
   roundFixtures,
-  roundLockTime,
+  openFixtures,
+  nextKickoff,
+  hasKickedOff,
+  isRoundLocked,
+  isJokerLocked,
   countPicked,
   allPicked,
   stepScore,
@@ -37,6 +41,12 @@ export default function PicksPage() {
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [notice, setNotice] = useState(null)
+  // Re-checked every 15 seconds so games lock on screen as they kick off.
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 15000)
+    return () => clearInterval(id)
+  }, [])
 
   const loadFixtures = useCallback(async () => {
     if (!isSupabaseConfigured) return
@@ -75,14 +85,20 @@ export default function PicksPage() {
       })
   }, [fixtures, user, completion.version])
 
-  const lockTime = useMemo(() => (fixtures ? roundLockTime(fixtures) : null), [fixtures])
-  const countdown = useCountdown(lockTime)
-  const locked = fixtures ? fixtures.length === 0 || countdown.locked : false
-  const hasSaved = fixtures ? allPicked(fixtures, saved.picks) : false
+  // Each game locks at its own kickoff, so only games still to start can
+  // be picked; ones already under way show the saved pick and result.
+  const open = useMemo(() => (fixtures ? openFixtures(fixtures, now) : []), [fixtures, now])
+  const nextMs = fixtures ? nextKickoff(fixtures, now)?.getTime() : undefined
+  const next = useMemo(() => (nextMs ? new Date(nextMs) : null), [nextMs])
+  const countdown = useCountdown(next)
+  const locked = fixtures ? isRoundLocked(fixtures, now) : false
+  const started = fixtures ? open.length < fixtures.length : false
+  const jokerFrozen = fixtures ? isJokerLocked(fixtures, saved.jokerId, now) : false
+  const hasSaved = allPicked(open, saved.picks)
   const mode = locked ? 'locked' : hasSaved && !editing ? 'saved' : 'edit'
   const roundName = fixtures?.[0]?.round ?? 'This round'
-  const picked = fixtures ? countPicked(fixtures, draft.picks) : 0
-  const ready = fixtures ? allPicked(fixtures, draft.picks) : false
+  const picked = countPicked(open, draft.picks)
+  const ready = allPicked(open, draft.picks)
 
   function step(fixtureId, side, delta) {
     setNotice(null)
@@ -93,6 +109,7 @@ export default function PicksPage() {
   }
 
   function joker(fixtureId) {
+    if (jokerFrozen) return
     buzz()
     setDraft((d) => ({ ...d, jokerId: toggleJoker(d.jokerId, fixtureId) }))
   }
@@ -108,21 +125,24 @@ export default function PicksPage() {
     setNotice(null)
     const { error } = await supabase
       .from('predictions')
-      .upsert(toPredictionRows(user.id, fixtures, draft.picks, draft.jokerId), { onConflict: 'user_id,fixture_id' })
+      .upsert(toPredictionRows(user.id, open, draft.picks, jokerFrozen ? saved.jokerId : draft.jokerId), { onConflict: 'user_id,fixture_id' })
     setSaving(false)
     if (error) {
       setNotice(
         isLockError(error)
-          ? { type: 'error', text: 'Picks for this round are locked. Get in early for the next one.' }
+          ? { type: 'error', text: "A game just kicked off, so that one's locked. Check your other picks and lock in again." }
           : { type: 'error', text: "Couldn't save your picks. Check your connection and try again.", retry: true },
       )
-      if (isLockError(error)) loadFixtures()
+      if (isLockError(error)) {
+        setNow(new Date())
+        loadFixtures()
+      }
       return
     }
     buzz()
-    setSaved({ picks: draft.picks, jokerId: draft.jokerId, points: {} })
+    setSaved((s) => ({ picks: { ...s.picks, ...draft.picks }, jokerId: jokerFrozen ? s.jokerId : draft.jokerId, points: s.points }))
     setEditing(false)
-    setNotice({ type: 'success', text: "You're locked in. Edit any time before the first kickoff." })
+    setNotice({ type: 'success', text: "You're locked in. You can change any game until it kicks off." })
   }
 
   const completionNotice =
@@ -131,7 +151,7 @@ export default function PicksPage() {
       : completion.status === 'error'
         ? { type: 'error', text: "Your account's ready but your picks didn't save.", retry: true, onRetry: completion.retry }
         : completion.status === 'locked'
-          ? { type: 'error', text: 'The round locked before your picks saved. Get in early for the next one.' }
+          ? { type: 'error', text: 'A game kicked off before your picks saved. Check your picks and lock in again.' }
           : completion.status === 'done' && completion.joinedLeague
             ? { type: 'success', text: `You're in ${completion.joinedLeague}. Check the Leaderboard tab.` }
             : null
@@ -140,12 +160,14 @@ export default function PicksPage() {
   const pending = !user ? loadPending() : null
 
   return (
-    <div className={`m-app${mode === 'edit' && fixtures?.length ? ' m-app--with-bar' : ''}`}>
+    <div className={`m-app${mode === 'edit' && open.length ? ' m-app--with-bar' : ''}`}>
       <header className="m-head">
         <div className="m-head__top">
           <img className="m-head__logo" src="/logo-header.png" alt="Champagne Football Lemonade Banter" />
           {fixtures?.length ? (
-            <span className={`m-pill${locked ? ' m-pill--locked' : ''}`}>{locked ? 'Locked' : `⏱ ${countdown.label} to lock`}</span>
+            <span className={`m-pill${locked ? ' m-pill--locked' : ''}`}>
+              {locked ? 'Locked' : `⏱ ${countdown.label} to ${started ? 'next kickoff' : 'kickoff'}`}
+            </span>
           ) : null}
         </div>
         <h1 className="m-head__title">{fixtures?.length ? `${roundName} picks` : 'Picks'}</h1>
@@ -199,7 +221,7 @@ export default function PicksPage() {
         {mode === 'saved' && (
           <div className="m-notice">
             <strong>You're locked in</strong>
-            Change your mind? You can edit until the first kickoff.
+            Change your mind? You can edit any game until it kicks off.
             <div>
               <button
                 type="button"
@@ -217,15 +239,17 @@ export default function PicksPage() {
         )}
 
         {fixtures?.map((fixture) => {
-          const source = mode === 'edit' ? draft : saved
+          const cardMode = hasKickedOff(fixture, now) ? 'locked' : mode
+          const source = cardMode === 'edit' ? draft : saved
           return (
             <MatchCard
               key={fixture.id}
               fixture={fixture}
               pick={source.picks[fixture.id]}
               isJoker={source.jokerId === fixture.id}
-              mode={mode}
+              mode={cardMode}
               points={saved.points[fixture.id]}
+              jokerUsed={jokerFrozen}
               onStep={(side, delta) => step(fixture.id, side, delta)}
               onJoker={() => joker(fixture.id)}
             />
@@ -233,10 +257,10 @@ export default function PicksPage() {
         })}
       </main>
 
-      {mode === 'edit' && fixtures?.length > 0 && (
+      {mode === 'edit' && open.length > 0 && (
         <div className="m-lockbar m-glass">
           <span className="m-lockbar__count">
-            {picked} of {fixtures.length} picked
+            {picked} of {open.length} picked
           </span>
           <button type="button" className="m-btn m-press" disabled={!ready || saving} onClick={lockIn}>
             {saving ? 'Saving...' : 'Lock in picks'}

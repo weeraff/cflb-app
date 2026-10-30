@@ -45,7 +45,7 @@ describe('buildReminderEmail', () => {
   }
   it('day-before: says tomorrow, rank, Joker and the lock time', () => {
     const e = buildReminderEmail({ ...base, kind: 'day-before' })
-    expect(e.subject).toBe('Round 3 locks tomorrow at 7:30pm')
+    expect(e.subject).toBe('Round 3 kicks off tomorrow at 7:30pm')
     expect(e.text).toContain('Jamie')
     expect(e.text).toContain('5th on 14 points')
     expect(e.text).toContain('Joker')
@@ -54,7 +54,7 @@ describe('buildReminderEmail', () => {
   })
   it('lock-day: says tonight', () => {
     const e = buildReminderEmail({ ...base, kind: 'lock-day' })
-    expect(e.subject).toBe('Round 3 locks tonight at 7:30pm')
+    expect(e.subject).toBe('Round 3 kicks off tonight at 7:30pm')
   })
   it('handles players with no points yet', () => {
     const e = buildReminderEmail({ ...base, kind: 'day-before', rank: null, points: 0 })

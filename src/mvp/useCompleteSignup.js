@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { loadPending, clearPending } from './lib/pendingSignup'
 import { consentFields } from './lib/consent'
 import { cleanName, isNameTakenError, nameWithSuffix } from './lib/names'
-import { COMPETITION, roundFixtures, filterPicksToRound, allPicked, toPredictionRows, isLockError } from './lib/round'
+import { COMPETITION, roundFixtures, openFixtures, filterPicksToRound, allPicked, toPredictionRows, isLockError } from './lib/round'
 
 // Until a player chooses a name, show only their first name. Google hands
 // over the full name, which shouldn't go public without them choosing it.
@@ -81,7 +81,8 @@ export default function useCompleteSignup(user, profileChecked, setProfile) {
           .eq('featured', true)
           .eq('competition', COMPETITION)
         if (fixturesError) throw fixturesError
-        const round = roundFixtures(fixtures ?? [])
+        // Only games still to kick off: earlier ones are locked.
+        const round = openFixtures(roundFixtures(fixtures ?? []))
         const { picks, jokerId } = filterPicksToRound(round, pending.picks, pending.jokerId)
         if (allPicked(round, picks)) {
           const { error } = await supabase

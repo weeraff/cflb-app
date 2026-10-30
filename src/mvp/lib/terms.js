@@ -7,5 +7,5 @@ export const TERMS = {
   startRound: 'Round 2',
   startDate: '22 October 2026',
   prize: '$1,000',
-  updated: '20 October 2026',
+  updated: '30 October 2026',
 }
