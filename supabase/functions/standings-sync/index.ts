@@ -358,12 +358,28 @@ async function completeFixturesFromResults(supabase: SupabaseClientAny) {
 async function autoFeatureNextRound(supabase: SupabaseClientAny) {
   const { data: openFeatured, error: openError } = await supabase
     .from('fixtures')
-    .select('id')
+    .select('id, round')
     .eq('featured', true)
     .neq('status', 'completed')
   if (openError) throw openError
-  // Current round still has an unfinished featured fixture — not done yet.
-  if (openFeatured && openFeatured.length > 0) return 0
+  // Current round still has an unfinished featured fixture, so it isn't
+  // done yet. But knockout draws fill in gradually: the round can be
+  // featured when only some of its ties are known (Quarter Finals went
+  // live with 1 of 4 games). Top it up with any of its games added since.
+  if (openFeatured && openFeatured.length > 0) {
+    const currentRounds = [...new Set(openFeatured.map((f: { round: string }) => f.round))]
+    const { data: added, error: topUpError } = await supabase
+      .from('fixtures')
+      .update({ featured: true })
+      .eq('featured', false)
+      .eq('status', 'scheduled')
+      .eq('competition', 'Australian Championship')
+      .in('round', currentRounds)
+      .gt('kickoff_at', new Date().toISOString())
+      .select('id')
+    if (topUpError) throw topUpError
+    return added?.length ?? 0
+  }
 
   // Read candidates for the next round before touching anything — if
   // there's nothing to replace this round with yet, leave the finished
